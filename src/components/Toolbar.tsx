@@ -15,7 +15,6 @@ import { useDroppable } from "@dnd-kit/core";
 import Draggable from "./Draggable";
 import { GenericItem, EventItem } from "../types/Items";
 import DraggableTape from "./DraggableTape";
-import Image from "next/image";
 
 interface ToolbarProps {
   toolbarItems: (GenericItem | EventItem)[];
@@ -48,7 +47,7 @@ const Toolbar = ({
             element="post-it"
             style={{
               zIndex: 200,
-              width: "10em",
+              width: "20em",
               position: "relative",
             }}
             data={{ content: ti.content }}
@@ -233,7 +232,7 @@ const Toolbar = ({
       </div>
       <div
         ref={scrollRef}
-        className={`flex flex-row bg-white bg-opacity-90 p-auto overflow-y-hidden overflox-x-scroll rounded-tl-xl flex-1 items-baseline justify-start md:justify-around gap-10 touch-none`}
+        className={`flex flex-row bg-white bg-opacity-90 p-auto overflow-y-hidden overflox-x-scroll rounded-tl-xl flex-1 items-baseline justify-start md:justify-around gap-10 touch-none pt-1`}
       >
         {toolbarItems.map((ti: GenericItem, i: number) => renderItem(ti, i))}
         {showLeftScroll && (
