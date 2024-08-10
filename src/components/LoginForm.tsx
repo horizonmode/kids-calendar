@@ -24,18 +24,6 @@ const LoginForm = () => {
   return (
     <div className="flex flex-col flex-1 justify-center items-center">
       <div className="flex justify-center my-2 mx-4 md:mx-0 relative">
-        <div className="text-center absolute -top-40">
-          <div className="flex items-center justify-center">
-            <RiDoorOpenFill className="text-6x text-black" />
-          </div>
-          <h2 className="text-4xl tracking-tight">Open Calendar</h2>
-          <span className="text-sm">
-            or &nbsp;
-            <a href="#" className="text-blue-500" onClick={createNew}>
-              create new
-            </a>
-          </span>
-        </div>
         <form className="w-full max-w-xl bg-white rounded-lg shadow-md p-6">
           <div className="flex flex-wrap -mx-3 mb-6">
             <div className="w-full md:w-full px-3 mb-6">

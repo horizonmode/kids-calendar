@@ -56,7 +56,7 @@ const Note = ({
 
   return (
     <div
-      className={` text-3xl touch-manipulation relative flex flex-col text-gray-800 rounded-3xl p-4 pb-1 flex-shrink-0`}
+      className={`text-xl md:text-3xl touch-manipulation relative flex flex-col text-gray-800 rounded-3xl p-4 pb-1 flex-shrink-0`}
       style={{
         backgroundColor: `${hexConvert(color, 0.8)}`,
         width: "10em",

@@ -53,8 +53,6 @@ interface MonthViewProps {
   onRevert: () => void;
   onShare: () => void;
   saving: boolean;
-  // initialDays: Schedule[];
-  // initialEvents: EventItem[];
 }
 
 const MonthView = ({

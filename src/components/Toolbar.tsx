@@ -47,7 +47,7 @@ const Toolbar = ({
             element="post-it"
             style={{
               zIndex: 200,
-              width: "20em",
+              width: "10em",
               position: "relative",
             }}
             data={{ content: ti.content }}
