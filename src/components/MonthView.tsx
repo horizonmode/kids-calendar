@@ -16,7 +16,6 @@ import {
   MouseSensor,
   TouchSensor,
   closestCorners,
-  pointerWithin,
   Over,
   Active,
   DroppableContainer,
@@ -338,6 +337,7 @@ const MonthView = ({
   return (
     <DndContext
       id="droppable"
+      autoScroll={false}
       sensors={sensors}
       collisionDetection={customCollisionDetectionAlgorithm}
       onDragOver={updateDragState}

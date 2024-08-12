@@ -22,9 +22,9 @@ const Header = ({
   showTabs = true,
 }: HeaderProps) => {
   return (
-    <div className="flex gap-4 items-center justify-between">
+    <div className="flex gap-4 items-center justify-between max-w-full">
       <div className="flex flex-row gap-4 flex-1">{children}</div>
-      <div className="invisible md:visible flex-1 flex flex-row items-center justify-center">
+      <div className="hidden md:flex flex-1 flex-row items-center justify-center">
         <Image
           src="/static/logo.png"
           alt="Logo"
