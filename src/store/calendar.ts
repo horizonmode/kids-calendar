@@ -141,7 +141,7 @@ const reOrderLayers = (
   itemId: string | number
 ) => {
   if (items.length < 2) return items;
-  const sourceIndex = items.findIndex((i) => i.id === itemId);
+  const sourceIndex = items.findIndex((i) => i.id == itemId);
   const item = items[sourceIndex];
   const numItems = items.length;
   if (item.order === numItems - 1) return items;
