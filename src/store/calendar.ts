@@ -413,7 +413,7 @@ const useCalendarStore = create<CalendarState>()(
         set((state: CalendarState) => {
           const newDays = [...state.days];
           const sourceDayIndex = newDays.findIndex(
-            (d) => d.items.findIndex((i) => i.id === itemId) > -1
+            (d) => d.items.findIndex((i) => i.id == itemId) > -1
           );
           if (sourceDayIndex === -1) {
             // try to find in toolbars
@@ -466,7 +466,7 @@ const useCalendarStore = create<CalendarState>()(
             }
           } else {
             const day = newDays[sourceDayIndex];
-            const sourceIndex = day.items.findIndex((i) => i.id === itemId);
+            const sourceIndex = day.items.findIndex((i) => i.id == itemId);
             const item = day.items[sourceIndex];
 
             if (day.day !== overId) {
@@ -498,7 +498,6 @@ const useCalendarStore = create<CalendarState>()(
               item.y = delta.y * 100;
               reOrderLayers(day.items, itemId);
             }
-
             return { days: newDays, pendingChanges: state.pendingChanges + 1 };
           }
         }),
