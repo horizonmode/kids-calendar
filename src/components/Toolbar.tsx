@@ -232,7 +232,7 @@ const Toolbar = ({
       </div>
       <div
         ref={scrollRef}
-        className={`flex flex-row bg-white bg-opacity-90 p-auto overflow-y-hidden overflox-x-scroll rounded-tl-xl flex-1 items-baseline justify-start md:justify-around gap-10 touch-none pt-1`}
+        className={`flex flex-row bg-white bg-opacity-90 p-auto overflow-y-hidden overflox-x-scroll rounded-tl-xl flex-1 items-baseline justify-start md:justify-around gap-20 touch-none pt-1`}
       >
         {toolbarItems.map((ti: GenericItem, i: number) => renderItem(ti, i))}
         {showLeftScroll && (

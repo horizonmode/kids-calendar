@@ -21,7 +21,7 @@ const TemplatePage = () => {
     const daysUtil = new Days();
     const week = daysUtil.getWeekNumber(selectedDay);
     router.push(
-      `/schedule/${calendarId}?year=${selectedDay.getFullYear()}&week=${week}`
+      `/grids/schedule/${calendarId}?year=${selectedDay.getFullYear()}&week=${week}`
     );
   };
 
