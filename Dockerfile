@@ -1,4 +1,5 @@
 FROM node:18-alpine AS base
+ARG PROD_ENV=""
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -21,6 +22,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN printf "$PROD_ENV" >> .env.production
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
