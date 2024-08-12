@@ -472,7 +472,7 @@ const MonthView = ({
                       }
                       isStart={event.day === offsetDay}
                       isEnd={offsetDay === event.day + event.days - 1}
-                      label={event.content}
+                      label={event.content || event.label}
                       eventId={event.id}
                       style={{
                         position: "absolute",

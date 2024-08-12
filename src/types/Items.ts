@@ -38,6 +38,7 @@ export interface EventItem {
   id: string;
   color?: string;
   type: string;
+  label?: string | undefined;
   content: string | undefined;
   x?: number;
   y?: number;
