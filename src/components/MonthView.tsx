@@ -138,17 +138,20 @@ const MonthView = ({
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragId, setDragId] = useState<string | null>(null);
 
-  const mouseSensor = useSensor(MouseSensor, {
-    activationConstraint: {
-      distance: 2,
-    },
-  });
+  const activationConstraint = {
+    delay: 100,
+    tolerance: 5,
+    distance: 3,
+  };
 
-  const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: {
-      distance: 2,
-    },
-  });
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint,
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint,
+    })
+  );
 
   function customCollisionDetectionAlgorithm({
     droppableContainers,
@@ -182,8 +185,6 @@ const MonthView = ({
       ),
     });
   }
-
-  const sensors = useSensors(mouseSensor, touchSensor);
 
   const onReorderEvent = (
     itemId: string,
@@ -244,7 +245,7 @@ const MonthView = ({
                 top={`${d.y || 50 + i * 5}%`}
                 element="post-it"
                 style={getStyle(d)}
-                data={{ content: d.content }}
+                data={{ content: d.content, color: d.color }}
               >
                 <Note
                   content={d.content}
@@ -359,7 +360,7 @@ const MonthView = ({
       }}
     >
       {/* <PersonSelect /> */}
-      <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative">
+      <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative max-h-screen overflow:auto">
         <h2 className="text-center hidden md:block mb-3">Monday</h2>
         <h2 className="text-center hidden md:block mb-3">Tuesday</h2>
         <h2 className="text-center hidden md:block mb-3">Wednesday</h2>

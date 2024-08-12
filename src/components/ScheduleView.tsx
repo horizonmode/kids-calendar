@@ -102,19 +102,20 @@ const ScheduleView = ({
 
   const [isDragging, setIsDragging] = useState(false);
 
-  const mouseSensor = useSensor(MouseSensor, {
-    activationConstraint: {
-      distance: 2,
-    },
-  });
+  const activationConstraint = {
+    delay: 100,
+    tolerance: 5,
+    distance: 3,
+  };
 
-  const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: {
-      distance: 2,
-    },
-  });
-
-  const sensors = useSensors(mouseSensor, touchSensor);
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint,
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint,
+    })
+  );
 
   const days = [
     "Monday",

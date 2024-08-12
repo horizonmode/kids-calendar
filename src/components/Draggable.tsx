@@ -42,6 +42,7 @@ function Draggable({
         top: top,
         left: left,
         position: "absolute",
+        touchAction: "manipulation",
         ...style,
       }}
     >

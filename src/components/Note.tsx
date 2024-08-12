@@ -56,13 +56,19 @@ const Note = ({
 
   return (
     <div
-      className={`text-xl md:text-3xl touch-manipulation relative flex flex-col text-gray-800 rounded-3xl p-4 pb-1 flex-shrink-0`}
+      className={`text-xl md:text-2xl touch-none relative flex flex-col text-gray-800 rounded-3xl p-4 pb-1 flex-shrink-0`}
       style={{
         backgroundColor: `${hexConvert(color, 0.8)}`,
         width: "10em",
         height: "10em",
         boxShadow: "0px 5px 10px rgba(0, 0, 0, 0.5)",
         ...style,
+      }}
+      onClick={(e) => {
+        console.log("click");
+        e.stopPropagation();
+        setEditable(true);
+        onSelect && onSelect();
       }}
     >
       {editable && (
@@ -80,11 +86,6 @@ const Note = ({
       )}
       <ContentEditable
         innerRef={editRef}
-        onClick={(e) => {
-          e.stopPropagation();
-          setEditable(true);
-          onSelect && onSelect();
-        }}
         className="resize-none bg-transparent border-none outline-none whitespace-pre-wrap max-h-full overflow-y-auto"
         tagName="div"
         html={content || ""} // innerHTML of the editable div

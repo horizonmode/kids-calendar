@@ -49,10 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang={siteMetadata.language}
-      className={`${poppins.variable} scroll-smooth`}
-    >
+    <html lang={siteMetadata.language} className={`${poppins.variable}`}>
       <link
         rel="apple-touch-icon"
         sizes="76x76"
@@ -89,7 +86,7 @@ export default function RootLayout({
       />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
       <body style={poppins.style}>
-        <main className="p-5 md:p-12 min-h-screen font-sans w-screen overflow-hidden flex">
+        <main className="p-5 md:p-12 min-h-screen font-sans w-screen overflow-x-hidden flex">
           {children}
         </main>
       </body>
