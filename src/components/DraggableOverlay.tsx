@@ -27,7 +27,10 @@ function DraggableOverlay({ axis, dragging }: OverlayProps) {
       case "post-it":
         return (
           <Note
-            style={{ ...active.data.current.style }}
+            style={{
+              boxShadow: "0px 5px 10px rgba(0, 0, 0, 0.5)",
+              ...active.data.current.style,
+            }}
             {...active.data.current.extra}
           />
         );

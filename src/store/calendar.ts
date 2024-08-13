@@ -451,8 +451,8 @@ const useCalendarStore = create<CalendarState>()(
 
               targetDay.softDelete = false;
 
-              item.x = 0;
-              item.y = 0;
+              item.x = delta.x * 100;
+              item.y = delta.y * 100;
               targetDay.items.push(item);
               reOrderLayers(targetDay.items, item.id);
 

@@ -61,7 +61,7 @@ const Note = ({
         backgroundColor: `${hexConvert(color, 0.8)}`,
         width: "10em",
         height: "10em",
-        boxShadow: "0px 5px 10px rgba(0, 0, 0, 0.5)",
+        // boxShadow: "0px 5px 10px rgba(0, 0, 0, 0.5)",
         ...style,
       }}
       onClick={(e) => {

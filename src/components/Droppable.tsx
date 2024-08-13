@@ -35,7 +35,8 @@ function Droppable({
         "items-center justify-center relative box-border bg-[#f0f0f1] transition-shadow duration-[250ms] ease-[ease] flex-1 aspect-[1] max-w-[100vh] grid grid-cols-[repeat(auto-fit,minmax(20px,max-content))] ml-0 mr-0.5 mt-0 mb-0.5 outline outline-1 outline-black",
         isOver &&
           "shadow-[inset_#1eb99d_0_0_0_3px,rgba(201,211,219,0.5)_20px_14px_24px]",
-        highlight && "border border-[5px] border-solid border-orange-500",
+        highlight &&
+          "shadow-[inset_#0000FF_0_0_0_3px,rgba(201,211,219,0.5)_20px_14px_24px]",
         isToday &&
           `bg-[white] after:pointer-events-none after:bg-[url('../assets/circle_free.png')] after:bg-contain after:bg-center after:content-[''] after:w-full after:h-full after:absolute after:z-0`,
         isPast &&

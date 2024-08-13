@@ -86,7 +86,10 @@ const Text = ({
             setEditable(true);
             onSelect && onSelect();
           }}
-          className="bg-inherit tracking-tight text-[1.5rem] leading-[2rem] whitespace-pre-line max-h-full overflow-hidden w-max max-w-[12rem] rotate-[350deg] origin-top-right outline-none"
+          className={`bg-inherit tracking-tight text-[1.5rem] leading-[2rem] whitespace-pre-line max-h-full w-fit overflow-hidden max-w-[12rem] rotate-[350deg] origin-top-right  p-2 min-w-12 min-h-12 outline-none ${
+            (editable || !content || content.length === 0) &&
+            "outline-1 outline-dashed outline-black"
+          }`}
           tagName="div"
           html={content || ""} // innerHTML of the editable div
           //disabled={!this.state.editable} // use true to disable edition
