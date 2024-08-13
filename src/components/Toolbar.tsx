@@ -59,6 +59,7 @@ const Toolbar = ({
                 position: "relative",
                 zIndex: 200,
               }}
+              editable={false}
             ></Note>
           </Draggable>
         );
@@ -224,7 +225,7 @@ const Toolbar = ({
           Save
         </Button>
         <div
-          className="flex-1 flex justify-center align-middle items-center overflow-visible  w-12 h-12  hover:bg-slate-200"
+          className="flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 hover:bg-slate-200"
           onClick={onShare}
         >
           <Icon size="lg" icon={RiInformationLine} />
@@ -232,9 +233,13 @@ const Toolbar = ({
       </div>
       <div
         ref={scrollRef}
-        className={`flex flex-row bg-white bg-opacity-90 p-auto overflow-y-hidden overflox-x-scroll rounded-tl-xl flex-1 items-baseline justify-start md:justify-around gap-20 touch-none pt-1`}
+        className={`flex flex-row bg-white bg-opacity-90 p-auto overflow-y-hidden overflox-x-scroll rounded-tl-xl flex-1 items-stretch justify-start md:justify-around gap-12 touch-none pt-1`}
       >
-        {toolbarItems.map((ti: GenericItem, i: number) => renderItem(ti, i))}
+        {toolbarItems.map((ti: GenericItem, i: number) => (
+          <div className="flex-1 flex flex-col items-center justify-around">
+            {renderItem(ti, i)}
+          </div>
+        ))}
         {showLeftScroll && (
           <div
             className="md:hidden absolute left-0 bottom-0 flex-1 flex justify-center items-center overflow-visible w-12 h-12  hover:bg-slate-200"

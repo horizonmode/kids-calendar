@@ -41,6 +41,7 @@ import { shallow } from "zustand/shallow";
 import classNames from "classnames";
 import Tape from "./Tape";
 import DraggableTape from "./DraggableTape";
+import Editable from "./Editable";
 
 const days = new Days();
 const today = new Date();
@@ -70,6 +71,7 @@ const MonthView = ({
     deleteItem,
     deleteEvent,
     selectItem,
+    deselectItem,
     setDay,
     editEvent,
     addDayContent,
@@ -86,6 +88,7 @@ const MonthView = ({
       state.deleteItem,
       state.deleteEvent,
       state.selectItem,
+      state.deselectItem,
       state.setSelectedDay,
       state.editEvent,
       state.addDayContent,
@@ -139,9 +142,9 @@ const MonthView = ({
   const [dragId, setDragId] = useState<string | null>(null);
 
   const activationConstraint = {
-    delay: 100,
-    tolerance: 5,
-    distance: 3,
+    delay: 50,
+    tolerance: 2,
+    distance: 4,
   };
 
   const sensors = useSensors(
@@ -246,19 +249,29 @@ const MonthView = ({
                 element="post-it"
                 style={getStyle(d)}
                 data={{ content: d.content, color: d.color }}
+                disabled={d.editable}
               >
-                <Note
-                  content={d.content}
-                  onUpdateContent={(content: string) =>
-                    onItemEdit(d.id, { ...d, content })
-                  }
+                <Editable
                   onDelete={() => onItemDelete(d)}
-                  onSelect={() => onItemSelect(d)}
-                  color={d.color}
+                  color={d.color || "#0096FF"}
                   onChangeColor={(color: string) => {
                     onItemEdit(d.id, { ...d, color });
                   }}
-                />
+                  onSelect={(selected) => {
+                    if (selected) onItemSelect(d);
+                    else deselectItem(d.id);
+                  }}
+                  editable={d.editable || false}
+                >
+                  <Note
+                    editable={d.editable || false}
+                    content={d.content}
+                    onUpdateContent={(content: string) =>
+                      onItemEdit(d.id, { ...d, content })
+                    }
+                    color={d.color}
+                  />
+                </Editable>
               </Draggable>
             );
           case "text":
@@ -296,20 +309,32 @@ const MonthView = ({
                 style={getStyle(d)}
                 element="post-card"
                 data={{ content: d.content, fileUrl: d.file }}
+                disabled={d.editable}
               >
-                <PostCard
-                  key={`drag-postcard-${i}`}
-                  id={d.id}
-                  content={d.content}
-                  style={getStyle(d)}
-                  onUpdateContent={(content) =>
-                    onItemEdit(d.id, { ...d, content })
-                  }
+                <Editable
                   onDelete={() => onItemDelete(d)}
-                  onSelect={() => onItemSelect(d)}
-                  onFileChange={(file) => onItemEdit(d.id, { ...d, file })}
-                  fileUrl={d.file}
-                ></PostCard>
+                  color={d.color || "#0096FF"}
+                  onChangeColor={(color: string) => {
+                    onItemEdit(d.id, { ...d, color });
+                  }}
+                  onSelect={(selected) => {
+                    if (selected) onItemSelect(d);
+                    else deselectItem(d.id);
+                  }}
+                  editable={d.editable || false}
+                >
+                  <PostCard
+                    key={`drag-postcard-${i}`}
+                    id={d.id}
+                    content={d.content}
+                    editable={d.editable || false}
+                    onUpdateContent={(content) =>
+                      onItemEdit(d.id, { ...d, content })
+                    }
+                    onFileChange={(file) => onItemEdit(d.id, { ...d, file })}
+                    fileUrl={d.file}
+                  ></PostCard>
+                </Editable>
               </Draggable>
             );
         }

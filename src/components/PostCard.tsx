@@ -6,15 +6,12 @@ import React, {
   useEffect,
   CSSProperties,
   ReactNode,
-  FocusEventHandler,
-  FocusEvent,
   RefObject,
 } from "react";
 import ContentEditable, { ContentEditableEvent } from "react-contenteditable";
 import axios, { AxiosProgressEvent } from "axios";
-import closeBtn from "@/assets/close.png";
 
-const photoSVG = (
+const PhotoSVG = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
@@ -34,30 +31,27 @@ export interface PostCardProps {
   content?: string;
   onUpdateContent?: (val: string) => void;
   color?: string;
-  onChangeColor?: (val: string) => void;
-  onSelect?: () => void;
   style?: CSSProperties;
-  onDelete?: () => void;
   fileUrl?: string | null;
   onFileChange?: (val: string | null) => void;
   children?: ReactNode;
   id: string;
+  editable?: boolean;
 }
 
 const PostCard = ({
   content,
   style,
   onUpdateContent,
-  onSelect,
-  onDelete,
   children,
   fileUrl,
   onFileChange,
   id,
+  editable = false,
+  color,
 }: PostCardProps) => {
   const editRef: RefObject<HTMLElement> =
     useRef<HTMLElement>() as RefObject<HTMLElement>;
-  const [editable, setEditable] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [submitStatus, setSubmitStatus] = useState("waiting");
@@ -68,16 +62,6 @@ const PostCard = ({
   const onChange = (e: ContentEditableEvent) => {
     if (e.target.value !== content) {
       onUpdateContent && onUpdateContent(e.target.value);
-    }
-  };
-
-  const onBlur: FocusEventHandler = (event: FocusEvent) => {
-    if (!event.relatedTarget) {
-      const editor = editRef.current;
-      if (editor) {
-        editor.scrollTop = 0;
-      }
-      setEditable(false);
     }
   };
 
@@ -142,7 +126,7 @@ const PostCard = ({
   return (
     <div style={{ ...style }}>
       <div
-        className={`rotate-6 bg-white rounded-sm  pt-1 pl-1 pb-2 pr-1 w-[10rem]`}
+        className={`rotate-6 bg-white rounded-sm  pt-1 pl-1 pb-2 pr-1 w-[10rem] flex flex-col align-top`}
       >
         {fileUrl &&
         !editPhoto &&
@@ -151,7 +135,24 @@ const PostCard = ({
         ) : (
           fileUrl && <img className=" min-w-full h-auto" src={fileUrl} />
         )}
-        {(!fileUrl || editPhoto) && (
+        {!fileUrl && !editPhoto && !editable && (
+          <div className="flex items-center justify-center min-w-full h-auto">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+              />
+            </svg>
+          </div>
+        )}
+        {editable && (!fileUrl || editPhoto) && (
           <div className="flex items-center justify-center w-full">
             <label
               htmlFor={`dropzone-file`}
@@ -217,48 +218,14 @@ const PostCard = ({
             ></div>
           </div>
         )}
-
-        {editable && (
-          <div className="flex flex-row gap-1 absolute -right-5 -top-5 items-center">
-            <div
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setEditPhoto((s) => !s);
-                onFileChange && onFileChange(null);
-              }}
-              className="w-[2em] h-[2em] bg-contain bg-no-repeat z-10"
-            >
-              {photoSVG}
-            </div>
-            <div
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDelete && onDelete();
-              }}
-              className={`w-[2em] h-[2em] bg-contain bg-no-repeat z-10`}
-              style={{
-                backgroundImage: `url(${closeBtn.src})`,
-              }}
-            ></div>
-          </div>
-        )}
         <div>
           <ContentEditable
-            className=" whitespace-normal"
+            className=" whitespace-normal outline-none"
             innerRef={editRef}
-            onClick={(e) => {
-              e.stopPropagation();
-              setEditable(true);
-              onSelect && onSelect();
-            }}
-            // className={s.edit}
             tagName="pre"
+            disabled={!editable} // use true to disable edition
             html={content || ""} // innerHTML of the editable div
-            //disabled={!this.state.editable} // use true to disable edition
             onChange={onChange} // handle innerHTML change
-            onBlur={onBlur}
           />
           {children}
         </div>

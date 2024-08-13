@@ -10,6 +10,7 @@ interface DraggableProps {
   top?: string;
   data?: any;
   action?: "move" | "resize";
+  disabled?: boolean;
 }
 
 function Draggable({
@@ -21,6 +22,7 @@ function Draggable({
   top,
   data,
   action,
+  disabled = false,
 }: DraggableProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: id,
@@ -30,6 +32,7 @@ function Draggable({
       action,
       extra: { itemId: id, ...data },
     },
+    disabled,
   });
 
   return (

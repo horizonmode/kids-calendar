@@ -136,17 +136,20 @@ const toolbarItems: GenericItem[] = [
   },
 ];
 
+const findItem = (items: GenericItem[], itemId: string) => {
+  const itemIndex = items.findIndex((i) => i.id === itemId);
+  return { item: items[itemIndex], index: itemIndex };
+};
+
 const reOrderLayers = (
   items: GenericItem[] | EventItem[],
-  itemId: string | number
+  item: GenericItem | EventItem
 ) => {
   if (items.length < 2) return items;
-  const sourceIndex = items.findIndex((i) => i.id == itemId);
-  const item = items[sourceIndex];
   const numItems = items.length;
   if (item.order === numItems - 1) return items;
   item.order = numItems - 1;
-  const otherItems = items.filter((i) => i.id !== itemId);
+  const otherItems = items.filter((i) => i.id !== item.id);
   otherItems.sort((a, b) => (a.order > b.order ? 1 : -1));
   for (var i = 0; i < otherItems.length; i++) {
     otherItems[i].order = i;
@@ -231,6 +234,7 @@ export interface CalendarState {
   editDay: (itemId: string, newItem: GenericItem) => void;
   deleteItem: (itemId: string) => void;
   selectItem: (itemId: string) => void;
+  deselectItem: (itemId: string) => void;
   editEvent: (eventId: string, event: EventItem) => void;
   deleteEvent: (itemId: string) => void;
   addDayContent: (
@@ -334,7 +338,20 @@ const useCalendarStore = create<CalendarState>()(
             (d) => d.items.findIndex((i) => i.id === itemId) > -1
           );
           const day = newDays[sourceDayIndex];
-          reOrderLayers(day.items, itemId);
+          const { item } = findItem(day.items, itemId);
+          item.editable = true;
+          reOrderLayers(day.items, item);
+          return { days: newDays };
+        }),
+      deselectItem: (itemId: string) =>
+        set((state: CalendarState) => {
+          const newDays = [...state.days];
+          const sourceDayIndex = newDays.findIndex(
+            (d) => d.items.findIndex((i) => i.id === itemId) > -1
+          );
+          const day = newDays[sourceDayIndex];
+          const { item } = findItem(day.items, itemId);
+          item.editable = false;
           return { days: newDays };
         }),
       editEvent: (eventId: string, event: EventItem) =>
@@ -454,7 +471,7 @@ const useCalendarStore = create<CalendarState>()(
               item.x = delta.x * 100;
               item.y = delta.y * 100;
               targetDay.items.push(item);
-              reOrderLayers(targetDay.items, item.id);
+              reOrderLayers(targetDay.items, item);
 
               return {
                 days: newDays,
@@ -491,12 +508,12 @@ const useCalendarStore = create<CalendarState>()(
               item.x = delta.x * 100;
               item.y = delta.y * 100;
               targetDay.items.push(item);
-              reOrderLayers(targetDay.items, item.id);
+              reOrderLayers(targetDay.items, item);
               reOrderAll(day.items);
             } else {
               item.x = delta.x * 100;
               item.y = delta.y * 100;
-              reOrderLayers(day.items, itemId);
+              reOrderLayers(day.items, item);
             }
             return { days: newDays, pendingChanges: state.pendingChanges + 1 };
           }
@@ -538,7 +555,7 @@ const useCalendarStore = create<CalendarState>()(
               order: 0,
               color: "blue",
             };
-            reOrderLayers(newEvents, event.id);
+            reOrderLayers(newEvents, event);
             return { events: newEvents, toolbarItems: newToolbarItems };
           }
 
@@ -553,7 +570,7 @@ const useCalendarStore = create<CalendarState>()(
             }
 
             event.y = delta.y * 100;
-            reOrderLayers(newEvents, event.id);
+            reOrderLayers(newEvents, event);
             return { events: newEvents };
           }
 
@@ -589,7 +606,7 @@ const useCalendarStore = create<CalendarState>()(
             event.day = overId;
           }
           // event.y = delta.y * 100;
-          reOrderLayers(newEvents, event.id);
+          reOrderLayers(newEvents, event);
           return {
             events: newEvents,
             pendingChanges: state.pendingChanges + 1,

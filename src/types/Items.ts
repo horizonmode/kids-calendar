@@ -32,6 +32,7 @@ export interface GenericItem {
   y?: number;
   file?: string | null;
   order: number;
+  editable?: boolean;
 }
 
 export interface EventItem {
@@ -50,4 +51,5 @@ export interface EventItem {
   year: number;
   days: number;
   calendarId?: string;
+  editable?: boolean;
 }
