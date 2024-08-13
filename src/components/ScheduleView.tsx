@@ -172,12 +172,8 @@ const ScheduleView = ({
                 onUpdateContent={(content) =>
                   onEdit(d.id, { ...d, content }, year, week)
                 }
-                onDelete={() => deleteItem(d.id, year, week)}
-                onSelect={() => onItemSelect(d.id, year, week)}
                 color={d.color}
-                onChangeColor={(color) => {
-                  onEdit(d.id, { ...d, color }, year, week);
-                }}
+                editable={false}
               />
             </Draggable>
           );
@@ -225,8 +221,6 @@ const ScheduleView = ({
                 onUpdateContent={(content) =>
                   onEdit(d.id, { ...d, content }, year, week)
                 }
-                onDelete={() => deleteItem(d.id, year, week)}
-                onSelect={() => onItemSelect(d.id, year, week)}
                 onFileChange={(file) =>
                   onEdit(d.id, { ...d, file }, year, week)
                 }

@@ -144,12 +144,8 @@ const TemplateView = ({
               <Note
                 content={d.content}
                 onUpdateContent={(content) => onEdit(d.id, { ...d, content })}
-                onDelete={() => deleteItem(d.id)}
-                onSelect={() => onItemSelect(d.id)}
                 color={d.color}
-                onChangeColor={(color) => {
-                  onEdit(d.id, { ...d, color });
-                }}
+                editable={false}
               />
             </Draggable>
           );
@@ -193,8 +189,6 @@ const TemplateView = ({
                 content={d.content}
                 style={getStyle(d)}
                 onUpdateContent={(content) => onEdit(d.id, { ...d, content })}
-                onDelete={() => deleteItem(d.id)}
-                onSelect={() => onItemSelect(d.id)}
                 onFileChange={(file) => onEdit(d.id, { ...d, file })}
                 fileUrl={d.file}
               ></PostCard>
