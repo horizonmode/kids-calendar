@@ -42,7 +42,7 @@ export default function Admin({ calendarId }: AdminProps) {
     if (calendarId) {
       fetchTemplates(calendarId);
     }
-  }, [calendarId]);
+  }, [calendarId, fetch]);
 
   const onAddClicked = () => {
     createTemplate(calendarId);

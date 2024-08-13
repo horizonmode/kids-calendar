@@ -1,4 +1,10 @@
-import { Card, Dialog, DialogPanelProps, Button } from "@tremor/react";
+import {
+  Card,
+  Dialog,
+  DialogPanel,
+  DialogPanelProps,
+  Button,
+} from "@tremor/react";
 
 interface GalleryProps {
   show: boolean;

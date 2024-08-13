@@ -127,6 +127,7 @@ const Toolbar = ({
               position: "relative",
             }}
             color={ti.color}
+            editable={false}
           />
         );
     }
@@ -151,9 +152,10 @@ const Toolbar = ({
   setNodeRef(scrollRef.current);
 
   useEffect(() => {
-    scrollRef.current.addEventListener("scroll", onScroll);
+    const scrollVal = scrollRef.current;
+    scrollVal.addEventListener("scroll", onScroll);
     return () => {
-      scrollRef?.current?.removeEventListener("scroll", onScroll);
+      scrollVal.removeEventListener("scroll", onScroll);
     };
   }, []);
 

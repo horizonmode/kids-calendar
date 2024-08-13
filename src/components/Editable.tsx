@@ -43,7 +43,7 @@ const Editable = ({
       )}
       {editable && (
         <input
-          className="absolute -left-2 -bottom-12"
+          className="absolute -left-2 -top-12"
           onChange={(e) => {
             const { value } = e.target;
             onChangeColor && onChangeColor(value);

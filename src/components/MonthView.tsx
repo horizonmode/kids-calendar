@@ -31,7 +31,6 @@ import {
   ClientRect,
   Coordinates,
   DragMoveEvent,
-  UniqueIdentifier,
 } from "@dnd-kit/core/dist/types";
 import { Delta } from "./Delta";
 import { EventItem, GenericItem } from "@/types/Items";
@@ -79,6 +78,8 @@ const MonthView = ({
     content,
     events,
     toolbarItems,
+    selectEvent,
+    deselectEvent,
   ] = useCalendarStore(
     (state) => [
       state.selectedDay,
@@ -96,6 +97,8 @@ const MonthView = ({
       getDaysContent(state),
       getDaysEvents(state),
       state.toolbarItems,
+      state.selectEvent,
+      state.deselectEvent,
     ],
     shallow
   );
@@ -505,6 +508,12 @@ const MonthView = ({
                         zIndex: event.order + 2,
                         opacity: isDragging && dragId === event.id ? "0" : "1",
                       }}
+                      onSelect={(selected) => {
+                        console.log("selected", selected);
+                        if (selected) selectEvent(event.id);
+                        else deselectEvent(event.id);
+                      }}
+                      editable={event.editable}
                       onDelete={() => onEventDelete(event)}
                       onChangeColor={(e) =>
                         editEvent(event.id, { ...event, color: e })

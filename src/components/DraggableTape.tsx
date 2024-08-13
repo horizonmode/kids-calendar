@@ -2,6 +2,7 @@ import React, { CSSProperties } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import Tape from "./Tape";
 import ResizeIcon from "./ResizeIcon";
+import Editable from "./Editable";
 
 interface DraggableTapeProps {
   id: string;
@@ -16,6 +17,8 @@ interface DraggableTapeProps {
   eventId?: string;
   onChangeColor?: (val: string) => void;
   color?: string;
+  editable?: boolean;
+  onSelect?: (selected: boolean) => void;
 }
 
 function DraggableTape({
@@ -31,6 +34,8 @@ function DraggableTape({
   eventId,
   onChangeColor,
   color = "#0000ff",
+  editable,
+  onSelect,
 }: DraggableTapeProps) {
   const moveProps = useDraggable({
     id: id,
@@ -39,6 +44,7 @@ function DraggableTape({
       action: "move",
       extra: { itemId: eventId, label, isStart, isEnd, color },
     },
+    disabled: editable,
   });
 
   const moveAttributes = moveProps.attributes;
@@ -54,11 +60,14 @@ function DraggableTape({
       action: "resize",
       extra: { itemId: eventId, label, isStart, isEnd },
     },
+    disabled: editable,
   });
 
   const resizeAttributes = resizeProps.attributes;
   const resizeListeners = resizeProps.listeners;
   const resizeSetNodeRef = resizeProps.setNodeRef;
+
+  console.log(color);
 
   return (
     <div
@@ -77,13 +86,21 @@ function DraggableTape({
     >
       <Tape
         onUpdateContent={onUpdateContent}
-        onDelete={onDelete}
         label={label || ""}
         isStart={isStart}
         isEnd={isEnd}
-        onChangeColor={onChangeColor}
         color={color}
+        editable={editable}
       >
+        {isStart && onSelect && (
+          <Editable
+            onDelete={onDelete}
+            onChangeColor={onChangeColor}
+            color={color}
+            editable={editable || false}
+            onSelect={onSelect}
+          ></Editable>
+        )}
         {isEnd && (
           <ResizeIcon
             ref={resizeSetNodeRef}

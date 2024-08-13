@@ -17,11 +17,10 @@ interface TapeProps {
   isEnd: boolean;
   label: string;
   onUpdateContent?: (value: string) => void;
-  onDelete?: () => void;
-  onChangeColor?: (value: string) => void;
   color?: string;
   left?: string;
   top?: string;
+  editable?: boolean;
 }
 
 function Tape({
@@ -31,11 +30,10 @@ function Tape({
   isEnd,
   label,
   onUpdateContent,
-  onDelete,
-  onChangeColor,
   color = "#0000ff",
   left,
   top,
+  editable,
 }: TapeProps) {
   const waves = (
     <pattern
@@ -130,16 +128,9 @@ function Tape({
   var encodedData = renderToStaticMarkup(svg);
   var encodedSVG = "data:image/svg+xml;utf8," + encodeURIComponent(encodedData);
 
-  const [editable, setEditable] = useState(false);
   const onChange = (e: ContentEditableEvent) => {
     if (e.target.value !== label) {
       onUpdateContent && onUpdateContent(e.target.value);
-    }
-  };
-
-  const onBlur: FocusEventHandler = (event: FocusEvent) => {
-    if (!event.relatedTarget) {
-      setEditable(false);
     }
   };
 
@@ -169,42 +160,14 @@ function Tape({
         } as CSSProperties
       }
     >
-      {editable && isStart && (
-        <div className="absolute top-[-30px] flex flex-row gap-[5px] items-center justify-start left-5">
-          <div
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDelete && onDelete();
-            }}
-            className="h-[2em] w-[2em] bg-[url('../assets/close.png')] bg-contain bg-no-repeat "
-          ></div>
-          <input
-            onChange={(e) => {
-              const { value } = e.target;
-              onChangeColor && onChangeColor(value);
-            }}
-            type="color"
-            id="color"
-            name="color"
-            value={colorHex}
-            onBlur={onBlur}
-          />
-        </div>
-      )}
       {children}
       {label && (
         <ContentEditable
-          tagName="pre"
-          className="bg-transparent text-[1.5em] whitespace-nowrap overflow-visible absolute bottom-[-1.5em] bg-[white] leading-[1.5em] left-[10%]"
+          tagName="div"
+          className="bg-transparent text-[1.5em] whitespace-nowrap overflow-visible absolute bottom-[-1.5em] bg-[white] leading-[1.5em] left-[10%] outline-none"
           html={isStart && label ? label : ""} // innerHTML of the editable div
-          //disabled={!this.state.editable} // use true to disable edition
+          disabled={!editable} // use true to disable edition
           onChange={onChange} // handle innerHTML change
-          onBlur={onBlur}
-          onClick={(e) => {
-            e.stopPropagation();
-            setEditable(true);
-          }}
         />
       )}
     </div>

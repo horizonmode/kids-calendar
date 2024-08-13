@@ -235,6 +235,8 @@ export interface CalendarState {
   deleteItem: (itemId: string) => void;
   selectItem: (itemId: string) => void;
   deselectItem: (itemId: string) => void;
+  selectEvent: (itemId: string) => void;
+  deselectEvent: (itemId: string) => void;
   editEvent: (eventId: string, event: EventItem) => void;
   deleteEvent: (itemId: string) => void;
   addDayContent: (
@@ -353,6 +355,25 @@ const useCalendarStore = create<CalendarState>()(
           const { item } = findItem(day.items, itemId);
           item.editable = false;
           return { days: newDays };
+        }),
+      selectEvent: (itemId: string) =>
+        set((state: CalendarState) => {
+          const newEvents = [...state.events];
+          const sourceEventIndex = newEvents.findIndex((d) => d.id === itemId);
+          const event = newEvents[sourceEventIndex];
+          event.editable = true;
+          reOrderLayers(newEvents, event);
+          console.log("selected event", event);
+          return { events: newEvents };
+        }),
+      deselectEvent: (itemId: string) =>
+        set((state: CalendarState) => {
+          const newEvents = [...state.events];
+          const sourceEventIndex = newEvents.findIndex((d) => d.id === itemId);
+          const event = newEvents[sourceEventIndex];
+          event.editable = false;
+          reOrderLayers(newEvents, event);
+          return { events: newEvents };
         }),
       editEvent: (eventId: string, event: EventItem) =>
         set((state: CalendarState) => {
