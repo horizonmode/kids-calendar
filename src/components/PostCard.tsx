@@ -136,13 +136,14 @@ const PostCard = ({
           fileUrl && <img className=" min-w-full h-auto" src={fileUrl} />
         )}
         {!fileUrl && !editPhoto && !editable && (
-          <div className="flex items-center justify-center min-w-full h-auto">
+          <div className="flex items-center flex-1">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="currentColor"
+              className="w-full h-full"
             >
               <path
                 strokeLinecap="round"

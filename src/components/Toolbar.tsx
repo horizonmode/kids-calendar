@@ -41,94 +41,114 @@ const Toolbar = ({
     switch (ti.type) {
       case "post-it":
         return (
-          <Draggable
-            id={ti.id}
-            key={`toolbaritem-${i}`}
-            element="post-it"
-            style={{
-              zIndex: 200,
-              width: "10em",
-              position: "relative",
-            }}
-            data={{ content: ti.content }}
+          <div
+            key={`toolbar-item-${i}`}
+            className="flex-1 flex flex-col items-center justify-flex-start"
           >
-            <Note
+            <Draggable
+              id={ti.id}
               key={`toolbaritem-${i}`}
-              content={ti.content}
+              element="post-it"
               style={{
-                position: "relative",
                 zIndex: 200,
+                width: "10em",
+                position: "relative",
               }}
-              editable={false}
-            ></Note>
-          </Draggable>
+              data={{ content: ti.content }}
+            >
+              <Note
+                key={`toolbaritem-${i}`}
+                content={ti.content}
+                style={{
+                  position: "relative",
+                  zIndex: 200,
+                }}
+                editable={false}
+              ></Note>
+            </Draggable>
+          </div>
         );
 
       case "post-card":
         return (
-          <Draggable
-            id={ti.id}
-            key={`toolbaritem-${i}`}
-            element="post-card"
-            style={{
-              zIndex: 200,
-              width: "10em",
-              position: "relative",
-            }}
-            data={{ content: ti.content }}
+          <div
+            key={`toolbar-item-${i}`}
+            className="flex-1 flex flex-col items-center justify-flex-start"
           >
-            <PostCard
+            <Draggable
               id={ti.id}
-              content={ti.content}
+              key={`toolbaritem-${i}`}
+              element="post-card"
               style={{
-                position: "relative",
                 zIndex: 200,
+                width: "10em",
+                position: "relative",
               }}
-            ></PostCard>
-          </Draggable>
+              data={{ content: ti.content }}
+            >
+              <PostCard
+                id={ti.id}
+                content={ti.content}
+                style={{
+                  position: "relative",
+                  zIndex: 200,
+                }}
+              ></PostCard>
+            </Draggable>
+          </div>
         );
 
       case "text":
         return (
-          <Draggable
-            id={ti.id}
-            key={`toolbaritem-${i}`}
-            element="text"
-            style={{
-              zIndex: 200,
-              width: "10em",
-              position: "relative",
-            }}
-            data={{ content: ti.content }}
+          <div
+            key={`toolbar-item-${i}`}
+            className="flex-1 flex flex-col items-center justify-around"
           >
-            <Text
+            <Draggable
+              id={ti.id}
               key={`toolbaritem-${i}`}
-              content={ti.content}
+              element="text"
               style={{
-                position: "relative",
                 zIndex: 200,
+                width: "10em",
+                position: "relative",
               }}
-            ></Text>
-          </Draggable>
+              data={{ content: ti.content }}
+            >
+              <Text
+                key={`toolbaritem-${i}`}
+                content={ti.content}
+                style={{
+                  position: "relative",
+                  zIndex: 200,
+                }}
+              ></Text>
+            </Draggable>
+          </div>
         );
 
       case "event":
         return (
-          <DraggableTape
-            key={`toolbarItem-${i}`}
-            id={ti.id}
-            isStart={true}
-            isEnd={false}
-            eventId={ti.id}
-            label={"new event"}
-            style={{
-              zIndex: 200,
-              width: "10em",
-              position: "relative",
-            }}
-            color={ti.color}
-            editable={false}
-          />
+          <div
+            key={`toolbar-item-${i}`}
+            className="flex-1 flex flex-col items-center justify-around"
+          >
+            <DraggableTape
+              key={`toolbarItem-${i}`}
+              id={ti.id}
+              isStart={true}
+              isEnd={false}
+              eventId={ti.id}
+              label={"new event"}
+              style={{
+                zIndex: 200,
+                width: "10em",
+                position: "relative",
+              }}
+              color={ti.color}
+              editable={false}
+            />
+          </div>
         );
     }
   };
@@ -237,14 +257,7 @@ const Toolbar = ({
         ref={scrollRef}
         className={`flex flex-row bg-white bg-opacity-90 p-auto overflow-y-hidden overflox-x-scroll rounded-tl-xl flex-1 items-stretch justify-start md:justify-around gap-12 touch-none pt-1`}
       >
-        {toolbarItems.map((ti: GenericItem, i: number) => (
-          <div
-            key={`toolbar-item-${i}`}
-            className="flex-1 flex flex-col items-center justify-around"
-          >
-            {renderItem(ti, i)}
-          </div>
-        ))}
+        {toolbarItems.map((ti: GenericItem, i: number) => renderItem(ti, i))}
         {showLeftScroll && (
           <div
             className="md:hidden absolute left-0 bottom-0 flex-1 flex justify-center items-center overflow-visible w-12 h-12  hover:bg-slate-200"

@@ -11,6 +11,7 @@ export interface EditableProps {
   onChangeColor?: (val: string) => void;
   color: string;
   children?: ReactNode;
+  position?: "top" | "bottom" | "left" | "right";
 }
 
 const Editable = ({
@@ -20,11 +21,27 @@ const Editable = ({
   onChangeColor,
   color,
   children,
+  position = "top",
 }: EditableProps) => {
+  const positionClass =
+    position === "top"
+      ? "-top-12 -right-0 flex-row"
+      : position === "right"
+      ? "-right-12 -top-0 flex-col items-center justify-center"
+      : "-bottom-12 -left-0 flex-row";
   return (
     <>
       {editable && (
-        <div className="flex flex-row top-[-25px] right-[0] absolute z-10">
+        <div className={`flex absolute z-10 gap-2 ${positionClass}`}>
+          <input
+            onChange={(e) => {
+              const { value } = e.target;
+              onChangeColor && onChangeColor(value);
+            }}
+            type="color"
+            name="color"
+            value={color}
+          />
           <RiDeleteBin2Fill
             onMouseDown={(e) => {
               e.preventDefault();
@@ -41,22 +58,11 @@ const Editable = ({
           />
         </div>
       )}
-      {editable && (
-        <input
-          className="absolute -left-2 -top-12"
-          onChange={(e) => {
-            const { value } = e.target;
-            onChangeColor && onChangeColor(value);
-          }}
-          type="color"
-          name="color"
-          value={color}
-        />
-      )}
+
       {children}
       {!editable && (
         <RiEditCircleFill
-          className="top-[-25px] right-[0] absolute z-10"
+          className={`absolute z-10 ${positionClass}`}
           onMouseDown={(e) => {
             e.stopPropagation();
             e.preventDefault();

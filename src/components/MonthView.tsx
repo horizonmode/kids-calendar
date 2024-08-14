@@ -265,6 +265,7 @@ const MonthView = ({
                     else deselectItem(d.id);
                   }}
                   editable={d.editable || false}
+                  position="right"
                 >
                   <Note
                     editable={d.editable || false}
@@ -325,6 +326,7 @@ const MonthView = ({
                     else deselectItem(d.id);
                   }}
                   editable={d.editable || false}
+                  position="right"
                 >
                   <PostCard
                     key={`drag-postcard-${i}`}
