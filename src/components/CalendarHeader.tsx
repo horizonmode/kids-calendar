@@ -23,7 +23,9 @@ const Header = ({
 }: HeaderProps) => {
   return (
     <div className="flex gap-4 items-center justify-between max-w-full">
-      <div className="flex flex-row gap-4 flex-1">{children}</div>
+      <div className="flex flex-row gap-4 flex-1 flex-wrap md:flex-nowrap ">
+        {children}
+      </div>
       <div className="hidden md:flex flex-1 flex-row items-center justify-center">
         <Image
           src="/static/logo.png"
