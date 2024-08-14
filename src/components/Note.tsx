@@ -31,22 +31,32 @@ const Note = ({
     if (!editable) {
       const editor = editRef.current;
       if (editor) editor.scrollTop = 0;
+    } else {
+      editRef.current?.focus();
     }
   }, [editable]);
 
+  console.log(color);
+
+  const isHex = /^#[0-9A-F]{6}$/i.test(color);
+  if (isHex) {
+    color = hexConvert(color, 0.8);
+  }
+
+  const text = color === "black" ? "white" : "black";
+
   return (
     <div
-      className={`text-xl md:text-2xl touch-none relative flex flex-col text-gray-800 rounded-3xl p-4 pb-1 flex-shrink-0`}
+      className={`relative text-xl md:text-2xl touch-none flex flex-col text-gray-800 p-3 flex-shrink-0 w-44 max-w-48 max-h-48 h-auto rounded-xl shadow-lg`}
       style={{
-        backgroundColor: `${hexConvert(color, 0.8)}`,
-        width: "10em",
-        height: "10em",
+        backgroundColor: color,
+        color: text,
         ...style,
       }}
     >
       <ContentEditable
         innerRef={editRef}
-        className="resize-none bg-transparent border-none outline-none whitespace-pre-wrap max-h-full overflow-y-auto "
+        className="resize-none bg-transparent border-none outline-none overflow-y-auto"
         tagName="div"
         html={content || ""} // innerHTML of the editable div
         disabled={!editable} // use true to disable edition

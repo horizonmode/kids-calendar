@@ -117,15 +117,6 @@ const toolbarItems: GenericItem[] = [
     color: "#0000ff",
   },
   {
-    id: "toolbar-0-text",
-    type: "text",
-    content: "new text",
-    x: 0,
-    y: 0,
-    order: 0,
-    color: "black",
-  },
-  {
     id: "toolbar-0-postcard",
     type: "post-card",
     content: "example content1",

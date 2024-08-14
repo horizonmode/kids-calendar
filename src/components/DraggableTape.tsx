@@ -67,8 +67,6 @@ function DraggableTape({
   const resizeListeners = resizeProps.listeners;
   const resizeSetNodeRef = resizeProps.setNodeRef;
 
-  console.log(color);
-
   return (
     <div
       id={id}

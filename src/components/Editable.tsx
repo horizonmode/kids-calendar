@@ -1,8 +1,8 @@
 "use client";
 import { ReactNode } from "react";
 import { RiEditCircleFill } from "@remixicon/react";
-import { RiSave3Fill } from "@remixicon/react";
-import { RiDeleteBin2Fill } from "@remixicon/react";
+import { RiDeleteBin6Fill } from "@remixicon/react";
+import { RiCloseCircleFill } from "@remixicon/react";
 
 export interface EditableProps {
   editable: boolean;
@@ -33,28 +33,29 @@ const Editable = ({
     <>
       {editable && (
         <div className={`flex absolute z-10 gap-2 ${positionClass}`}>
-          <input
-            onChange={(e) => {
-              const { value } = e.target;
-              onChangeColor && onChangeColor(value);
+          <RiCloseCircleFill
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onSelect(false);
             }}
-            type="color"
-            name="color"
-            value={color}
           />
-          <RiDeleteBin2Fill
+          <RiDeleteBin6Fill
             onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onDelete && onDelete();
             }}
           />
-          <RiSave3Fill
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onSelect(false);
+          <input
+            onChange={(e) => {
+              const { value } = e.target;
+              onChangeColor && onChangeColor(value);
             }}
+            className="w-10 h-10"
+            type="color"
+            name="color"
+            value={color}
           />
         </div>
       )}

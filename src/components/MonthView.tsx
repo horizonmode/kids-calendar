@@ -243,6 +243,7 @@ const MonthView = ({
       day.items.map((d, i) => {
         switch (d.type) {
           case "post-it":
+          case "text":
             return (
               <Draggable
                 id={d.id}
@@ -278,31 +279,7 @@ const MonthView = ({
                 </Editable>
               </Draggable>
             );
-          case "text":
-            return (
-              <Draggable
-                id={d.id}
-                key={`drag-text-${d.id}-${i}`}
-                left={`${d.x || 50 + i * 5}%`}
-                top={`${d.y || 50 + i * 5}%`}
-                style={getStyle(d)}
-                element="text"
-                data={{ content: d.content, color: d.color }}
-              >
-                <Text
-                  content={d.content}
-                  onUpdateContent={(content) =>
-                    onItemEdit(d.id, { ...d, content })
-                  }
-                  onDelete={() => onItemDelete(d)}
-                  onSelect={() => onItemSelect(d)}
-                  color={d.color}
-                  onChangeColor={(color) => {
-                    onItemEdit(d.id, { ...d, color });
-                  }}
-                ></Text>
-              </Draggable>
-            );
+
           case "post-card":
             return (
               <Draggable

@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import ContentEditable, { ContentEditableEvent } from "react-contenteditable";
 import axios, { AxiosProgressEvent } from "axios";
+import hexConvert from "hex-color-opacity";
 
 const PhotoSVG = (
   <svg
@@ -48,7 +49,7 @@ const PostCard = ({
   onFileChange,
   id,
   editable = false,
-  color,
+  color = "#FF00FF",
 }: PostCardProps) => {
   const editRef: RefObject<HTMLElement> =
     useRef<HTMLElement>() as RefObject<HTMLElement>;
@@ -123,10 +124,22 @@ const PostCard = ({
     process();
   };
 
+  useEffect(() => {
+    if (!editable) {
+      const editor = editRef.current;
+      if (editor) editor.scrollTop = 0;
+    } else {
+      editRef.current?.focus();
+    }
+  }, [editable]);
+
   return (
     <div style={{ ...style }}>
       <div
-        className={`rotate-6 bg-white rounded-sm  pt-1 pl-1 pb-2 pr-1 w-[10rem] flex flex-col align-top`}
+        className={`bg-gradient-to-b rounded-xl shadow-lg w-[10rem] flex flex-col align-top`}
+        style={{
+          backgroundColor: `${hexConvert(color, 0.8)}`,
+        }}
       >
         {fileUrl &&
         !editPhoto &&
@@ -221,7 +234,7 @@ const PostCard = ({
         )}
         <div>
           <ContentEditable
-            className=" whitespace-normal outline-none"
+            className=" whitespace-normal outline-none bg-white p-2"
             innerRef={editRef}
             tagName="pre"
             disabled={!editable} // use true to disable edition

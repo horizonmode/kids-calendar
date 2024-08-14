@@ -43,7 +43,7 @@ const Toolbar = ({
         return (
           <div
             key={`toolbar-item-${i}`}
-            className="flex-1 flex flex-col items-center justify-flex-start"
+            className="flex-1 flex flex-col items-center justify-around"
           >
             <Draggable
               id={ti.id}
@@ -94,35 +94,6 @@ const Toolbar = ({
                   zIndex: 200,
                 }}
               ></PostCard>
-            </Draggable>
-          </div>
-        );
-
-      case "text":
-        return (
-          <div
-            key={`toolbar-item-${i}`}
-            className="flex-1 flex flex-col items-center justify-around"
-          >
-            <Draggable
-              id={ti.id}
-              key={`toolbaritem-${i}`}
-              element="text"
-              style={{
-                zIndex: 200,
-                width: "10em",
-                position: "relative",
-              }}
-              data={{ content: ti.content }}
-            >
-              <Text
-                key={`toolbaritem-${i}`}
-                content={ti.content}
-                style={{
-                  position: "relative",
-                  zIndex: 200,
-                }}
-              ></Text>
             </Draggable>
           </div>
         );
@@ -257,7 +228,9 @@ const Toolbar = ({
         ref={scrollRef}
         className={`flex flex-row bg-white bg-opacity-90 p-auto overflow-y-hidden overflox-x-scroll rounded-tl-xl flex-1 items-stretch justify-start md:justify-around gap-12 touch-none pt-1`}
       >
-        {toolbarItems.map((ti: GenericItem, i: number) => renderItem(ti, i))}
+        {toolbarItems
+          .filter((t) => t.type !== "text")
+          .map((ti: GenericItem, i: number) => renderItem(ti, i))}
         {showLeftScroll && (
           <div
             className="md:hidden absolute left-0 bottom-0 flex-1 flex justify-center items-center overflow-visible w-12 h-12  hover:bg-slate-200"

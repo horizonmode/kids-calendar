@@ -4,6 +4,9 @@ import React, {
   ReactNode,
   useState,
   FocusEvent,
+  useEffect,
+  RefObject,
+  useRef,
 } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import classNames from "classnames";
@@ -35,6 +38,8 @@ function Tape({
   top,
   editable,
 }: TapeProps) {
+  const editRef: RefObject<HTMLElement> =
+    useRef<HTMLElement>() as RefObject<HTMLElement>;
   const waves = (
     <pattern
       id="waves"
@@ -163,6 +168,7 @@ function Tape({
       {children}
       {label && (
         <ContentEditable
+          innerRef={editRef}
           tagName="div"
           className="bg-transparent text-[1.5em] whitespace-nowrap overflow-visible absolute bottom-[-1.5em] bg-[white] leading-[1.5em] left-[10%] outline-none"
           html={isStart && label ? label : ""} // innerHTML of the editable div
