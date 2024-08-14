@@ -43,7 +43,7 @@ const Toolbar = ({
         return (
           <div
             key={`toolbar-item-${i}`}
-            className="flex-1 flex flex-col items-center justify-around"
+            className="flex-1 flex flex-col items-center justify-around scale-75"
           >
             <Draggable
               id={ti.id}
@@ -73,7 +73,7 @@ const Toolbar = ({
         return (
           <div
             key={`toolbar-item-${i}`}
-            className="flex-1 flex flex-col items-center justify-flex-start"
+            className="flex-1 flex flex-col items-center justify-center scale-75"
           >
             <Draggable
               id={ti.id}
@@ -102,7 +102,7 @@ const Toolbar = ({
         return (
           <div
             key={`toolbar-item-${i}`}
-            className="flex-1 flex flex-col items-center justify-around"
+            className="flex-1 flex flex-col items-center justify-around scale-75"
           >
             <DraggableTape
               key={`toolbarItem-${i}`}
@@ -229,7 +229,7 @@ const Toolbar = ({
         className={`flex flex-row bg-white bg-opacity-90 p-auto overflow-y-hidden overflox-x-scroll rounded-tl-xl flex-1 items-stretch justify-start md:justify-around gap-12 touch-none pt-1`}
       >
         {toolbarItems
-          .filter((t) => t.type !== "text")
+          .filter((t) => t.type != "text")
           .map((ti: GenericItem, i: number) => renderItem(ti, i))}
         {showLeftScroll && (
           <div

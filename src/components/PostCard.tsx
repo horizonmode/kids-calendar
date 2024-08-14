@@ -137,10 +137,7 @@ const PostCard = ({
   return (
     <div style={{ ...style }}>
       <div
-        className={`bg-gradient-to-b rounded-xl shadow-lg w-[10rem] flex flex-col align-top`}
-        style={{
-          backgroundColor: `${hexConvert(color, 0.8)}`,
-        }}
+        className={`bg-gradient-to-b rounded-xl shadow-lg w-[10rem] flex flex-col align-top bg-white`}
       >
         {fileUrl &&
         !editPhoto &&
@@ -206,9 +203,13 @@ const PostCard = ({
             ></div>
           </div>
         )}
-        <div>
+        <div
+          style={{
+            backgroundColor: `${hexConvert(color, 0.8)}`,
+          }}
+        >
           <ContentEditable
-            className=" whitespace-normal outline-none bg-white p-2"
+            className=" whitespace-normal outline-none p-2"
             innerRef={editRef}
             tagName="pre"
             disabled={!editable} // use true to disable edition

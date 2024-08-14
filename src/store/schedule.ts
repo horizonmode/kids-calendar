@@ -22,7 +22,7 @@ const initialSchedules: Schedule[] = [
           {
             id: uuidv4(),
             type: "post-it",
-            content: "example content1",
+            content: "new post-it",
             x: 0,
             y: 0,
             order: 0,
@@ -32,7 +32,7 @@ const initialSchedules: Schedule[] = [
           {
             id: uuidv4(),
             type: "post-it",
-            content: "example content2",
+            content: "new post-it",
             x: 0,
             y: 0,
             order: 1,
@@ -74,7 +74,7 @@ const toolbarItems: GenericItem[] = [
   {
     id: `${Date.now()}-card`,
     type: "post-card",
-    content: "example content1",
+    content: "new post-card",
     x: 0,
     y: 0,
     order: 0,
@@ -212,7 +212,6 @@ const useScheduleStore = create<ScheduleState>()(
           let newState = {};
 
           if (dayIndex === null) {
-            console.log("looking in toolbar");
             // look in toolbar items
             const newToolbarItems = [...state.toolbarItems];
             const toolbarIndex = newToolbarItems.findIndex(
@@ -443,7 +442,6 @@ const useScheduleStore = create<ScheduleState>()(
           };
         },
         setItem: (name, newValue) => {
-          console.log("setting", newValue);
           const str = JSON.stringify({
             state: {
               ...newValue.state,

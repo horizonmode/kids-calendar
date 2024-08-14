@@ -16,7 +16,7 @@ const initialTemplates: Template[] = [
           {
             id: "1",
             type: "post-it",
-            content: "example content1",
+            content: "new post-it",
             x: 0,
             y: 0,
             order: 0,
@@ -433,7 +433,6 @@ const useTemplateStore = create<TemplateState>()(
           };
         },
         setItem: (name, newValue) => {
-          console.log("setting", newValue);
           const str = JSON.stringify({
             state: {
               ...newValue.state,

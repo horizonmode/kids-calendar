@@ -107,7 +107,8 @@ const MonthView = ({
   const month = currentDay.getMonth();
   const year = currentDay.getFullYear();
   const daysInMonth = days.getDays(year, month);
-  const firstDayOfMonth = days.getFirstDay(year, month);
+  const firstDayOfMonth =
+    days.getFirstDay(year, month) === 0 ? 7 : days.getFirstDay(year, month);
 
   const onReorder = (itemId: string, overId: number, delta: Delta) => {
     if (itemId) reorderDays(itemId, overId, delta, day, month, year);
@@ -230,7 +231,10 @@ const MonthView = ({
   };
 
   const calendarDays = daysInMonth + firstDayOfMonth - 1; // always show 7 days x 5 rows
+  console.log(calendarDays, firstDayOfMonth, daysInMonth);
+
   const offset = firstDayOfMonth - 1;
+  console.log(offset);
 
   const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
     position: "absolute",
@@ -315,6 +319,7 @@ const MonthView = ({
                     }
                     onFileChange={(file) => onItemEdit(d.id, { ...d, file })}
                     fileUrl={d.file}
+                    color={d.color}
                   ></PostCard>
                 </Editable>
               </Draggable>
@@ -341,6 +346,8 @@ const MonthView = ({
     setDragAction(e?.active?.data?.current?.action);
     setDelta({ x, y });
   };
+
+  console.log(calendarDays);
 
   return (
     <DndContext
@@ -376,7 +383,6 @@ const MonthView = ({
         <h2 className="text-center hidden md:block mb-3">Saturday</h2>
         <h2 className="text-center hidden md:block mb-3">Sunday</h2>
         {[...Array(calendarDays)].map((_, i) => {
-          const isRowStart = i % 7 === 0;
           const offsetDay = i + 1 - offset;
           if (offsetDay >= 1 && offsetDay <= daysInMonth)
             return (
@@ -488,7 +494,6 @@ const MonthView = ({
                         opacity: isDragging && dragId === event.id ? "0" : "1",
                       }}
                       onSelect={(selected) => {
-                        console.log("selected", selected);
                         if (selected) selectEvent(event.id);
                         else deselectEvent(event.id);
                       }}

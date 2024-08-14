@@ -25,7 +25,7 @@ const initialDays: Schedule[] = [
       {
         id: "post-it-1",
         type: "post-it",
-        content: "example content1",
+        content: "new post-it",
         x: 0,
         y: 0,
         order: 0,
@@ -33,18 +33,10 @@ const initialDays: Schedule[] = [
       {
         id: "post-it-2",
         type: "post-it",
-        content: "example content2",
+        content: "new post-it",
         x: 0,
         y: 0,
         order: 1,
-      },
-      {
-        id: "text-1",
-        type: "text",
-        content: "my text item",
-        x: 0,
-        y: 0,
-        order: 2,
       },
     ],
   },
@@ -58,7 +50,7 @@ const initialDays: Schedule[] = [
       {
         id: "post-it-3",
         type: "post-card",
-        content: "example content1",
+        content: "new post-card",
         x: 0,
         y: 0,
         order: 0,
@@ -119,7 +111,7 @@ const toolbarItems: GenericItem[] = [
   {
     id: "toolbar-0-postcard",
     type: "post-card",
-    content: "example content1",
+    content: "new post-card",
     x: 0,
     y: 0,
     order: 0,
