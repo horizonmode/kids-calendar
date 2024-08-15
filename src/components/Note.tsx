@@ -1,11 +1,19 @@
 "use client";
-import { useEffect, useRef, RefObject, CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  RefObject,
+  CSSProperties,
+  useLayoutEffect,
+} from "react";
 import ContentEditable, { ContentEditableEvent } from "react-contenteditable";
 import hexConvert from "hex-color-opacity";
+import { useEditable } from "use-editable";
 
 export interface NoteProps {
   content?: string;
   onUpdateContent?: (val: string) => void;
+  onBlur?: () => void;
   color?: string;
   style?: CSSProperties;
   editable: boolean;
@@ -17,22 +25,34 @@ const Note = ({
   color = "#0096FF",
   style,
   editable,
+  onBlur,
 }: NoteProps) => {
-  const editRef: RefObject<HTMLElement> =
-    useRef<HTMLElement>() as RefObject<HTMLElement>;
+  const editRef: RefObject<HTMLDivElement> =
+    useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
 
-  const onChange = (e: ContentEditableEvent) => {
-    if (e.target.value !== content) {
-      onUpdateContent && onUpdateContent(e.target.value);
+  const onChange = (e: string) => {
+    if (e !== content) {
+      onUpdateContent && onUpdateContent(e);
     }
   };
 
+  useEditable(editRef, onChange, {
+    disabled: !editable,
+  });
+
+  const textRef = useRef<string>();
+
   useEffect(() => {
+    textRef.current = content;
+  }, [content]);
+
+  useLayoutEffect(() => {
+    const editor = editRef.current;
+    if (!editor) return;
     if (!editable) {
-      const editor = editRef.current;
-      if (editor) editor.scrollTop = 0;
+      editor.scrollTop = 0;
     } else {
-      editRef.current?.focus();
+      editor.focus();
     }
   }, [editable]);
 
@@ -52,14 +72,13 @@ const Note = ({
         ...style,
       }}
     >
-      <ContentEditable
-        innerRef={editRef}
+      <div
+        ref={editRef}
         className="resize-none bg-transparent border-none outline-none overflow-y-auto"
-        tagName="div"
-        html={content || ""} // innerHTML of the editable div
-        disabled={!editable} // use true to disable edition
-        onChange={onChange} // handle innerHTML change
-      />
+        onBlur={onBlur}
+      >
+        {content}
+      </div>
     </div>
   );
 };

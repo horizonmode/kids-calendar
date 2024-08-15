@@ -26,6 +26,7 @@
     "react-contenteditable": "^3.3.7",
     "react-dom": "^18",
     "sass": "^1.77.6",
+    "use-editable": "^2.3.3",
     "uuid": "^10.0.0",
     "zustand": "^4.5.2"
   },

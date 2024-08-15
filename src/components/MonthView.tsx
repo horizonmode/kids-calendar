@@ -277,6 +277,7 @@ const MonthView = ({
                       onItemEdit(d.id, { ...d, content })
                     }
                     color={d.color}
+                    onBlur={() => deselectItem(d.id)}
                   />
                 </Editable>
               </Draggable>
