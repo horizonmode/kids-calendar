@@ -151,17 +151,17 @@ const Toolbar = ({
   }, []);
 
   const onScrollLeft = () => {
-    const pageWidth = window.innerWidth;
+    const scrollDist = scrollRef.current.scrollWidth - window.innerWidth;
     scrollRef.current.scrollBy({
-      left: -pageWidth,
+      left: -scrollDist,
       behavior: "smooth",
     });
   };
 
   const onScrollRight = () => {
-    const pageWidth = window.innerWidth;
+    const scrollDist = scrollRef.current.scrollWidth - window.innerWidth;
     scrollRef.current.scrollBy({
-      left: pageWidth,
+      left: scrollDist,
       behavior: "smooth",
     });
   };
