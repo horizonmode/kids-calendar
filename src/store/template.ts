@@ -40,18 +40,9 @@ const toolbarItems: GenericItem[] = [
     color: "#0096FF",
   },
   {
-    id: `${Date.now()}-text`,
-    type: "text",
-    content: "new text",
-    x: 0,
-    y: 0,
-    order: 0,
-    color: "black",
-  },
-  {
     id: `${Date.now()}-card`,
     type: "post-card",
-    content: "example content1",
+    content: "new post-card",
     x: 0,
     y: 0,
     order: 0,
@@ -59,14 +50,17 @@ const toolbarItems: GenericItem[] = [
   },
 ];
 
-const reOrderLayers = (items: GenericItem[], itemId: string | number) => {
+const findItem = (items: GenericItem[], itemId: string) => {
+  const itemIndex = items.findIndex((i) => i.id === itemId);
+  return { item: items[itemIndex], index: itemIndex };
+};
+
+const reOrderLayers = (items: GenericItem[], item: GenericItem) => {
   if (items.length < 2) return items;
-  const sourceIndex = items.findIndex((i) => i.id === itemId);
-  const item = items[sourceIndex];
   const numItems = items.length;
   if (item.order === numItems - 1) return items;
   item.order = numItems - 1;
-  const otherItems = items.filter((i) => i.id !== itemId);
+  const otherItems = items.filter((i) => i.id !== item.id);
   otherItems.sort((a, b) => (a.order > b.order ? 1 : -1));
   for (var i = 0; i < otherItems.length; i++) {
     otherItems[i].order = i;
@@ -86,13 +80,13 @@ const reOrderAll = (items: GenericItem[]) => {
 const findDay = (itemId: string, schedule: ScheduleItem[]) => {
   for (var i = 0; i < schedule.length; i++) {
     const day = schedule[i];
-    let sectionIndex = day.morning.findIndex((d) => d.id === itemId);
+    let sectionIndex = day.morning.findIndex((d) => d.id == itemId);
     if (sectionIndex > -1)
       return { dayIndex: i, section: "morning", sectionIndex };
-    sectionIndex = day.afternoon.findIndex((d) => d.id === itemId);
+    sectionIndex = day.afternoon.findIndex((d) => d.id == itemId);
     if (sectionIndex > -1)
       return { dayIndex: i, section: "afternoon", sectionIndex };
-    sectionIndex = day.evening.findIndex((d) => d.id === itemId);
+    sectionIndex = day.evening.findIndex((d) => d.id == itemId);
     if (sectionIndex > -1)
       return { dayIndex: i, section: "evening", sectionIndex };
   }
@@ -131,6 +125,7 @@ export interface TemplateState {
   createTemplate: (calendarId: string) => void;
   deleteTemplate: (templateId: string) => void;
   selectTemplateItem: (itemId: string, templateId: string) => void;
+  deselectTemplateItem: (itemId: string, templateId: string) => void;
   syncItem: (updatedItem: any, calendarId: string) => Promise<any>;
   deleteItem: (updatedItem: any, calendarId: string) => Promise<any>;
   fetch: (calendarId: string) => Promise<void>;
@@ -250,6 +245,7 @@ const useTemplateStore = create<TemplateState>()(
           const templateItemIndex = newTemplates.findIndex(
             (n) => n.id === templateId
           );
+          g("templateItemIndex", templateItemIndex);
           let templateItem = null;
           if (templateItemIndex === -1) {
             templateItem = {
@@ -293,7 +289,6 @@ const useTemplateStore = create<TemplateState>()(
             }
           } else {
             if (!templateItem) return state;
-            if (!dayIndex) return state;
             const sectionKey = section as keyof ScheduleItem;
             const sectionItems = templateItem.schedule[dayIndex][
               sectionKey
@@ -373,9 +368,37 @@ const useTemplateStore = create<TemplateState>()(
           );
           if (dayIndex === null) return state;
           const sectionKey = section as keyof ScheduleItem;
-          reOrderLayers(
+          const { item } = findItem(
             newTemplate[dayIndex][sectionKey] as GenericItem[],
             itemId
+          );
+          item.editable = true;
+          reOrderLayers(
+            newTemplate[dayIndex][sectionKey] as GenericItem[],
+            item
+          );
+          return { templates: newTemplates };
+        }),
+      deselectTemplateItem: (itemId: string, templateId: string) =>
+        set((state: TemplateState) => {
+          const newTemplates = [...state.templates];
+          const newTemplate = newTemplates.find(
+            (n) => n.id === templateId
+          )!.schedule;
+          const { dayIndex, section, sectionIndex } = findDay(
+            itemId,
+            newTemplate
+          );
+          if (dayIndex === null) return state;
+          const sectionKey = section as keyof ScheduleItem;
+          const { item } = findItem(
+            newTemplate[dayIndex][sectionKey] as GenericItem[],
+            itemId
+          );
+          item.editable = false;
+          reOrderLayers(
+            newTemplate[dayIndex][sectionKey] as GenericItem[],
+            item
           );
           return { templates: newTemplates };
         }),

@@ -83,7 +83,7 @@ export default function Calendar() {
 
   useWarnIfUnsavedChanges(pendingChanges > 0, () => {
     setShowModal(3);
-    return true;
+    return false;
   });
 
   return (

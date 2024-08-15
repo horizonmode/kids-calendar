@@ -1,31 +1,29 @@
-import Router from "next/router";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 const useWarnIfUnsavedChanges = (
   unsavedChanges: boolean,
   callback: () => boolean
 ) => {
-  const [savedRoute, setSavedRoute] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    if (unsavedChanges) {
-      const routeChangeStart = (route: string) => {
-        setSavedRoute(route);
-        const ok = callback();
-        if (!ok) {
-          Router.events.emit("routeChangeError");
-          throw "Abort route change. Please ignore this error.";
+    const _push = router.push.bind(router);
+
+    router.push = (href, options) => {
+      if (unsavedChanges) {
+        if (!callback()) {
+          return;
         }
-      };
-      Router.events.on("routeChangeStart", routeChangeStart);
+      }
+      _push(href, options);
+    };
+    return () => {
+      router.push = _push;
+    };
+  }, [unsavedChanges, callback, router]);
 
-      return () => {
-        Router.events.off("routeChangeStart", routeChangeStart);
-      };
-    }
-  }, [callback, unsavedChanges]);
-
-  return { savedRoute };
+  return null;
 };
 
 export default useWarnIfUnsavedChanges;

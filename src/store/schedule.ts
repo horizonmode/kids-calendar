@@ -82,14 +82,17 @@ const toolbarItems: GenericItem[] = [
   },
 ];
 
-const reOrderLayers = (items: GenericItem[], itemId: string | number) => {
+const findItem = (items: GenericItem[], itemId: string) => {
+  const itemIndex = items.findIndex((i) => i.id == itemId);
+  return { item: items[itemIndex], index: itemIndex };
+};
+
+const reOrderLayers = (items: GenericItem[], item: GenericItem) => {
   if (items.length < 2) return items;
-  const sourceIndex = items.findIndex((i) => i.id === itemId);
-  const item = items[sourceIndex];
   const numItems = items.length;
   if (item.order === numItems - 1) return items;
   item.order = numItems - 1;
-  const otherItems = items.filter((i) => i.id !== itemId);
+  const otherItems = items.filter((i) => i.id !== item.id);
   otherItems.sort((a, b) => (a.order > b.order ? 1 : -1));
   for (var i = 0; i < otherItems.length; i++) {
     otherItems[i].order = i;
@@ -170,6 +173,7 @@ export interface ScheduleState {
   ) => void;
   deleteScheduleItem: (itemId: string, year: number, week: number) => void;
   selectItem: (itemId: string, year: number, week: number) => void;
+  deselectItem: (itemId: string, year: number, week: number) => void;
   syncItem: (updatedItem: any, calendarId: string) => Promise<any>;
   deleteItem: (updatedItem: any, calendarId: string) => Promise<any>;
   applyTemplate: (template: ScheduleItem[], week: number, year: number) => void;
@@ -323,7 +327,6 @@ const useScheduleStore = create<ScheduleState>()(
             pendingChanges: state.pendingChanges + 1,
           };
         }),
-
       selectItem: (itemId: string, year: number, week: number) =>
         set((state: ScheduleState) => {
           const newSchedules = [...state.schedules];
@@ -336,9 +339,40 @@ const useScheduleStore = create<ScheduleState>()(
           );
           if (dayIndex === null) return state;
           const sectionKey = section as keyof ScheduleItem;
-          reOrderLayers(
+          const { item } = findItem(
             newSchedule[dayIndex][sectionKey] as GenericItem[],
             itemId
+          );
+          item.editable = true;
+          reOrderLayers(
+            newSchedule[dayIndex][sectionKey] as GenericItem[],
+            item
+          );
+          return {
+            schedules: newSchedules,
+            pendingChanges: state.pendingChanges + 1,
+          };
+        }),
+      deselectItem: (itemId: string, year: number, week: number) =>
+        set((state: ScheduleState) => {
+          const newSchedules = [...state.schedules];
+          const newSchedule = newSchedules.find(
+            (n) => n.year === year && n.week === week
+          )!.schedule;
+          const { dayIndex, section, sectionIndex } = findDay(
+            itemId,
+            newSchedule
+          );
+          if (dayIndex === null) return state;
+          const sectionKey = section as keyof ScheduleItem;
+          const { item } = findItem(
+            newSchedule[dayIndex][sectionKey] as GenericItem[],
+            itemId
+          );
+          item.editable = false;
+          reOrderLayers(
+            newSchedule[dayIndex][sectionKey] as GenericItem[],
+            item
           );
           return {
             schedules: newSchedules,

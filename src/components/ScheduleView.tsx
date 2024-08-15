@@ -22,6 +22,7 @@ import { GenericItem, ScheduleItem, Section } from "@/types/Items";
 import { Delta } from "./Delta";
 import Draggable from "./Draggable";
 import { useTemplateStore } from "@/store/template";
+import Editable from "./Editable";
 
 interface ScheduleViewProps {
   year: number;
@@ -50,6 +51,7 @@ const ScheduleView = ({
     reorderSchedule,
     editItem,
     selectItem,
+    deselectItem,
     deleteScheduleItem,
   ] = useScheduleStore(
     (state) => [
@@ -58,6 +60,7 @@ const ScheduleView = ({
       state.reorderSchedule,
       state.editItem,
       state.selectItem,
+      state.deselectItem,
       state.deleteScheduleItem,
     ],
     shallow
@@ -140,7 +143,7 @@ const ScheduleView = ({
     if (templateId) return d;
     const date = new Date(day);
     date.setDate(date.getDate() + i);
-    return date.toLocaleDateString();
+    return date.toLocaleDateString("en-US");
   });
 
   const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
@@ -157,6 +160,7 @@ const ScheduleView = ({
     return items.map((d, i) => {
       switch (d.type) {
         case "post-it":
+        case "text":
           return (
             <Draggable
               id={d.id}
@@ -167,39 +171,29 @@ const ScheduleView = ({
               style={getStyle(d)}
               data={{ content: d.content }}
             >
-              <Note
-                content={d.content}
-                onUpdateContent={(content) =>
-                  onEdit(d.id, { ...d, content }, year, week)
-                }
-                color={d.color}
-                editable={false}
-              />
-            </Draggable>
-          );
-        case "text":
-          return (
-            <Draggable
-              id={d.id}
-              key={`drag-text-${d.id}-${i}`}
-              left={`${d.x || 50 + i * 5}%`}
-              top={`${d.y || 50 + i * 5}%`}
-              style={getStyle(d)}
-              element="text"
-              data={{ content: d.content, color: d.color }}
-            >
-              <Text
-                content={d.content}
-                onUpdateContent={(content) =>
-                  onEdit(d.id, { ...d, content }, year, week)
-                }
+              <Editable
                 onDelete={() => deleteItem(d.id, year, week)}
-                onSelect={() => onItemSelect(d.id, year, week)}
-                color={d.color}
-                onChangeColor={(color) => {
+                onSelect={(selected: boolean) => {
+                  if (selected) {
+                    onItemSelect(d.id, year, week);
+                  } else deselectItem(d.id, year, week);
+                }}
+                color={d.color || "#0096FF"}
+                onChangeColor={(color: string) => {
                   onEdit(d.id, { ...d, color }, year, week);
                 }}
-              ></Text>
+                editable={d.editable || false}
+                position="right"
+              >
+                <Note
+                  content={d.content}
+                  onUpdateContent={(content) =>
+                    onEdit(d.id, { ...d, content }, year, week)
+                  }
+                  color={d.color}
+                  editable={d.editable || false}
+                />
+              </Editable>
             </Draggable>
           );
         case "post-card":
@@ -212,20 +206,37 @@ const ScheduleView = ({
               style={getStyle(d)}
               element="post-card"
               data={{ content: d.content, fileUrl: d.file }}
+              disabled={d.editable}
             >
-              <PostCard
-                key={`drag-postcard-${i}`}
-                id={d.id}
-                content={d.content}
-                style={getStyle(d)}
-                onUpdateContent={(content) =>
-                  onEdit(d.id, { ...d, content }, year, week)
-                }
-                onFileChange={(file) =>
-                  onEdit(d.id, { ...d, file }, year, week)
-                }
-                fileUrl={d.file}
-              ></PostCard>
+              <Editable
+                onDelete={() => deleteItem(d.id, year, week)}
+                onSelect={(selected: boolean) => {
+                  if (selected) {
+                    onItemSelect(d.id, year, week);
+                  } else deselectItem(d.id, year, week);
+                }}
+                color={d.color || "#0096FF"}
+                onChangeColor={(color: string) => {
+                  onEdit(d.id, { ...d, color }, year, week);
+                }}
+                editable={d.editable || false}
+                position="right"
+              >
+                <PostCard
+                  key={`drag-postcard-${i}`}
+                  id={d.id}
+                  content={d.content}
+                  editable={d.editable || false}
+                  onUpdateContent={(content) =>
+                    onEdit(d.id, { ...d, content }, year, week)
+                  }
+                  onFileChange={(file) =>
+                    onEdit(d.id, { ...d, file }, year, week)
+                  }
+                  fileUrl={d.file}
+                  color={d.color}
+                ></PostCard>
+              </Editable>
             </Draggable>
           );
       }

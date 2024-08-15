@@ -23,6 +23,7 @@ import { GenericItem, ScheduleItem, Section } from "@/types/Items";
 import { Delta } from "./Delta";
 import Draggable from "./Draggable";
 import { useTemplateStore } from "@/store/template";
+import Editable from "./Editable";
 
 interface TemplateViewProps {
   templateId: string;
@@ -43,6 +44,7 @@ const TemplateView = ({
     reorderTemplate,
     editTemplateItem,
     selectTemplateItem,
+    deselectTemplateItem,
     deleteTemplateItem,
   ] = useTemplateStore(
     (state) => [
@@ -51,6 +53,7 @@ const TemplateView = ({
       state.reorderTemplate,
       state.editTemplateItem,
       state.selectTemplateItem,
+      state.deselectTemplateItem,
       state.deleteTemplateItem,
     ],
     shallow
@@ -62,6 +65,10 @@ const TemplateView = ({
 
   const onItemSelect = (id: string) => {
     selectTemplateItem(id, templateId);
+  };
+
+  const onItemDeslect = (id: string) => {
+    deselectTemplateItem(id, templateId);
   };
 
   const onItemDrag = (over: Over, delta: Delta, activeItem: Active) => {
@@ -131,6 +138,7 @@ const TemplateView = ({
     return items.map((d, i) => {
       switch (d.type) {
         case "post-it":
+        case "text":
           return (
             <Draggable
               id={d.id}
@@ -141,37 +149,30 @@ const TemplateView = ({
               style={getStyle(d)}
               data={{ content: d.content }}
             >
-              <Note
-                content={d.content}
-                onUpdateContent={(content) => onEdit(d.id, { ...d, content })}
-                color={d.color}
-                editable={false}
-              />
-            </Draggable>
-          );
-        case "text":
-          return (
-            <Draggable
-              id={d.id}
-              key={`drag-text-${d.id}-${i}`}
-              left={`${d.x || 50 + i * 5}%`}
-              top={`${d.y || 50 + i * 5}%`}
-              style={getStyle(d)}
-              element="text"
-              data={{ content: d.content, color: d.color }}
-            >
-              <Text
-                content={d.content}
-                onUpdateContent={(content) => onEdit(d.id, { ...d, content })}
+              <Editable
                 onDelete={() => deleteItem(d.id)}
-                onSelect={() => onItemSelect(d.id)}
-                color={d.color}
-                onChangeColor={(color) => {
+                onSelect={(selected: boolean) => {
+                  if (selected) {
+                    onItemSelect(d.id);
+                  } else onItemDeslect(d.id);
+                }}
+                color={d.color || "#0096FF"}
+                onChangeColor={(color: string) => {
                   onEdit(d.id, { ...d, color });
                 }}
-              ></Text>
+                editable={d.editable || false}
+                position="right"
+              >
+                <Note
+                  content={d.content}
+                  onUpdateContent={(content) => onEdit(d.id, { ...d, content })}
+                  color={d.color}
+                  editable={false}
+                />
+              </Editable>
             </Draggable>
           );
+
         case "post-card":
           return (
             <Draggable
@@ -182,16 +183,33 @@ const TemplateView = ({
               style={getStyle(d)}
               element="post-card"
               data={{ content: d.content, fileUrl: d.file }}
+              disabled={d.editable}
             >
-              <PostCard
-                key={`drag-postcard-${i}`}
-                id={d.id}
-                content={d.content}
-                style={getStyle(d)}
-                onUpdateContent={(content) => onEdit(d.id, { ...d, content })}
-                onFileChange={(file) => onEdit(d.id, { ...d, file })}
-                fileUrl={d.file}
-              ></PostCard>
+              <Editable
+                onDelete={() => deleteItem(d.id)}
+                onSelect={(selected: boolean) => {
+                  if (selected) {
+                    onItemSelect(d.id);
+                  } else onItemDeslect(d.id);
+                }}
+                color={d.color || "#0096FF"}
+                onChangeColor={(color: string) => {
+                  onEdit(d.id, { ...d, color });
+                }}
+                editable={d.editable || false}
+                position="right"
+              >
+                <PostCard
+                  key={`drag-postcard-${i}`}
+                  id={d.id}
+                  content={d.content}
+                  editable={d.editable || false}
+                  onUpdateContent={(content) => onEdit(d.id, { ...d, content })}
+                  onFileChange={(file) => onEdit(d.id, { ...d, file })}
+                  fileUrl={d.file}
+                  color={d.color}
+                ></PostCard>
+              </Editable>
             </Draggable>
           );
       }
