@@ -36,8 +36,6 @@ const Note = ({
     }
   }, [editable]);
 
-  console.log(color);
-
   const isHex = /^#[0-9A-F]{6}$/i.test(color);
   if (isHex) {
     color = hexConvert(color, 0.8);

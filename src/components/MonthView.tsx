@@ -231,10 +231,8 @@ const MonthView = ({
   };
 
   const calendarDays = daysInMonth + firstDayOfMonth - 1; // always show 7 days x 5 rows
-  console.log(calendarDays, firstDayOfMonth, daysInMonth);
 
   const offset = firstDayOfMonth - 1;
-  console.log(offset);
 
   const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
     position: "absolute",
@@ -346,8 +344,6 @@ const MonthView = ({
     setDragAction(e?.active?.data?.current?.action);
     setDelta({ x, y });
   };
-
-  console.log(calendarDays);
 
   return (
     <DndContext
