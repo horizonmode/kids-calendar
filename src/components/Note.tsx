@@ -8,7 +8,6 @@ import {
 } from "react";
 import ContentEditable, { ContentEditableEvent } from "react-contenteditable";
 import hexConvert from "hex-color-opacity";
-import { useEditable } from "use-editable";
 
 export interface NoteProps {
   content?: string;
@@ -27,24 +26,16 @@ const Note = ({
   editable,
   onBlur,
 }: NoteProps) => {
-  const editRef: RefObject<HTMLDivElement> =
-    useRef<HTMLDivElement>() as RefObject<HTMLDivElement>;
+  const editRef: RefObject<HTMLElement> =
+    useRef<HTMLElement>() as RefObject<HTMLElement>;
 
-  const onChange = (e: string) => {
-    if (e !== content) {
-      onUpdateContent && onUpdateContent(e);
+  const onChange = (e: ContentEditableEvent) => {
+    if (e.target.value !== content) {
+      onUpdateContent && onUpdateContent(e.target.value);
     }
   };
 
-  useEditable(editRef, onChange, {
-    disabled: !editable,
-  });
-
   const textRef = useRef<string>();
-
-  useEffect(() => {
-    textRef.current = content;
-  }, [content]);
 
   useLayoutEffect(() => {
     const editor = editRef.current;
@@ -52,6 +43,7 @@ const Note = ({
     if (!editable) {
       editor.scrollTop = 0;
     } else {
+      console.log("focus", editor);
       editor.focus();
     }
   }, [editable]);
@@ -72,13 +64,15 @@ const Note = ({
         ...style,
       }}
     >
-      <div
-        ref={editRef}
+      <ContentEditable
+        innerRef={editRef}
         className="resize-none bg-transparent border-none outline-none overflow-y-auto"
+        tagName="div"
+        html={content || ""} // innerHTML of the editable div
+        disabled={!editable} // use true to disable edition
+        onChange={onChange} // handle innerHTML change
         onBlur={onBlur}
-      >
-        {content}
-      </div>
+      />
     </div>
   );
 };
