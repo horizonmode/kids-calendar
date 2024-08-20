@@ -64,6 +64,7 @@ const MonthView = ({
   saving,
 }: MonthViewProps) => {
   const [
+    people,
     currentDay,
     reorderDays,
     reorderEvents,
@@ -83,6 +84,7 @@ const MonthView = ({
     deselectEvent,
   ] = useCalendarStore(
     (state) => [
+      state.people,
       state.selectedDay,
       state.reorderDays,
       state.reorderEvents,
@@ -389,7 +391,7 @@ const MonthView = ({
         onItemDrag(over, { x, y }, active);
       }}
     >
-      {/* <PersonSelect></PersonSelect> */}
+      <PersonSelect people={people}></PersonSelect>
       <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative max-h-screen overflow:auto select-none">
         <h2 className="text-center hidden md:block mb-3">Monday</h2>
         <h2 className="text-center hidden md:block mb-3">Tuesday</h2>
@@ -400,6 +402,7 @@ const MonthView = ({
         <h2 className="text-center hidden md:block mb-3">Sunday</h2>
         {[...Array(calendarDays)].map((_, i) => {
           const offsetDay = i + 1 - offset;
+          const dateOfOffset = new Date(year, month, offsetDay);
           if (offsetDay >= 1 && offsetDay <= daysInMonth)
             return (
               <Droppable
@@ -419,8 +422,9 @@ const MonthView = ({
                 }
                 highlight={currentDay.getDate() === offsetDay}
                 onClick={() => {
-                  setDay(new Date(currentDay.setDate(offsetDay)));
+                  setDay(dateOfOffset);
                 }}
+                label={days.getWeekDay(dateOfOffset.getDay())}
               >
                 {renderItems(
                   content.filter(

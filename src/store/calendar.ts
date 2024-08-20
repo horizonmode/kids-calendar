@@ -89,6 +89,8 @@ const initialEvents: EventItem[] = [
   },
 ];
 
+const initialPeople = ["faye", "esme"];
+
 const toolbarItems: GenericItem[] = [
   {
     id: "toolbar-0-post-it",
@@ -206,6 +208,7 @@ const getDaysEvents = ({
 export interface CalendarState {
   days: Schedule[];
   events: EventItem[];
+  people: string[];
   toolbarItems: (GenericItem | EventItem)[];
   selectedDay: Date;
   pendingChanges: number;
@@ -266,6 +269,7 @@ const useCalendarStore = create<CalendarState>()(
       days: initialDays,
       events: initialEvents,
       toolbarItems: toolbarItems,
+      people: initialPeople,
       selectedDay: new Date(),
       pendingChanges: 0,
       nextMonth: () =>

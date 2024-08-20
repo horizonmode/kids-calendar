@@ -230,7 +230,7 @@ const Toolbar = ({
           </div>
         )}
         <Button
-          className=" opacity-100 pl-5 pr-5"
+          className="opacity-100 pl-5 pr-5"
           variant="light"
           icon={RiSave2Line}
           onClick={onSave}
