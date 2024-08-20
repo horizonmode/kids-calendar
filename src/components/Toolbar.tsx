@@ -13,6 +13,8 @@ import {
   RiArrowRightLine,
   RiLock2Line,
   RiLockUnlockLine,
+  RiUser2Line,
+  RiUserAddLine,
 } from "@remixicon/react";
 import { RiArrowLeftLine } from "@remixicon/react";
 import { RiArrowDownLine } from "@remixicon/react";
@@ -33,9 +35,11 @@ interface ToolbarProps {
   onPrev?: () => void;
   onShare: () => void;
   onToggleLock?: () => void;
+  onToggleShowUsers?: () => void;
   showNav: boolean;
   saving: boolean;
   locked?: boolean;
+  showUsers?: boolean;
 }
 
 const Toolbar = ({
@@ -45,9 +49,11 @@ const Toolbar = ({
   onPrev,
   onShare,
   onToggleLock,
+  onToggleShowUsers,
   showNav = true,
   saving = false,
   locked = true,
+  showUsers = false,
 }: ToolbarProps) => {
   const [open, setOpen] = useState(true);
 
@@ -230,7 +236,7 @@ const Toolbar = ({
           </div>
         )}
         <Button
-          className=" opacity-100 pl-5 pr-5"
+          className="opacity-100 pl-5 pr-5"
           variant="light"
           icon={RiSave2Line}
           onClick={onSave}
@@ -249,6 +255,14 @@ const Toolbar = ({
           onClick={onToggleLock}
         >
           <Icon size="lg" icon={!locked ? RiLockUnlockLine : RiLock2Line} />
+        </div>
+        <div
+          className={`flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12  ${
+            showUsers ? "bg-green-500" : "hover:bg-slate-200"
+          }`}
+          onClick={onToggleShowUsers}
+        >
+          <Icon size="lg" icon={RiUserAddLine} />
         </div>
       </div>
       <div

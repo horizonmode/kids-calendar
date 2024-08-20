@@ -18,9 +18,12 @@ interface PersonSelectProps {
   //   onShare: () => void;
   //   showNav: boolean;
   //   saving: boolean;
+  people: string[];
 }
 
-const PersonSelect = ({}: //   onSave,
+const PersonSelect = ({
+  people,
+}: //   onSave,
 //   onNext,
 //   onPrev,
 //   onShare,
@@ -72,12 +75,12 @@ PersonSelectProps) => {
 
   return (
     <div
-      className="overflow-y-visible w-full max-w-5xl top-1/2 -translate-y-1/2 z-50  fixed flex touch-none"
+      className="overflow-y-visible top-1/2 -translate-y-1/2 z-50  fixed flex touch-none"
       style={{
         transition: "left .5s, top .5s",
-        width: "15vh",
+        width: "10vh",
         height: "50vh",
-        left: open ? "0" : "-15vh",
+        left: open ? "0" : "-10vh",
         outline: isOver ? "1px solid red" : "none",
       }}
     >
@@ -101,32 +104,19 @@ PersonSelectProps) => {
       <div
         ref={scrollRef}
         className={`flex flex-col bg-white
-        bg-opacity-90 p-auto overflow-x-hidden overflox-y-scroll rounded-tl-xl flex-1 items-baseline justify-start md:justify-around gap-2 touch-none`}
+        bg-opacity-90 p-auto overflow-x-hidden overflow-y-scroll rounded-tl-xl flex-1 items-center pt-3 justify-start gap-2 touch-none`}
       >
-        <Draggable
-          element="person"
-          style={{ position: "relative" }}
-          id={"person-1"}
-          data={{ name: "Esme" }}
-        >
-          <Person name={"Esme"} />
-        </Draggable>
-        <Draggable
-          element="person"
-          style={{ position: "relative" }}
-          id={"person-2"}
-          data={{ name: "Esme" }}
-        >
-          <Person name={"Esme"} />
-        </Draggable>
-        <Draggable
-          element="person"
-          style={{ position: "relative" }}
-          id={"person-3"}
-          data={{ name: "Esme" }}
-        >
-          <Person name={"Esme"} />
-        </Draggable>
+        {people.map((person, i) => (
+          <Draggable
+            key={`person-${i}`}
+            element="person"
+            style={{ position: "relative" }}
+            id={person}
+            data={{ name: person, type: "person" }}
+          >
+            <Person name={person} />
+          </Draggable>
+        ))}
         {showLeftScroll && (
           <div
             className="md:hidden absolute left-0 bottom-0 flex-1 flex justify-center items-center overflow-visible w-12 h-12  hover:bg-slate-200"

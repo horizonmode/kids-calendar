@@ -1,19 +1,32 @@
-import { Card } from "@tremor/react";
+import Image from "next/image";
 
-export function Person({ name }: { name: string }) {
+export function Person({
+  name,
+  hideName,
+  className,
+}: {
+  name: string;
+  hideName?: boolean;
+  className?: string;
+}) {
   return (
-    <Card className="mx-auto max-w-xs">
-      <img
-        className="h-32 w-32 rounded-full border-4 border-white dark:border-gray-800 mx-auto"
-        src="https://randomuser.me/api/portraits/women/21.jpg"
-        alt=""
-      />
-      <div className="py-1">
-        <h3 className=" text-center font-bold text-2xl text-gray-800 dark:text-white mb-1">
-          {name}
-        </h3>
+    <div className={`max-w-xs ${className}`}>
+      <div className="w-12 h-12 relative rounded-full">
+        <Image
+          className="bg-black rounded-full"
+          src="/static/17.jpg"
+          alt=""
+          layout="fill"
+        />
       </div>
-    </Card>
+      {!hideName && (
+        <div className="py-1">
+          <h3 className=" text-center font-bold text-l text-gray-800 dark:text-white mb-1">
+            {name}
+          </h3>
+        </div>
+      )}
+    </div>
   );
 }
 

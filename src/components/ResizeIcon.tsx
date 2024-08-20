@@ -10,7 +10,7 @@ const ResizeIcon = forwardRef(function Resize(
 ) {
   return (
     <div
-      className={`rounded-3xl absolute top-1/2 -translate-y-2/4 ${className}`}
+      className={`rounded-3xl  ${className}`}
       {...listeners}
       {...attributes}
       ref={ref}

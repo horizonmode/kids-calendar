@@ -1,9 +1,6 @@
 import React, {
   CSSProperties,
-  FocusEventHandler,
   ReactNode,
-  useState,
-  FocusEvent,
   useEffect,
   RefObject,
   useRef,
