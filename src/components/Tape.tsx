@@ -176,7 +176,7 @@ function Tape({
       }
     >
       {children}
-      {label && (
+      {label && isStart && (
         <ContentEditable
           innerRef={editRef}
           tagName="div"
