@@ -9,6 +9,7 @@ interface DroppableProps {
   day?: number;
   onClick: () => void;
   highlight?: boolean;
+  label?: string;
   isToday: boolean;
   isPast: boolean;
 }
@@ -20,6 +21,7 @@ function Droppable({
   day,
   onClick,
   highlight = false,
+  label = "",
   isToday,
   isPast,
 }: DroppableProps) {
@@ -48,9 +50,13 @@ function Droppable({
       {isPast && (
         <div className=" w-full absolute text-gray-300 opacity-25"></div>
       )}
-      <span className="absolute box-content text-[7rem] leading-none -translate-x-2/4 -translate-y-2/4 left-2/4 top-2/4">
+      <div className="absolute box-content text-[7rem] leading-none -translate-x-2/4 -translate-y-2/4 left-2/4 top-2/4">
         {day}
-      </span>
+        <span className="md:hidden text-lg absolute -bottom-5 left-1/2 -translate-x-1/2 text-center pt-2">
+          {label}
+        </span>
+      </div>
+
       {children}
     </div>
   );

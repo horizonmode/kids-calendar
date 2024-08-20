@@ -1,4 +1,13 @@
 export class Days {
+  daysOfWeek = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
   getDays(year: number, month: number) {
     return new Date(year, month + 1, 0).getDate();
   }
@@ -37,5 +46,9 @@ export class Days {
     } while (week == 1);
 
     return week;
+  }
+
+  getWeekDay(dayIndex: number) {
+    return this.daysOfWeek[dayIndex];
   }
 }
