@@ -9,15 +9,16 @@ interface DraggableTapeProps {
   top?: string;
   left?: string;
   style?: CSSProperties;
-  onUpdateContent?: (val: string) => void;
-  onDelete?: () => void;
   isStart: boolean;
   isEnd: boolean;
   label?: string;
   eventId?: string;
-  onChangeColor?: (val: string) => void;
-  color?: string;
   editable?: boolean;
+  color?: string;
+  locked?: boolean;
+  onUpdateContent?: (val: string) => void;
+  onDelete?: () => void;
+  onChangeColor?: (val: string) => void;
   onSelect?: (selected: boolean) => void;
 }
 
@@ -26,15 +27,16 @@ function DraggableTape({
   top,
   left,
   style,
-  onUpdateContent,
-  onDelete,
   isStart,
   isEnd,
   label,
   eventId,
-  onChangeColor,
-  color = "#0000ff",
   editable,
+  color = "#0000ff",
+  locked = true,
+  onUpdateContent,
+  onDelete,
+  onChangeColor,
   onSelect,
 }: DraggableTapeProps) {
   const moveProps = useDraggable({
@@ -97,6 +99,8 @@ function DraggableTape({
             color={color}
             editable={editable || false}
             onSelect={onSelect}
+            position="top"
+            className={`${locked ? "hidden" : ""}`}
           ></Editable>
         )}
         {isEnd && (

@@ -1,5 +1,5 @@
 "use client";
-import React, { CSSProperties, useState } from "react";
+import React, { CSSProperties, useEffect, useState } from "react";
 import Droppable from "@/components/Droppable";
 import DraggableOverlay from "@/components/DraggableOverlay";
 import {
@@ -7,12 +7,11 @@ import {
   DndContext,
   useSensors,
   useSensor,
-  MouseSensor,
-  TouchSensor,
   Over,
   Active,
   DragMoveEvent,
 } from "@dnd-kit/core";
+import { MouseSensor, TouchSensor } from "@/utils/handlers";
 import Note from "./Note";
 import { shallow } from "zustand/shallow";
 import Toolbar from "./Toolbar";
@@ -96,11 +95,12 @@ const TemplateView = ({
   });
 
   const [isDragging, setIsDragging] = useState(false);
+  const [locked, setLocked] = useState<boolean>(false);
 
   const activationConstraint = {
-    delay: 100,
-    tolerance: 5,
-    distance: 3,
+    delay: 0,
+    tolerance: 2,
+    distance: 4,
   };
 
   const sensors = useSensors(
@@ -134,6 +134,16 @@ const TemplateView = ({
     deleteTemplateItem(itemId, templateId);
   };
 
+  useEffect(() => {
+    if (locked) {
+      existingSchedule?.schedule.forEach((s) => {
+        s.morning?.forEach((m) => deleteTemplateItem(m.id, templateId));
+        s.afternoon?.forEach((m) => deleteTemplateItem(m.id, templateId));
+        s.evening?.forEach((m) => deleteTemplateItem(m.id, templateId));
+      });
+    }
+  }, [locked]);
+
   const renderItems = (items: GenericItem[]) => {
     return items.map((d, i) => {
       switch (d.type) {
@@ -162,12 +172,13 @@ const TemplateView = ({
                 }}
                 editable={d.editable || false}
                 position="right"
+                className={`${locked ? "hidden" : ""}`}
               >
                 <Note
                   content={d.content}
                   onUpdateContent={(content) => onEdit(d.id, { ...d, content })}
                   color={d.color}
-                  editable={false}
+                  editable={d.editable || false}
                 />
               </Editable>
             </Draggable>
@@ -304,6 +315,8 @@ const TemplateView = ({
         showNav={!templateId}
         saving={saving}
         onShare={onShare}
+        onToggleLock={() => setLocked(!locked)}
+        locked={locked}
       />
       <DraggableOverlay />
     </DndContext>

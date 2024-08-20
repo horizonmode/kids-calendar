@@ -245,7 +245,6 @@ const useTemplateStore = create<TemplateState>()(
           const templateItemIndex = newTemplates.findIndex(
             (n) => n.id === templateId
           );
-          g("templateItemIndex", templateItemIndex);
           let templateItem = null;
           if (templateItemIndex === -1) {
             templateItem = {

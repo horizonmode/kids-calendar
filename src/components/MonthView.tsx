@@ -1,5 +1,5 @@
 "use client";
-import React, { CSSProperties, useState } from "react";
+import React, { CSSProperties, useEffect, useState } from "react";
 import Droppable from "@/components/Droppable";
 import DraggableOverlay from "@/components/DraggableOverlay";
 import {
@@ -13,8 +13,6 @@ import {
   DndContext,
   useSensors,
   useSensor,
-  MouseSensor,
-  TouchSensor,
   closestCorners,
   Over,
   Active,
@@ -24,7 +22,6 @@ import {
 import NonDay from "./NonDay";
 import { Days } from "@/utils/days";
 import Toolbar from "./Toolbar";
-import Text from "./Text";
 import PostCard from "./PostCard";
 import { RectMap } from "@dnd-kit/core/dist/store/types";
 import {
@@ -41,6 +38,10 @@ import classNames from "classnames";
 import Tape from "./Tape";
 import DraggableTape from "./DraggableTape";
 import Editable from "./Editable";
+import PersonSelect from "./PersonSelect";
+import Person from "./Person";
+
+import { MouseSensor, TouchSensor } from "@/utils/handlers";
 
 const days = new Days();
 const today = new Date();
@@ -144,9 +145,10 @@ const MonthView = ({
 
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [locked, setLocked] = useState<boolean>(false);
 
   const activationConstraint = {
-    delay: 50,
+    delay: 0,
     tolerance: 2,
     distance: 4,
   };
@@ -258,6 +260,7 @@ const MonthView = ({
                 disabled={d.editable}
               >
                 <Editable
+                  key={`drag-postit-${d}-${i}`}
                   onDelete={() => onItemDelete(d)}
                   color={d.color || "#0096FF"}
                   onChangeColor={(color: string) => {
@@ -269,6 +272,7 @@ const MonthView = ({
                   }}
                   editable={d.editable || false}
                   position="right"
+                  className={`${locked ? "hidden" : ""}`}
                 >
                   <Note
                     editable={d.editable || false}
@@ -277,7 +281,7 @@ const MonthView = ({
                       onItemEdit(d.id, { ...d, content })
                     }
                     color={d.color}
-                    onBlur={() => deselectItem(d.id)}
+                    // highlight={true}
                   />
                 </Editable>
               </Draggable>
@@ -306,6 +310,7 @@ const MonthView = ({
                     else deselectItem(d.id);
                   }}
                   editable={d.editable || false}
+                  className={`${locked ? "hidden" : ""}`}
                   position="right"
                 >
                   <PostCard
@@ -346,6 +351,20 @@ const MonthView = ({
     setDelta({ x, y });
   };
 
+  useEffect(() => {
+    if (locked) {
+      const items = content
+        .map((d) => d.items)
+        .reduce((acc, val) => acc.concat(val), []);
+      items.forEach((item) => {
+        deselectItem(item.id);
+      });
+      events.forEach((event) => {
+        deselectEvent(event.id);
+      });
+    }
+  }, [locked]);
+
   return (
     <DndContext
       id="droppable"
@@ -370,8 +389,8 @@ const MonthView = ({
         onItemDrag(over, { x, y }, active);
       }}
     >
-      {/* <PersonSelect /> */}
-      <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative max-h-screen overflow:auto">
+      {/* <PersonSelect></PersonSelect> */}
+      <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative max-h-screen overflow:auto select-none">
         <h2 className="text-center hidden md:block mb-3">Monday</h2>
         <h2 className="text-center hidden md:block mb-3">Tuesday</h2>
         <h2 className="text-center hidden md:block mb-3">Wednesday</h2>
@@ -500,6 +519,7 @@ const MonthView = ({
                         editEvent(event.id, { ...event, color: e })
                       }
                       color={event.color}
+                      locked={locked}
                     />
                   ) : (
                     <Tape
@@ -547,8 +567,10 @@ const MonthView = ({
         onPrev={onPrev}
         onSave={onSave}
         onShare={onShare}
+        onToggleLock={() => setLocked(!locked)}
         saving={saving}
         showNav={true}
+        locked={locked}
       />
       <DraggableOverlay />
     </DndContext>

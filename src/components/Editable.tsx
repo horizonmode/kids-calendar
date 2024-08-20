@@ -1,8 +1,8 @@
 "use client";
 import { ReactNode } from "react";
-import { RiEditCircleFill } from "@remixicon/react";
-import { RiDeleteBin6Fill } from "@remixicon/react";
-import { RiCloseCircleFill } from "@remixicon/react";
+import { RiEdit2Line } from "@remixicon/react";
+import { RiDeleteBin6Line } from "@remixicon/react";
+import { RiCloseCircleLine } from "@remixicon/react";
 
 export interface EditableProps {
   editable: boolean;
@@ -11,6 +11,7 @@ export interface EditableProps {
   onChangeColor?: (val: string) => void;
   color: string;
   children?: ReactNode;
+  className?: string;
   position?: "top" | "bottom" | "left" | "right";
 }
 
@@ -21,56 +22,70 @@ const Editable = ({
   onChangeColor,
   color,
   children,
+  className,
   position = "top",
 }: EditableProps) => {
   const positionClass =
     position === "top"
-      ? "-top-12 -right-0 flex-row"
+      ? "-top-12 left-50 flex-row"
       : position === "right"
       ? "-right-12 -top-0 flex-col items-center justify-center"
-      : "-bottom-12 -left-0 flex-row";
+      : position === "left"
+      ? "-left-12 -top-0 flex-col items-center justify-center"
+      : "-bottom-12 -right-12 flex-row";
+  const sizeClass = "w-8 h-8";
   return (
     <>
-      {editable && (
-        <div className={`flex absolute z-10 gap-2 ${positionClass}`}>
-          <RiCloseCircleFill
-            onMouseDown={(e) => {
-              e.preventDefault();
+      <div
+        className={`flex absolute z-10 gap-2 bg-white p-1 ${positionClass} ${className}`}
+      >
+        {editable ? (
+          <>
+            <RiCloseCircleLine
+              className={sizeClass}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onSelect(false);
+              }}
+            />
+            <RiDeleteBin6Line
+              className={sizeClass}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete && onDelete();
+              }}
+            />
+            <input
+              onChange={(e) => {
+                const { value } = e.target;
+                onChangeColor && onChangeColor(value);
+              }}
+              className={sizeClass}
+              type="color"
+              name="color"
+              value={color}
+            />
+          </>
+        ) : (
+          <RiEdit2Line
+            className={sizeClass}
+            data-no-dnd="true"
+            onFocus={(e) => {
               e.stopPropagation();
-              onSelect(false);
-            }}
-          />
-          <RiDeleteBin6Fill
-            onMouseDown={(e) => {
               e.preventDefault();
+              onSelect(true);
+            }}
+            onMouseDown={(e) => {
               e.stopPropagation();
-              onDelete && onDelete();
+              e.preventDefault();
+              onSelect(true);
             }}
           />
-          <input
-            onChange={(e) => {
-              const { value } = e.target;
-              onChangeColor && onChangeColor(value);
-            }}
-            className="w-10 h-10"
-            type="color"
-            name="color"
-            value={color}
-          />
-        </div>
-      )}
-
+        )}
+      </div>
       {children}
-      {!editable && (
-        <RiEditCircleFill
-          className={`absolute z-10 ${positionClass}`}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            onSelect(true);
-          }}
-        />
-      )}
     </>
   );
 };

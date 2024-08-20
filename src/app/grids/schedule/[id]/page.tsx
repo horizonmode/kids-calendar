@@ -65,7 +65,7 @@ const SchedulePage = () => {
       nextYear = nextYear + 1;
       nextWeek = 1;
     }
-    router.push(`/schedule/${id}?year=${nextYear}&week=${nextWeek}`);
+    router.push(`/grids/schedule/${id}?year=${nextYear}&week=${nextWeek}`);
   };
 
   const onPrev = () => {
@@ -76,7 +76,7 @@ const SchedulePage = () => {
       prevYear = prevYear - 1;
       prevWeek = dateUtil.weeksInYear(prevYear);
     }
-    router.push(`/schedule/${id}?year=${prevYear}&week=${prevWeek - 1}`);
+    router.push(`/grids/schedule/${id}?year=${prevYear}&week=${prevWeek - 1}`);
   };
 
   const templateOptions = templates.map((t) => ({

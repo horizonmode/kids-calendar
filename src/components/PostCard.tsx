@@ -137,7 +137,7 @@ const PostCard = ({
   return (
     <div style={{ ...style }}>
       <div
-        className={`bg-gradient-to-b rounded-xl shadow-lg w-[10rem] flex flex-col align-top bg-white`}
+        className={`bg-gradient-to-b  rounded-l-lg shadow-lg w-[10rem] flex flex-col align-top bg-white`}
       >
         {fileUrl &&
         !editPhoto &&

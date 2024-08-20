@@ -141,6 +141,16 @@ function Tape({
 
   const colorHex = toHex(color) || color;
 
+  useEffect(() => {
+    const editor = editRef.current;
+    if (!editor) return;
+    if (!editable) {
+      editor.scrollTop = 0;
+    } else {
+      editor.focus();
+    }
+  }, [editable]);
+
   return (
     <div
       className={classNames(

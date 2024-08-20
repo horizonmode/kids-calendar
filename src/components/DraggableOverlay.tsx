@@ -6,6 +6,7 @@ import Note from "./Note";
 import ResizeIcon from "./ResizeIcon";
 import PostCard from "./PostCard";
 import Text from "./Text";
+import Person from "./Person";
 
 interface OverlayProps {
   axis?: string;
@@ -32,6 +33,8 @@ function DraggableOverlay({ axis, dragging }: OverlayProps) {
               ...active.data.current.style,
             }}
             {...active.data.current.extra}
+            highlight={false}
+            dragging={true}
           />
         );
       case "post-card":
@@ -52,6 +55,8 @@ function DraggableOverlay({ axis, dragging }: OverlayProps) {
         if (active.data.current.action === "move")
           return <Tape {...active.data.current.extra} />;
         if (active.data.current.action === "resize") return <ResizeIcon />;
+      case "person":
+        return <Person {...active.data.current.extra} />;
     }
   };
 

@@ -35,15 +35,12 @@ const Note = ({
     }
   };
 
-  const textRef = useRef<string>();
-
-  useLayoutEffect(() => {
+  useEffect(() => {
     const editor = editRef.current;
     if (!editor) return;
     if (!editable) {
       editor.scrollTop = 0;
     } else {
-      console.log("focus", editor);
       editor.focus();
     }
   }, [editable]);
@@ -57,7 +54,7 @@ const Note = ({
 
   return (
     <div
-      className={`relative text-xl md:text-2xl touch-none flex flex-col text-gray-800 p-3 flex-shrink-0 w-44 max-w-48 max-h-48 h-auto rounded-xl shadow-lg`}
+      className={`relative text-xl md:text-2xl touch-none flex flex-col text-gray-800 p-3 flex-shrink-0 w-44 max-w-48 max-h-48 h-auto rounded shadow-lg group overflow-hidden select-none`}
       style={{
         backgroundColor: color,
         color: text,
@@ -66,7 +63,7 @@ const Note = ({
     >
       <ContentEditable
         innerRef={editRef}
-        className="resize-none bg-transparent border-none outline-none overflow-y-auto"
+        className="resize-none bg-transparent border-none outline-none overflow-y-auto select-none"
         tagName="div"
         html={content || ""} // innerHTML of the editable div
         disabled={!editable} // use true to disable edition

@@ -106,7 +106,7 @@ const toolbarItems: GenericItem[] = [
     x: 0,
     y: 0,
     order: 0,
-    color: "#0000ff",
+    color: "#0000FF",
   },
   {
     id: "toolbar-0-postcard",
@@ -116,6 +116,7 @@ const toolbarItems: GenericItem[] = [
     y: 0,
     order: 0,
     file: "",
+    color: "#FF00FF",
   },
 ];
 

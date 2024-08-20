@@ -1,4 +1,4 @@
-import React, { CSSProperties, useState } from "react";
+import React, { CSSProperties, useEffect, useState } from "react";
 import Droppable from "@/components/Droppable";
 import DraggableOverlay from "@/components/DraggableOverlay";
 import {
@@ -6,12 +6,11 @@ import {
   DndContext,
   useSensors,
   useSensor,
-  MouseSensor,
-  TouchSensor,
   Over,
   Active,
   DragMoveEvent,
 } from "@dnd-kit/core";
+import { MouseSensor, TouchSensor } from "@/utils/handlers";
 import Note from "./Note";
 import { shallow } from "zustand/shallow";
 import Toolbar from "./Toolbar";
@@ -104,11 +103,12 @@ const ScheduleView = ({
   });
 
   const [isDragging, setIsDragging] = useState(false);
+  const [locked, setLocked] = useState<boolean>(false);
 
   const activationConstraint = {
-    delay: 100,
-    tolerance: 5,
-    distance: 3,
+    delay: 0,
+    tolerance: 2,
+    distance: 4,
   };
 
   const sensors = useSensors(
@@ -184,6 +184,7 @@ const ScheduleView = ({
                 }}
                 editable={d.editable || false}
                 position="right"
+                className={`${locked ? "hidden" : ""}`}
               >
                 <Note
                   content={d.content}
@@ -221,6 +222,7 @@ const ScheduleView = ({
                 }}
                 editable={d.editable || false}
                 position="right"
+                className={`${locked ? "hidden" : ""}`}
               >
                 <PostCard
                   key={`drag-postcard-${i}`}
@@ -255,6 +257,16 @@ const ScheduleView = ({
   const existingSchedule = schedules.find(
     (s) => s.year === year && s.week === week
   );
+
+  useEffect(() => {
+    if (locked) {
+      existingSchedule?.schedule.forEach((s) => {
+        s.morning?.forEach((m) => deselectItem(m.id, year, week));
+        s.afternoon?.forEach((m) => deselectItem(m.id, year, week));
+        s.evening?.forEach((m) => deselectItem(m.id, year, week));
+      });
+    }
+  }, [locked]);
 
   return (
     <DndContext
@@ -334,10 +346,12 @@ const ScheduleView = ({
         onNext={onNext}
         onPrev={onPrev}
         onSave={onSave}
+        onToggleLock={() => setLocked(!locked)}
         toolbarItems={toolbarItems}
         showNav={!templateId}
         saving={saving}
         onShare={onShare}
+        locked={locked}
       />
       <DraggableOverlay />
     </DndContext>

@@ -1,6 +1,6 @@
 import { Card } from "@tremor/react";
 
-export function Person() {
+export function Person({ name }: { name: string }) {
   return (
     <Card className="mx-auto max-w-xs">
       <img
@@ -10,7 +10,7 @@ export function Person() {
       />
       <div className="py-1">
         <h3 className=" text-center font-bold text-2xl text-gray-800 dark:text-white mb-1">
-          Esme
+          {name}
         </h3>
       </div>
     </Card>

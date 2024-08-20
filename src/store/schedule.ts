@@ -63,15 +63,6 @@ const toolbarItems: GenericItem[] = [
     color: "#0096FF",
   },
   {
-    id: `${Date.now()}-text`,
-    type: "text",
-    content: "new text",
-    x: 0,
-    y: 0,
-    order: 0,
-    color: "black",
-  },
-  {
     id: `${Date.now()}-card`,
     type: "post-card",
     content: "new post-card",
@@ -79,6 +70,7 @@ const toolbarItems: GenericItem[] = [
     y: 0,
     order: 0,
     file: "",
+    color: "#FF00FF",
   },
 ];
 

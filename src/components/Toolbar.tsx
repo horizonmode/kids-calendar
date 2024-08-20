@@ -1,9 +1,19 @@
 "use client";
-import React, { MutableRefObject, useEffect, useRef, useState } from "react";
+import React, {
+  MutableRefObject,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import Note from "./Note";
 import Text from "./Text";
 import PostCard from "./PostCard";
-import { RiArrowRightLine } from "@remixicon/react";
+import {
+  RiArrowRightLine,
+  RiLock2Line,
+  RiLockUnlockLine,
+} from "@remixicon/react";
 import { RiArrowLeftLine } from "@remixicon/react";
 import { RiArrowDownLine } from "@remixicon/react";
 import { Icon, Button } from "@tremor/react";
@@ -22,8 +32,10 @@ interface ToolbarProps {
   onNext?: () => void;
   onPrev?: () => void;
   onShare: () => void;
+  onToggleLock?: () => void;
   showNav: boolean;
   saving: boolean;
+  locked?: boolean;
 }
 
 const Toolbar = ({
@@ -32,8 +44,10 @@ const Toolbar = ({
   onNext,
   onPrev,
   onShare,
+  onToggleLock,
   showNav = true,
   saving = false,
+  locked = true,
 }: ToolbarProps) => {
   const [open, setOpen] = useState(true);
 
@@ -126,6 +140,13 @@ const Toolbar = ({
 
   const [showLeftScroll, setShowLeftScroll] = useState(false);
   const [showRightScroll, setShowRightScroll] = useState(true);
+
+  useLayoutEffect(() => {
+    const scrollVal = scrollRef.current;
+    setShowRightScroll(
+      scrollVal.scrollWidth - scrollVal.clientWidth - scrollVal.scrollLeft > 0
+    );
+  }, []);
 
   const onScroll = () => {
     let currentPosition = scrollRef.current.scrollLeft;
@@ -222,6 +243,12 @@ const Toolbar = ({
           onClick={onShare}
         >
           <Icon size="lg" icon={RiInformationLine} />
+        </div>
+        <div
+          className="flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 hover:bg-slate-200"
+          onClick={onToggleLock}
+        >
+          <Icon size="lg" icon={!locked ? RiLockUnlockLine : RiLock2Line} />
         </div>
       </div>
       <div
