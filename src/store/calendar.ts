@@ -3,6 +3,7 @@ import { Days } from "@/utils/days";
 import { persist } from "zustand/middleware";
 import { EventItem, GenericItem } from "@/types/Items";
 import { Delta } from "@/components/Delta";
+import { it } from "node:test";
 
 export interface Schedule {
   day: number;
@@ -255,6 +256,7 @@ export interface CalendarState {
     updatedItem: Schedule | EventItem,
     id: string
   ) => Promise<Response>;
+  assignPerson: (itemId: string, person: string) => void;
   syncItem: (
     updatedItem: Schedule | EventItem,
     id: string
@@ -621,6 +623,23 @@ const useCalendarStore = create<CalendarState>()(
             pendingChanges: state.pendingChanges + 1,
           };
         }),
+      assignPerson: (itemId: string, person: string) => {
+        set((state: CalendarState) => {
+          const newDays = [...state.days];
+          const sourceDayIndex = newDays.findIndex(
+            (d) => d.items.findIndex((i) => i.id === itemId) > -1
+          );
+          const day = newDays[sourceDayIndex];
+          const { item } = findItem(day.items, itemId);
+          if (!item.people) item.people = [];
+          if (item.people.includes(person)) {
+            item.people = item.people.filter((p) => p !== person);
+          } else {
+            item.people.push(person);
+          }
+          return { days: newDays };
+        });
+      },
       syncItem: async (updatedItem: Schedule | EventItem, id: string) => {
         console.log("syncing item");
         return await fetch(`/api/update/${id}`, {

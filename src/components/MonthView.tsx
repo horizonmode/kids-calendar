@@ -42,6 +42,7 @@ import PersonSelect from "./PersonSelect";
 import Person from "./Person";
 
 import { MouseSensor, TouchSensor } from "@/utils/handlers";
+import PersonAssignment from "./PersonAssignment";
 
 const days = new Days();
 const today = new Date();
@@ -82,6 +83,7 @@ const MonthView = ({
     toolbarItems,
     selectEvent,
     deselectEvent,
+    assignPerson,
   ] = useCalendarStore(
     (state) => [
       state.people,
@@ -102,6 +104,7 @@ const MonthView = ({
       state.toolbarItems,
       state.selectEvent,
       state.deselectEvent,
+      state.assignPerson,
     ],
     shallow
   );
@@ -127,6 +130,7 @@ const MonthView = ({
     const itemId = activeItem.id.toString();
 
     if (destination === "toolbar") return;
+    if (destination === "toolbar-person") return;
 
     if (type === "tape") {
       const { isStart, isEnd, itemId } = (activeItem.data.current as any).extra;
@@ -138,16 +142,19 @@ const MonthView = ({
         delta,
         action
       );
-    } else {
+    } else if (type === "person") {
       {
-        onReorder(itemId, parseInt(destination), delta);
+        assignPerson(destination, itemId);
       }
+    } else {
+      onReorder(itemId, parseInt(destination), delta);
     }
   };
 
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const [locked, setLocked] = useState<boolean>(false);
+  const [showUsers, setShowUsers] = useState<boolean>(false);
 
   const activationConstraint = {
     delay: 0,
@@ -283,9 +290,17 @@ const MonthView = ({
                       onItemEdit(d.id, { ...d, content })
                     }
                     color={d.color}
-                    // highlight={true}
                   />
                 </Editable>
+                {showUsers && (
+                  <PersonAssignment
+                    id={d.id}
+                    people={d.people || []}
+                    disabled={
+                      !isDragging || dragType == null || dragType !== "person"
+                    }
+                  />
+                )}
               </Draggable>
             );
 
@@ -337,6 +352,7 @@ const MonthView = ({
 
   const [delta, setDelta] = useState<Delta | null>(null);
   const [over, setOver] = useState<number | null>(null);
+  const [dragType, setDragType] = useState<string | null>(null);
   const [dragAction, setDragAction] = useState<string | null>(null);
 
   const updateDragState = (e: DragMoveEvent) => {
@@ -349,6 +365,7 @@ const MonthView = ({
     const overAsInt = over ? parseInt(over.id.toString()) : null;
     setOver(overAsInt);
     setDragId(e?.active?.data?.current?.extra.itemId);
+    setDragType(e?.active?.data?.current?.type);
     setDragAction(e?.active?.data?.current?.action);
     setDelta({ x, y });
   };
@@ -377,6 +394,7 @@ const MonthView = ({
       onDragMove={updateDragState}
       onDragStart={(e) => {
         setIsDragging(true);
+        console.log(e);
       }}
       onDragCancel={(e) => {
         setIsDragging(false);
@@ -391,7 +409,7 @@ const MonthView = ({
         onItemDrag(over, { x, y }, active);
       }}
     >
-      <PersonSelect people={people}></PersonSelect>
+      {showUsers && <PersonSelect people={people}></PersonSelect>}
       <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative max-h-screen overflow:auto select-none">
         <h2 className="text-center hidden md:block mb-3">Monday</h2>
         <h2 className="text-center hidden md:block mb-3">Tuesday</h2>
@@ -425,6 +443,7 @@ const MonthView = ({
                   setDay(dateOfOffset);
                 }}
                 label={days.getWeekDay(dateOfOffset.getDay())}
+                disabled={dragType === "person"}
               >
                 {renderItems(
                   content.filter(
@@ -572,9 +591,11 @@ const MonthView = ({
         onSave={onSave}
         onShare={onShare}
         onToggleLock={() => setLocked(!locked)}
+        onToggleShowUsers={() => setShowUsers(!showUsers)}
         saving={saving}
         showNav={true}
         locked={locked}
+        showUsers={showUsers}
       />
       <DraggableOverlay />
     </DndContext>

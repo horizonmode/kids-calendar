@@ -56,7 +56,7 @@ function DraggableOverlay({ axis, dragging }: OverlayProps) {
           return <Tape {...active.data.current.extra} />;
         if (active.data.current.action === "resize") return <ResizeIcon />;
       case "person":
-        return <Person {...active.data.current.extra} />;
+        return <Person {...active.data.current.extra} hideName={true} />;
     }
   };
 

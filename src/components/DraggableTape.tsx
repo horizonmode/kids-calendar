@@ -101,16 +101,15 @@ function DraggableTape({
         isEnd={isEnd}
         color={color}
         editable={editable}
-      >
-        {isEnd && (
-          <ResizeIcon
-            ref={resizeSetNodeRef}
-            listeners={resizeListeners}
-            attributes={resizeAttributes}
-            className={"-right-8"}
-          />
-        )}
-      </Tape>
+      ></Tape>
+      {isEnd && (
+        <ResizeIcon
+          ref={resizeSetNodeRef}
+          listeners={resizeListeners}
+          attributes={resizeAttributes}
+          className="absolute pointer-events-auto right-0 -top-12"
+        />
+      )}
     </div>
   );
 }
