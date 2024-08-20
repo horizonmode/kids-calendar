@@ -53,7 +53,6 @@ function DraggableTape({
   const moveListeners = moveProps.listeners;
   const moveSetNodeRef = moveProps.setNodeRef;
   const moveIsDragging = moveProps.isDragging;
-  const moveTransform = moveProps.transform;
 
   const resizeProps = useDraggable({
     id: `${id}-resize`,
@@ -84,6 +83,17 @@ function DraggableTape({
         ...style,
       }}
     >
+      {isStart && onSelect && (
+        <Editable
+          onDelete={onDelete}
+          onChangeColor={onChangeColor}
+          color={color}
+          editable={editable || false}
+          onSelect={onSelect}
+          position="top"
+          className={`pointer-events-auto ${locked ? "hidden" : ""}`}
+        ></Editable>
+      )}
       <Tape
         onUpdateContent={onUpdateContent}
         label={label || ""}
@@ -92,17 +102,6 @@ function DraggableTape({
         color={color}
         editable={editable}
       >
-        {isStart && onSelect && (
-          <Editable
-            onDelete={onDelete}
-            onChangeColor={onChangeColor}
-            color={color}
-            editable={editable || false}
-            onSelect={onSelect}
-            position="top"
-            className={`${locked ? "hidden" : ""}`}
-          ></Editable>
-        )}
         {isEnd && (
           <ResizeIcon
             ref={resizeSetNodeRef}
