@@ -49,6 +49,7 @@ export class Days {
   }
 
   getWeekDay(dayIndex: number) {
+    console.log(dayIndex, this.daysOfWeek[dayIndex]);
     return this.daysOfWeek[dayIndex];
   }
 }
