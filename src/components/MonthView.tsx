@@ -426,7 +426,11 @@ const MonthView = ({
         onItemDrag(over, { x, y }, active);
       }}
     >
-      {showPeople && <PersonSelect people={people}></PersonSelect>}
+      <PersonSelect
+        people={people}
+        showUsers={showPeople}
+        onToggleShowUsers={() => setShowPeople(!showPeople)}
+      ></PersonSelect>
       <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative max-h-screen overflow:auto select-none">
         <h2 className="text-center hidden md:block mb-3">Monday</h2>
         <h2 className="text-center hidden md:block mb-3">Tuesday</h2>
@@ -610,11 +614,9 @@ const MonthView = ({
         onSave={onSave}
         onShare={onShare}
         onToggleLock={() => setLocked(!locked)}
-        onToggleShowUsers={() => setShowPeople(!showPeople)}
         saving={saving}
         showNav={true}
         locked={locked}
-        showUsers={showPeople}
         pendingChanges={pendingChanges > 0}
       />
       <DraggableOverlay />

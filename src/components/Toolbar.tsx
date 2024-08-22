@@ -35,11 +35,9 @@ interface ToolbarProps {
   onPrev?: () => void;
   onShare: () => void;
   onToggleLock?: () => void;
-  onToggleShowUsers?: () => void;
   showNav: boolean;
   saving: boolean;
   locked?: boolean;
-  showUsers?: boolean;
   pendingChanges?: boolean;
 }
 
@@ -50,11 +48,9 @@ const Toolbar = ({
   onPrev,
   onShare,
   onToggleLock,
-  onToggleShowUsers,
   showNav = true,
   saving = false,
   locked = true,
-  showUsers = false,
   pendingChanges = false,
 }: ToolbarProps) => {
   const [open, setOpen] = useState(true);
@@ -259,14 +255,6 @@ const Toolbar = ({
           onClick={onToggleLock}
         >
           <Icon size="lg" icon={!locked ? RiLockUnlockLine : RiLock2Line} />
-        </div>
-        <div
-          className={`flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12  ${
-            showUsers ? "  border-teal-300 border" : "hover:bg-slate-200"
-          }`}
-          onClick={onToggleShowUsers}
-        >
-          <Icon size="lg" icon={RiUserAddLine} />
         </div>
       </div>
       <div

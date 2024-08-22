@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { RiArrowDownLine } from "@remixicon/react";
+import { RiArrowDownLine, RiUserAddLine } from "@remixicon/react";
 import { Icon } from "@tremor/react";
 import { useDroppable } from "@dnd-kit/core";
 import PersonCard from "./PersonCard";
@@ -8,9 +8,15 @@ import { Person } from "@/types/Items";
 
 interface PersonSelectProps {
   people: Person[];
+  showUsers?: boolean;
+  onToggleShowUsers?: () => void;
 }
 
-const PersonSelect = ({ people }: PersonSelectProps) => {
+const PersonSelect = ({
+  people,
+  showUsers,
+  onToggleShowUsers,
+}: PersonSelectProps) => {
   const [open, setOpen] = useState(true);
 
   const { isOver, setNodeRef } = useDroppable({
@@ -44,10 +50,18 @@ const PersonSelect = ({ people }: PersonSelectProps) => {
             icon={RiArrowDownLine}
           />
         </div>
+        <div
+          className={`flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12  ${
+            showUsers ? "  border-teal-300 border" : "hover:bg-slate-200"
+          }`}
+          onClick={onToggleShowUsers}
+        >
+          <Icon size="lg" icon={RiUserAddLine} />
+        </div>
       </div>
       <div
         className={`flex flex-col bg-white
-        bg-opacity-90 p-auto overflow-x-hidden hover:overflow-y-auto  rounded-br-xl flex-1 items-center pt-3 justify-start gap-2 touch-none`}
+        bg-opacity-90 p-auto overflow-x-hidden hover:overflow-y-auto rounded-br-xl flex-1 items-center pt-3 justify-start gap-2 touch-none`}
       >
         {people.map((person, i) => (
           <Draggable
