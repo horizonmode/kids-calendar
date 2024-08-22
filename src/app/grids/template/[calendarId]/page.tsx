@@ -1,15 +1,15 @@
 "use client";
 import React from "react";
-import Head from "next/head";
-import { useParams, useRouter } from "next/navigation";
-import Header from "@/components/CalendarHeader";
-import { shallow } from "zustand/shallow";
-import { useCalendarStore } from "@/store/calendar";
+
 import { Days } from "@/utils/days";
+import { shallow } from "zustand/shallow";
 import Templates from "@/components/Templates";
+import Header from "@/components/CalendarHeader";
+import { useCalendarContext } from "@/store/calendar";
+import { useParams, useRouter } from "next/navigation";
 
 const TemplatePage = () => {
-  const [selectedDay] = useCalendarStore(
+  const [selectedDay] = useCalendarContext(
     (state) => [state.selectedDay],
     shallow
   );

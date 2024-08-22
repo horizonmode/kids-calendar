@@ -1,4 +1,4 @@
-import { createStore, useStore } from "zustand";
+import { createStore } from "zustand";
 import { Days } from "@/utils/days";
 import { persist } from "zustand/middleware";
 import { EventItem, GenericItem, Person } from "@/types/Items";
