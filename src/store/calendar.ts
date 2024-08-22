@@ -286,504 +286,457 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
     people: initialPeople,
   };
 
-  return createStore<CalendarState>()(
-    persist(
-      (set, get) => ({
-        ...DEFAULT,
-        ...initProps,
-        toolbarItems,
-        selectedDay: new Date(),
-        pendingChanges: 0,
-        locked: false,
-        setLocked: (locked: boolean) => set({ locked }),
-        showPeople: true,
-        setShowPeople: (showPeople: boolean) => set({ showPeople }),
-        nextMonth: () =>
-          set((state: CalendarState) => ({
-            selectedDay: adjustDateByMonth(
-              state.selectedDay.getMonth() + 1,
-              state.selectedDay
-            ),
-          })),
-        prevMonth: () =>
-          set((state: CalendarState) => ({
-            selectedDay: adjustDateByMonth(
-              state.selectedDay.getMonth() - 1,
-              state.selectedDay
-            ),
-          })),
-        setSelectedDay: (selectedDay: Date) => set(() => ({ selectedDay })),
-        setDays: (days: Schedule[]) => set({ days }),
-        addDay: (day: Schedule) =>
-          set((state: CalendarState) => ({ days: [...state.days, day] })),
-        addEvent: (event: EventItem) =>
-          set((state: CalendarState) => ({ events: [...state.events, event] })),
-        editDay: (itemId: string, newItem: GenericItem) =>
-          set((state: CalendarState) => {
-            const newDays = [...state.days];
-            const sourceDayIndex = newDays.findIndex(
-              (d) => d.items.findIndex((i) => i.id === itemId) > -1
-            );
-            const day = newDays[sourceDayIndex];
-            const sourceIndex = day.items.findIndex((i) => i.id === itemId);
-            day.items[sourceIndex] = newItem;
-            return { days: newDays };
-          }),
-        deleteItem: (itemId: string) =>
-          set((state: CalendarState) => {
-            const newDays = [...state.days];
-            const sourceDayIndex = newDays.findIndex(
-              (d) => d.items.findIndex((i) => i.id === itemId) > -1
-            );
-            const day = newDays[sourceDayIndex];
-            const sourceIndex = day.items.findIndex((i) => i.id === itemId);
-            day.items = [
-              ...day.items.slice(0, sourceIndex),
-              ...day.items.slice(sourceIndex + 1),
-            ];
+  return createStore<CalendarState>()((set, get) => ({
+    ...DEFAULT,
+    ...initProps,
+    toolbarItems,
+    selectedDay: new Date(),
+    pendingChanges: 0,
+    locked: false,
+    setLocked: (locked: boolean) => set({ locked }),
+    showPeople: true,
+    setShowPeople: (showPeople: boolean) => set({ showPeople }),
+    nextMonth: () =>
+      set((state: CalendarState) => ({
+        selectedDay: adjustDateByMonth(
+          state.selectedDay.getMonth() + 1,
+          state.selectedDay
+        ),
+      })),
+    prevMonth: () =>
+      set((state: CalendarState) => ({
+        selectedDay: adjustDateByMonth(
+          state.selectedDay.getMonth() - 1,
+          state.selectedDay
+        ),
+      })),
+    setSelectedDay: (selectedDay: Date) => set(() => ({ selectedDay })),
+    setDays: (days: Schedule[]) => set({ days }),
+    addDay: (day: Schedule) =>
+      set((state: CalendarState) => ({ days: [...state.days, day] })),
+    addEvent: (event: EventItem) =>
+      set((state: CalendarState) => ({ events: [...state.events, event] })),
+    editDay: (itemId: string, newItem: GenericItem) =>
+      set((state: CalendarState) => {
+        const newDays = [...state.days];
+        const sourceDayIndex = newDays.findIndex(
+          (d) => d.items.findIndex((i) => i.id === itemId) > -1
+        );
+        const day = newDays[sourceDayIndex];
+        const sourceIndex = day.items.findIndex((i) => i.id === itemId);
+        day.items[sourceIndex] = newItem;
+        return { days: newDays };
+      }),
+    deleteItem: (itemId: string) =>
+      set((state: CalendarState) => {
+        const newDays = [...state.days];
+        const sourceDayIndex = newDays.findIndex(
+          (d) => d.items.findIndex((i) => i.id === itemId) > -1
+        );
+        const day = newDays[sourceDayIndex];
+        const sourceIndex = day.items.findIndex((i) => i.id === itemId);
+        day.items = [
+          ...day.items.slice(0, sourceIndex),
+          ...day.items.slice(sourceIndex + 1),
+        ];
 
-            day.softDelete = day.items.length === 0;
+        day.softDelete = day.items.length === 0;
 
-            reOrderAll(day.items);
-            return { days: newDays, pendingChanges: state.pendingChanges + 1 };
-          }),
-        selectItem: (itemId: string) =>
-          set((state: CalendarState) => {
-            const newDays = [...state.days];
-            const sourceDayIndex = newDays.findIndex(
-              (d) => d.items.findIndex((i) => i.id === itemId) > -1
-            );
-            const day = newDays[sourceDayIndex];
-            const { item } = findItem(day.items, itemId);
-            item.editable = true;
-            reOrderLayers(day.items, item);
-            return { days: newDays };
-          }),
-        deselectItem: (itemId: string) =>
-          set((state: CalendarState) => {
-            const newDays = [...state.days];
-            const sourceDayIndex = newDays.findIndex(
-              (d) => d.items.findIndex((i) => i.id === itemId) > -1
-            );
-            const day = newDays[sourceDayIndex];
-            const { item } = findItem(day.items, itemId);
-            item.editable = false;
-            return { days: newDays };
-          }),
-        selectEvent: (itemId: string) =>
-          set((state: CalendarState) => {
-            const newEvents = [...state.events];
-            const sourceEventIndex = newEvents.findIndex(
-              (d) => d.id === itemId
-            );
-            const event = newEvents[sourceEventIndex];
-            event.editable = true;
-            reOrderLayers(newEvents, event);
-            return { events: newEvents };
-          }),
-        deselectEvent: (itemId: string) =>
-          set((state: CalendarState) => {
-            const newEvents = [...state.events];
-            const sourceEventIndex = newEvents.findIndex(
-              (d) => d.id === itemId
-            );
-            const event = newEvents[sourceEventIndex];
-            event.editable = false;
-            reOrderLayers(newEvents, event);
-            return { events: newEvents };
-          }),
-        editEvent: (eventId: string, event: EventItem) =>
-          set((state: CalendarState) => {
-            const newEvents = [...state.events];
-            const eventIndex = newEvents.findIndex((d) => d.id === eventId);
-            newEvents[eventIndex] = event;
-            return {
-              events: newEvents,
-              pendingChanges: state.pendingChanges + 1,
-            };
-          }),
-        deleteEvent: (eventId: string) =>
-          set((state: CalendarState) => {
-            let newEvents = [...state.events];
-            const newEventIndex = newEvents.findIndex((i) => i.id === eventId);
-            newEvents[newEventIndex].softDelete = true;
+        reOrderAll(day.items);
+        return { days: newDays, pendingChanges: state.pendingChanges + 1 };
+      }),
+    selectItem: (itemId: string) =>
+      set((state: CalendarState) => {
+        const newDays = [...state.days];
+        const sourceDayIndex = newDays.findIndex(
+          (d) => d.items.findIndex((i) => i.id === itemId) > -1
+        );
+        const day = newDays[sourceDayIndex];
+        const { item } = findItem(day.items, itemId);
+        item.editable = true;
+        reOrderLayers(day.items, item);
+        return { days: newDays };
+      }),
+    deselectItem: (itemId: string) =>
+      set((state: CalendarState) => {
+        const newDays = [...state.days];
+        const sourceDayIndex = newDays.findIndex(
+          (d) => d.items.findIndex((i) => i.id === itemId) > -1
+        );
+        const day = newDays[sourceDayIndex];
+        const { item } = findItem(day.items, itemId);
+        item.editable = false;
+        return { days: newDays };
+      }),
+    selectEvent: (itemId: string) =>
+      set((state: CalendarState) => {
+        const newEvents = [...state.events];
+        const sourceEventIndex = newEvents.findIndex((d) => d.id === itemId);
+        const event = newEvents[sourceEventIndex];
+        event.editable = true;
+        reOrderLayers(newEvents, event);
+        return { events: newEvents };
+      }),
+    deselectEvent: (itemId: string) =>
+      set((state: CalendarState) => {
+        const newEvents = [...state.events];
+        const sourceEventIndex = newEvents.findIndex((d) => d.id === itemId);
+        const event = newEvents[sourceEventIndex];
+        event.editable = false;
+        reOrderLayers(newEvents, event);
+        return { events: newEvents };
+      }),
+    editEvent: (eventId: string, event: EventItem) =>
+      set((state: CalendarState) => {
+        const newEvents = [...state.events];
+        const eventIndex = newEvents.findIndex((d) => d.id === eventId);
+        newEvents[eventIndex] = event;
+        return {
+          events: newEvents,
+          pendingChanges: state.pendingChanges + 1,
+        };
+      }),
+    deleteEvent: (eventId: string) =>
+      set((state: CalendarState) => {
+        let newEvents = [...state.events];
+        const newEventIndex = newEvents.findIndex((i) => i.id === eventId);
+        newEvents[newEventIndex].softDelete = true;
 
-            return {
-              events: newEvents,
-              pendingChanges: state.pendingChanges + 1,
-            };
-          }),
-        addDayContent: (
-          selDay: number,
-          selMonth: number,
-          setYear: number,
-          itemId: string
-        ) =>
-          set((state: CalendarState) => {
-            const item: GenericItem = {
-              id: itemId || Date.now().toString(),
-              type: "post-it",
-              content: "new item",
+        return {
+          events: newEvents,
+          pendingChanges: state.pendingChanges + 1,
+        };
+      }),
+    addDayContent: (
+      selDay: number,
+      selMonth: number,
+      setYear: number,
+      itemId: string
+    ) =>
+      set((state: CalendarState) => {
+        const item: GenericItem = {
+          id: itemId || Date.now().toString(),
+          type: "post-it",
+          content: "new item",
+          x: 0,
+          y: 0,
+          order: 0,
+        };
+
+        const day = selDay || state.selectedDay.getDate();
+        const month = selMonth || state.selectedDay.getMonth();
+        const year = setYear || state.selectedDay.getFullYear();
+
+        const newDays = [...state.days];
+        let dayItemIndex = newDays.findIndex(
+          (d) => d.day === day && d.month === month + 1 && d.year === year
+        );
+        let dayItem: Schedule;
+        if (dayItemIndex == -1) {
+          dayItem = {
+            day: day,
+            year: year,
+            month: month + 1,
+            items: [],
+            type: "day",
+            calendarId: "test",
+          };
+        } else {
+          [dayItem] = newDays.splice(dayItemIndex, 1);
+        }
+        item.order = dayItem.items.length;
+
+        dayItem.items.push(item);
+        reOrderAll(dayItem.items);
+        newDays.push(dayItem);
+        return { days: newDays, pendingChanges: state.pendingChanges + 1 };
+      }),
+    reorderDays: (
+      itemId: string,
+      overId: number,
+      delta: Delta,
+      day: number,
+      month: number,
+      year: number
+    ) =>
+      set((state: CalendarState) => {
+        const newDays = [...state.days];
+        const sourceDayIndex = newDays.findIndex(
+          (d) => d.items.findIndex((i) => i.id == itemId) > -1
+        );
+        if (sourceDayIndex === -1) {
+          // try to find in toolbars
+          const newToolbarItems = [...state.toolbarItems];
+          const toolbarIndex = newToolbarItems.findIndex(
+            (d) => d.id === itemId
+          );
+          if (toolbarIndex > -1) {
+            //
+            const item = newToolbarItems[toolbarIndex] as GenericItem;
+            const toolbarId = item.id;
+            item.id = Date.now().toString();
+            newToolbarItems[toolbarIndex] = {
+              id: toolbarId,
+              type: item.type,
+              content: item.content,
               x: 0,
               y: 0,
               order: 0,
+              color: item.color,
             };
-
-            const day = selDay || state.selectedDay.getDate();
-            const month = selMonth || state.selectedDay.getMonth();
-            const year = setYear || state.selectedDay.getFullYear();
-
-            const newDays = [...state.days];
-            let dayItemIndex = newDays.findIndex(
-              (d) => d.day === day && d.month === month + 1 && d.year === year
+            let targetDay: Schedule | undefined = newDays.find(
+              (d) =>
+                d.day === overId && d.month === month + 1 && d.year === year
             );
-            let dayItem: Schedule;
-            if (dayItemIndex == -1) {
-              dayItem = {
-                day: day,
-                year: year,
+            if (!targetDay) {
+              targetDay = {
+                day: overId,
                 month: month + 1,
+                year: year,
                 items: [],
                 type: "day",
                 calendarId: "test",
               };
-            } else {
-              [dayItem] = newDays.splice(dayItemIndex, 1);
-            }
-            item.order = dayItem.items.length;
-
-            dayItem.items.push(item);
-            reOrderAll(dayItem.items);
-            newDays.push(dayItem);
-            return { days: newDays, pendingChanges: state.pendingChanges + 1 };
-          }),
-        reorderDays: (
-          itemId: string,
-          overId: number,
-          delta: Delta,
-          day: number,
-          month: number,
-          year: number
-        ) =>
-          set((state: CalendarState) => {
-            const newDays = [...state.days];
-            const sourceDayIndex = newDays.findIndex(
-              (d) => d.items.findIndex((i) => i.id == itemId) > -1
-            );
-            if (sourceDayIndex === -1) {
-              // try to find in toolbars
-              const newToolbarItems = [...state.toolbarItems];
-              const toolbarIndex = newToolbarItems.findIndex(
-                (d) => d.id === itemId
-              );
-              if (toolbarIndex > -1) {
-                //
-                const item = newToolbarItems[toolbarIndex] as GenericItem;
-                const toolbarId = item.id;
-                item.id = Date.now().toString();
-                newToolbarItems[toolbarIndex] = {
-                  id: toolbarId,
-                  type: item.type,
-                  content: item.content,
-                  x: 0,
-                  y: 0,
-                  order: 0,
-                  color: item.color,
-                };
-                let targetDay: Schedule | undefined = newDays.find(
-                  (d) =>
-                    d.day === overId && d.month === month + 1 && d.year === year
-                );
-                if (!targetDay) {
-                  targetDay = {
-                    day: overId,
-                    month: month + 1,
-                    year: year,
-                    items: [],
-                    type: "day",
-                    calendarId: "test",
-                  };
-                  newDays.push(targetDay);
-                }
-
-                targetDay.softDelete = false;
-
-                item.x = delta.x * 100;
-                item.y = delta.y * 100;
-                targetDay.items.push(item);
-                reOrderLayers(targetDay.items, item);
-
-                return {
-                  days: newDays,
-                  toolbarItems: newToolbarItems,
-                  pendingChanges: state.pendingChanges + 1,
-                };
-              } else {
-                return { ...state };
-              }
-            } else {
-              const day = newDays[sourceDayIndex];
-              const sourceIndex = day.items.findIndex((i) => i.id == itemId);
-              const item = day.items[sourceIndex];
-
-              if (day.day !== overId) {
-                day.items.splice(sourceIndex, 1);
-                day.softDelete = day.items.length === 0;
-                let targetDay = newDays.find(
-                  (d) =>
-                    d.day === overId && d.month === month + 1 && d.year === year
-                );
-                if (!targetDay) {
-                  targetDay = {
-                    day: overId,
-                    month: month + 1,
-                    year: year,
-                    type: "day",
-                    items: [],
-                  };
-                  newDays.push(targetDay);
-                }
-
-                targetDay.softDelete = false;
-                item.x = delta.x * 100;
-                item.y = delta.y * 100;
-                targetDay.items.push(item);
-                reOrderLayers(targetDay.items, item);
-                reOrderAll(day.items);
-              } else {
-                item.x = delta.x * 100;
-                item.y = delta.y * 100;
-                reOrderLayers(day.items, item);
-              }
-              return {
-                days: newDays,
-                pendingChanges: state.pendingChanges + 1,
-              };
-            }
-          }),
-        reorderEvents: (
-          itemId: string,
-          overId: number,
-          day: number,
-          month: number,
-          year: number,
-          isStart: boolean,
-          isEnd: boolean,
-          delta: Delta,
-          action: string
-        ) =>
-          set((state: CalendarState) => {
-            const newEvents = [...state.events];
-            let event = newEvents.find((e) => e.id === itemId);
-            if (!event) {
-              const newToolbarItems = [...state.toolbarItems];
-              // look in toolbar
-              const itemIndex = newToolbarItems.findIndex(
-                (e) => e.id === itemId && e.type === "event"
-              );
-              if (itemIndex === -1) return state;
-              event = newToolbarItems[itemIndex] as EventItem;
-              const toolbarId = event.id;
-              event.id = Date.now().toString();
-              event.day = overId;
-              event.days = 1;
-              event.year = year;
-              event.month = month + 1;
-              event.y = delta.y * 100;
-              newEvents.push(event);
-              newToolbarItems[itemIndex] = {
-                id: toolbarId,
-                type: "event",
-                content: "new event",
-                x: 0,
-                y: 0,
-                order: 0,
-                color: "blue",
-              };
-              reOrderLayers(newEvents, event);
-              return { events: newEvents, toolbarItems: newToolbarItems };
+              newDays.push(targetDay);
             }
 
-            if (action === "move") {
-              // move the event start day to selected day
-              event.day = overId;
+            targetDay.softDelete = false;
 
-              // if the event goes past end of the month, trim the days.
-              const overlap = event.day + event.days - getDaysInMonth(state);
-              if (overlap > 0) {
-                event.days = event.days - overlap;
-              }
+            item.x = delta.x * 100;
+            item.y = delta.y * 100;
+            targetDay.items.push(item);
+            reOrderLayers(targetDay.items, item);
 
-              event.y = delta.y * 100;
-              reOrderLayers(newEvents, event);
-              return { events: newEvents };
-            }
-
-            if (isStart && !isEnd && overId > event.day + event.days) {
-              return state;
-            }
-            if (isEnd && !isStart && overId < event.day) {
-              return state;
-            }
-
-            if (isStart && isEnd) {
-              if (overId > event.day) {
-                event.days = overId - event.day + 1;
-              } else {
-                event.day = overId;
-                event.days = event.days + (event.day - overId);
-              }
-            }
-
-            if (isEnd && !isStart) {
-              event.days = overId - event.day + 1;
-            }
-            if (isStart && !isEnd) {
-              if (overId < event.day) {
-                // we've moved back
-                event.days = event.days + (event.day - overId);
-              }
-              if (overId > event.day) {
-                // we've moved forward
-
-                event.days = event.days - (overId - event.day);
-              }
-              event.day = overId;
-            }
-            // event.y = delta.y * 100;
-            reOrderLayers(newEvents, event);
             return {
-              events: newEvents,
+              days: newDays,
+              toolbarItems: newToolbarItems,
               pendingChanges: state.pendingChanges + 1,
             };
-          }),
-        assignPerson: (itemId: string, personId: number) => {
-          set((state: CalendarState) => {
-            const person = state.people.find((p) => p.id === personId);
-            if (!person) return state;
+          } else {
+            return { ...state };
+          }
+        } else {
+          const day = newDays[sourceDayIndex];
+          const sourceIndex = day.items.findIndex((i) => i.id == itemId);
+          const item = day.items[sourceIndex];
 
-            let targetItem: EventItem | GenericItem | null = null;
-            const newDays = [...state.days];
-            const sourceDayIndex = newDays.findIndex(
-              (d) => d.items.findIndex((i) => i.id === itemId) > -1
+          if (day.day !== overId) {
+            day.items.splice(sourceIndex, 1);
+            day.softDelete = day.items.length === 0;
+            let targetDay = newDays.find(
+              (d) =>
+                d.day === overId && d.month === month + 1 && d.year === year
             );
-            const day = newDays[sourceDayIndex];
-            if (sourceDayIndex === -1) {
-              // look in events
-              const newEvents = [...state.events];
-              const sourceEventIndex = newEvents.findIndex(
-                (d) => d.id === itemId
-              );
-              targetItem = newEvents[sourceEventIndex];
-            } else {
-              const { item } = findItem(day.items, itemId);
-              targetItem = item;
+            if (!targetDay) {
+              targetDay = {
+                day: overId,
+                month: month + 1,
+                year: year,
+                type: "day",
+                items: [],
+              };
+              newDays.push(targetDay);
             }
 
-            if (!targetItem) return state;
-
-            if (!targetItem.people) targetItem.people = [];
-            if (targetItem.people.includes(person)) {
-              targetItem.people = targetItem.people.filter((p) => p !== person);
-            } else {
-              targetItem.people.push(person);
-            }
-            return { days: newDays };
-          });
-        },
-        syncItem: async (updatedItem: Schedule | EventItem, id: string) => {
-          return await fetch(`/api/update/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updatedItem),
-          });
-        },
-        deleteDay: async (updatedItem: Schedule | EventItem, id: string) => {
-          return await fetch(`/api/days/${id}`, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updatedItem),
-          });
-        },
-        fetch: async (id: string) => {
-          const response = (await GetDays(id)) as any;
-          const allData = await response.json();
-          const days = allData.filter(
-            (r: Schedule | EventItem) => r.type === "day"
-          );
-          const events = allData.filter(
-            (r: Schedule | EventItem) => r.type === "event"
-          );
-          set({ days, events, pendingChanges: 0 });
-        },
-        sync: async (id: string) => {
-          const { days, events, syncItem, deleteDay } = get() as CalendarState;
-          const savedDays = [];
-          const savedEvents = [];
-          for (var i = 0; i < days.length; i++) {
-            const item = days[i];
-            if (item.softDelete) {
-              await deleteDay(item, id);
-            } else {
-              const res = await syncItem(item, id);
-              const resObj = await res.json();
-              savedDays.push(resObj);
-            }
+            targetDay.softDelete = false;
+            item.x = delta.x * 100;
+            item.y = delta.y * 100;
+            targetDay.items.push(item);
+            reOrderLayers(targetDay.items, item);
+            reOrderAll(day.items);
+          } else {
+            item.x = delta.x * 100;
+            item.y = delta.y * 100;
+            reOrderLayers(day.items, item);
           }
-
-          for (var i = 0; i < events.length; i++) {
-            const item = events[i];
-            if (item.softDelete) {
-              await deleteDay(item, id);
-            } else {
-              const res = await syncItem(item, id);
-              const resObj = await res.json();
-              savedEvents.push(resObj);
-            }
-          }
-
-          set({ days: savedDays, events: savedEvents, pendingChanges: 0 });
-        },
+          return {
+            days: newDays,
+            pendingChanges: state.pendingChanges + 1,
+          };
+        }
       }),
-      {
-        name: "calendar-storage",
-        partialize: (state) =>
-          Object.fromEntries(
-            Object.entries(state).filter(
-              ([key]) =>
-                ![
-                  "days",
-                  "events",
-                  "people",
-                  "pendingChanges",
-                  "toolbarItems",
-                ].includes(key)
-            )
-          ),
-        storage: {
-          getItem: (name) => {
-            const str = localStorage.getItem(name);
-            if (!str) return null;
-            return {
-              state: {
-                ...JSON.parse(str).state,
-                selectedDay: new Date(JSON.parse(str).state.selectedDay),
-              },
-            };
-          },
-          setItem: (name, newValue) => {
-            const str = JSON.stringify({
-              state: {
-                ...newValue.state,
-              },
-            });
-            localStorage.setItem(name, str);
-          },
-          removeItem: (name) => localStorage.removeItem(name),
-        },
+    reorderEvents: (
+      itemId: string,
+      overId: number,
+      day: number,
+      month: number,
+      year: number,
+      isStart: boolean,
+      isEnd: boolean,
+      delta: Delta,
+      action: string
+    ) =>
+      set((state: CalendarState) => {
+        const newEvents = [...state.events];
+        let event = newEvents.find((e) => e.id === itemId);
+        if (!event) {
+          const newToolbarItems = [...state.toolbarItems];
+          // look in toolbar
+          const itemIndex = newToolbarItems.findIndex(
+            (e) => e.id === itemId && e.type === "event"
+          );
+          if (itemIndex === -1) return state;
+          event = newToolbarItems[itemIndex] as EventItem;
+          const toolbarId = event.id;
+          event.id = Date.now().toString();
+          event.day = overId;
+          event.days = 1;
+          event.year = year;
+          event.month = month + 1;
+          event.y = delta.y * 100;
+          newEvents.push(event);
+          newToolbarItems[itemIndex] = {
+            id: toolbarId,
+            type: "event",
+            content: "new event",
+            x: 0,
+            y: 0,
+            order: 0,
+            color: "blue",
+          };
+          reOrderLayers(newEvents, event);
+          return { events: newEvents, toolbarItems: newToolbarItems };
+        }
+
+        if (action === "move") {
+          // move the event start day to selected day
+          event.day = overId;
+
+          // if the event goes past end of the month, trim the days.
+          const overlap = event.day + event.days - getDaysInMonth(state);
+          if (overlap > 0) {
+            event.days = event.days - overlap;
+          }
+
+          event.y = delta.y * 100;
+          reOrderLayers(newEvents, event);
+          return { events: newEvents };
+        }
+
+        if (isStart && !isEnd && overId > event.day + event.days) {
+          return state;
+        }
+        if (isEnd && !isStart && overId < event.day) {
+          return state;
+        }
+
+        if (isStart && isEnd) {
+          if (overId > event.day) {
+            event.days = overId - event.day + 1;
+          } else {
+            event.day = overId;
+            event.days = event.days + (event.day - overId);
+          }
+        }
+
+        if (isEnd && !isStart) {
+          event.days = overId - event.day + 1;
+        }
+        if (isStart && !isEnd) {
+          if (overId < event.day) {
+            // we've moved back
+            event.days = event.days + (event.day - overId);
+          }
+          if (overId > event.day) {
+            // we've moved forward
+
+            event.days = event.days - (overId - event.day);
+          }
+          event.day = overId;
+        }
+        // event.y = delta.y * 100;
+        reOrderLayers(newEvents, event);
+        return {
+          events: newEvents,
+          pendingChanges: state.pendingChanges + 1,
+        };
+      }),
+    assignPerson: (itemId: string, personId: number) => {
+      set((state: CalendarState) => {
+        const person = state.people.find((p) => p.id === personId);
+        if (!person) return state;
+
+        let targetItem: EventItem | GenericItem | null = null;
+        const newDays = [...state.days];
+        const sourceDayIndex = newDays.findIndex(
+          (d) => d.items.findIndex((i) => i.id === itemId) > -1
+        );
+        const day = newDays[sourceDayIndex];
+        if (sourceDayIndex === -1) {
+          // look in events
+          const newEvents = [...state.events];
+          const sourceEventIndex = newEvents.findIndex((d) => d.id === itemId);
+          targetItem = newEvents[sourceEventIndex];
+        } else {
+          const { item } = findItem(day.items, itemId);
+          targetItem = item;
+        }
+
+        if (!targetItem) return state;
+
+        if (!targetItem.people) targetItem.people = [];
+        if (targetItem.people.includes(person)) {
+          targetItem.people = targetItem.people.filter((p) => p !== person);
+        } else {
+          targetItem.people.push(person);
+        }
+        return { days: newDays };
+      });
+    },
+    syncItem: async (updatedItem: Schedule | EventItem, id: string) => {
+      return await fetch(`/api/update/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedItem),
+      });
+    },
+    deleteDay: async (updatedItem: Schedule | EventItem, id: string) => {
+      return await fetch(`/api/days/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedItem),
+      });
+    },
+    fetch: async (id: string) => {
+      const response = (await GetDays(id)) as any;
+      const allData = await response.json();
+      const days = allData.filter(
+        (r: Schedule | EventItem) => r.type === "day"
+      );
+      const events = allData.filter(
+        (r: Schedule | EventItem) => r.type === "event"
+      );
+      set({ days, events, pendingChanges: 0 });
+    },
+    sync: async (id: string) => {
+      const { days, events, syncItem, deleteDay } = get() as CalendarState;
+      const savedDays = [];
+      const savedEvents = [];
+      for (var i = 0; i < days.length; i++) {
+        const item = days[i];
+        if (item.softDelete) {
+          await deleteDay(item, id);
+        } else {
+          const res = await syncItem(item, id);
+          const resObj = await res.json();
+          savedDays.push(resObj);
+        }
       }
-    )
-  );
+
+      for (var i = 0; i < events.length; i++) {
+        const item = events[i];
+        if (item.softDelete) {
+          await deleteDay(item, id);
+        } else {
+          const res = await syncItem(item, id);
+          const resObj = await res.json();
+          savedEvents.push(resObj);
+        }
+      }
+
+      set({ days: savedDays, events: savedEvents, pendingChanges: 0 });
+    },
+  }));
 };
 
 export const CalendarContext = createContext<CalendarStore | null>(null);

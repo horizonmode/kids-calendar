@@ -19,7 +19,7 @@ const PersonSelect = ({ people }: PersonSelectProps) => {
 
   return (
     <div
-      className="overflow-y-visible top-1/2 -translate-y-1/2 z-50  fixed flex touch-none"
+      className="overflow-y-hidden hover:overflow-y-auto top-1/2 -translate-y-1/2 z-50  fixed flex touch-none"
       style={{
         transition: "left .5s, top .5s",
         width: "8vh",
