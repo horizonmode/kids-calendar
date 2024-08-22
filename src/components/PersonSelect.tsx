@@ -19,7 +19,7 @@ const PersonSelect = ({ people }: PersonSelectProps) => {
 
   return (
     <div
-      className="overflow-y-hidden hover:overflow-y-auto top-1/2 -translate-y-1/2 z-50  fixed flex touch-none"
+      className="overflow-hidden  top-1/2 -translate-y-1/2 z-50  fixed flex touch-none"
       style={{
         transition: "left .5s, top .5s",
         width: "8vh",
@@ -47,7 +47,7 @@ const PersonSelect = ({ people }: PersonSelectProps) => {
       </div>
       <div
         className={`flex flex-col bg-white
-        bg-opacity-90 p-auto overflow-x-hidden overflow-y-scroll rounded-tl-xl flex-1 items-center pt-3 justify-start gap-2 touch-none`}
+        bg-opacity-90 p-auto overflow-hidden hover:overflow-y-auto rounded-tl-xl flex-1 items-center pt-3 justify-start gap-2 touch-none`}
       >
         {people.map((person, i) => (
           <Draggable

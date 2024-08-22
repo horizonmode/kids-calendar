@@ -129,7 +129,7 @@ const toolbarItems: GenericItem[] = [
 ];
 
 const findItem = (items: GenericItem[], itemId: string) => {
-  const itemIndex = items.findIndex((i) => i.id === itemId);
+  const itemIndex = items.findIndex((i) => i.id == itemId);
   return { item: items[itemIndex], index: itemIndex };
 };
 
@@ -659,9 +659,11 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
         let targetItem: EventItem | GenericItem | null = null;
         const newDays = [...state.days];
         const sourceDayIndex = newDays.findIndex(
-          (d) => d.items.findIndex((i) => i.id === itemId) > -1
+          (d) => d.items.findIndex((i) => i.id == itemId) > -1
         );
+
         const day = newDays[sourceDayIndex];
+        console.log(day);
         if (sourceDayIndex === -1) {
           // look in events
           const newEvents = [...state.events];
