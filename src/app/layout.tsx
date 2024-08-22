@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import siteMetadata from "@/data/siteMetadata";
-import Image from "next/image";
 
 const poppins = Poppins({
   weight: ["300", "600", "700"],

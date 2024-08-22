@@ -1,21 +1,21 @@
 "use client";
-import { useEffect } from "react";
 import { useState } from "react";
-import MonthView from "@/components/MonthView";
-import { useCalendarStore } from "@/store/calendar";
-import { shallow } from "zustand/shallow";
-import Header from "@/components/CalendarHeader";
-import { useRouter, useParams } from "next/navigation";
-import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
+import { useEffect } from "react";
+
 import { Days } from "@/utils/days";
-import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
+import { shallow } from "zustand/shallow";
+import MonthView from "@/components/MonthView";
+import Header from "@/components/CalendarHeader";
 import { RiClipboardLine } from "@remixicon/react";
+import { useCalendarContext } from "@/store/calendar";
+import { useParams, useRouter } from "next/navigation";
+import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
+import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
 
 export default function Calendar() {
-  const [fetch, sync, prevMonth, nextMonth, selectedDay, pendingChanges] =
-    useCalendarStore(
+  const [sync, prevMonth, nextMonth, selectedDay, pendingChanges] =
+    useCalendarContext(
       (state) => [
-        state.fetch,
         state.sync,
         state.prevMonth,
         state.nextMonth,

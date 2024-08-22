@@ -6,7 +6,7 @@ import Note from "./Note";
 import ResizeIcon from "./ResizeIcon";
 import PostCard from "./PostCard";
 import Text from "./Text";
-import Person from "./Person";
+import Person from "./PersonCard";
 
 interface OverlayProps {
   axis?: string;

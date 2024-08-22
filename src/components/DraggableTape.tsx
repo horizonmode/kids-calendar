@@ -3,6 +3,8 @@ import { useDraggable } from "@dnd-kit/core";
 import Tape from "./Tape";
 import ResizeIcon from "./ResizeIcon";
 import Editable from "./Editable";
+import PersonAssignment from "./PersonAssignment";
+import { Person } from "@/types/Items";
 
 interface DraggableTapeProps {
   id: string;
@@ -12,10 +14,12 @@ interface DraggableTapeProps {
   isStart: boolean;
   isEnd: boolean;
   label?: string;
-  eventId?: string;
+  eventId: string;
   editable?: boolean;
   color?: string;
   locked?: boolean;
+  showPeople?: boolean;
+  people?: Person[];
   onUpdateContent?: (val: string) => void;
   onDelete?: () => void;
   onChangeColor?: (val: string) => void;
@@ -34,6 +38,8 @@ function DraggableTape({
   editable,
   color = "#0000ff",
   locked = true,
+  showPeople = false,
+  people,
   onUpdateContent,
   onDelete,
   onChangeColor,
@@ -53,6 +59,7 @@ function DraggableTape({
   const moveListeners = moveProps.listeners;
   const moveSetNodeRef = moveProps.setNodeRef;
   const moveIsDragging = moveProps.isDragging;
+  const moveType = moveProps.active?.data?.current?.type;
 
   const resizeProps = useDraggable({
     id: `${id}-resize`,
@@ -93,6 +100,14 @@ function DraggableTape({
           position="top"
           className={`pointer-events-auto ${locked ? "hidden" : ""}`}
         ></Editable>
+      )}
+      {showPeople && (
+        <PersonAssignment
+          id={eventId}
+          people={people || []}
+          disabled={moveType == null || moveType !== "person"}
+          style={{ position: "absolute", bottom: "-35px", right: "0" }}
+        />
       )}
       <Tape
         onUpdateContent={onUpdateContent}

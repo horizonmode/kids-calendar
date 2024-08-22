@@ -40,6 +40,7 @@ interface ToolbarProps {
   saving: boolean;
   locked?: boolean;
   showUsers?: boolean;
+  pendingChanges?: boolean;
 }
 
 const Toolbar = ({
@@ -54,6 +55,7 @@ const Toolbar = ({
   saving = false,
   locked = true,
   showUsers = false,
+  pendingChanges = false,
 }: ToolbarProps) => {
   const [open, setOpen] = useState(true);
 
@@ -236,7 +238,9 @@ const Toolbar = ({
           </div>
         )}
         <Button
-          className="opacity-100 pl-5 pr-5"
+          className={`opacity-100 pl-5 pr-5 ${
+            pendingChanges && " bg-green-500 text-white"
+          }`}
           variant="light"
           icon={RiSave2Line}
           onClick={onSave}

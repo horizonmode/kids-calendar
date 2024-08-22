@@ -23,6 +23,12 @@ export interface Schedule {
   softDelete?: boolean;
 }
 
+export interface Person {
+  id: number;
+  name: string;
+  photo: string;
+}
+
 export interface GenericItem {
   id: string;
   color?: string;
@@ -33,7 +39,7 @@ export interface GenericItem {
   file?: string | null;
   order: number;
   editable?: boolean;
-  people?: string[];
+  people?: Person[];
 }
 
 export interface EventItem {
@@ -53,5 +59,5 @@ export interface EventItem {
   days: number;
   calendarId?: string;
   editable?: boolean;
-  people?: string[];
+  people?: Person[];
 }

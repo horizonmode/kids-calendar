@@ -1,20 +1,21 @@
-import React, { ReactNode } from "react";
+import React from "react";
 import { useDroppable } from "@dnd-kit/core";
 import classNames from "classnames";
-import Person from "./Person";
-import { RiUserAddLine } from "@remixicon/react";
-import { Icon } from "@tremor/react";
+import Person from "./PersonCard";
+import { Person as PersonType } from "@/types/Items";
 
 interface PersonAssignmentProps {
-  people: string[] | null;
+  people: PersonType[] | null;
   id: string;
   disabled?: boolean;
+  style?: React.CSSProperties;
 }
 
 function PersonAssignment({
   people,
   id,
   disabled = true,
+  style,
 }: PersonAssignmentProps) {
   const { isOver, setNodeRef } = useDroppable({
     id,
@@ -22,7 +23,7 @@ function PersonAssignment({
   });
 
   return (
-    <div className="flex flex-row justify-start">
+    <div className="flex flex-row justify-start" style={style}>
       <div
         id={`person-droppable-${id}`}
         ref={setNodeRef}
@@ -36,31 +37,20 @@ function PersonAssignment({
         {people && people.length > 0 ? (
           people?.map((person, i) => (
             <Person
-              className={`${classNames(
-                !disabled &&
-                  "outline-green-500 outline-2 outline-dotted rounded-full",
-                !disabled &&
-                  isOver &&
-                  "outline-4 outline-double shadow-[inset_#1eb99d_0_0_0_3px,rgba(201,211,219,0.5)_20px_14px_24px]"
-              )}}`}
+              highlight={!disabled}
+              selected={isOver && !disabled}
               key={`person-${i}`}
-              name={person}
+              person={person}
               hideName={true}
             />
           ))
         ) : (
-          <div
-            className={classNames(
-              `flex justify-center align-middle items-center w-12 h-12 rounded-full bg-white outline-1 outline-black`,
-              !disabled &&
-                "outline-green-500 outline-2 outline-dotted rounded-full",
-              !disabled &&
-                isOver &&
-                "outline-4 shadow-[inset_#1eb99d_0_0_0_3px,rgba(201,211,219,0.5)_20px_14px_24px]"
-            )}
-          >
-            <Icon size="lg" icon={RiUserAddLine} className="rounded-ful" />
-          </div>
+          <Person
+            hideName={true}
+            placeholder={true}
+            highlight={!disabled}
+            selected={isOver && !disabled}
+          />
         )}
       </div>
     </div>

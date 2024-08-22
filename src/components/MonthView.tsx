@@ -1,47 +1,47 @@
 "use client";
 import React, { CSSProperties, useEffect, useState } from "react";
-import Droppable from "@/components/Droppable";
-import DraggableOverlay from "@/components/DraggableOverlay";
-import {
-  useCalendarStore,
-  getDaysContent,
-  getDaysEvents,
-  Schedule,
-} from "@/store/calendar";
-import {
-  rectIntersection,
-  DndContext,
-  useSensors,
-  useSensor,
-  closestCorners,
-  Over,
-  Active,
-  DroppableContainer,
-} from "@dnd-kit/core";
 
-import NonDay from "./NonDay";
+import classNames from "classnames";
+
 import { Days } from "@/utils/days";
-import Toolbar from "./Toolbar";
-import PostCard from "./PostCard";
+import { shallow } from "zustand/shallow";
+import Droppable from "@/components/Droppable";
+import { EventItem, GenericItem } from "@/types/Items";
 import { RectMap } from "@dnd-kit/core/dist/store/types";
+import { MouseSensor, TouchSensor } from "@/utils/handlers";
+import DraggableOverlay from "@/components/DraggableOverlay";
 import {
   ClientRect,
   Coordinates,
   DragMoveEvent,
 } from "@dnd-kit/core/dist/types";
-import { Delta } from "./Delta";
-import { EventItem, GenericItem } from "@/types/Items";
-import Draggable from "./Draggable";
-import Note from "./Note";
-import { shallow } from "zustand/shallow";
-import classNames from "classnames";
-import Tape from "./Tape";
-import DraggableTape from "./DraggableTape";
-import Editable from "./Editable";
-import PersonSelect from "./PersonSelect";
-import Person from "./Person";
+import {
+  getDaysContent,
+  getDaysEvents,
+  Schedule,
+  useCalendarContext,
+} from "@/store/calendar";
+import {
+  Active,
+  closestCorners,
+  DndContext,
+  DroppableContainer,
+  Over,
+  rectIntersection,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 
-import { MouseSensor, TouchSensor } from "@/utils/handlers";
+import Note from "./Note";
+import Tape from "./Tape";
+import NonDay from "./NonDay";
+import Toolbar from "./Toolbar";
+import { Delta } from "./Delta";
+import PostCard from "./PostCard";
+import Editable from "./Editable";
+import Draggable from "./Draggable";
+import PersonSelect from "./PersonSelect";
+import DraggableTape from "./DraggableTape";
 import PersonAssignment from "./PersonAssignment";
 
 const days = new Days();
@@ -84,7 +84,12 @@ const MonthView = ({
     selectEvent,
     deselectEvent,
     assignPerson,
-  ] = useCalendarStore(
+    pendingChanges,
+    locked,
+    showPeople,
+    setLocked,
+    setShowPeople,
+  ] = useCalendarContext(
     (state) => [
       state.people,
       state.selectedDay,
@@ -105,6 +110,11 @@ const MonthView = ({
       state.selectEvent,
       state.deselectEvent,
       state.assignPerson,
+      state.pendingChanges,
+      state.locked,
+      state.showPeople,
+      state.setLocked,
+      state.setShowPeople,
     ],
     shallow
   );
@@ -122,7 +132,6 @@ const MonthView = ({
 
   const onItemDrag = (over: Over, delta: Delta, activeItem: Active) => {
     const { type, action } = activeItem.data.current as any;
-
     if (!over) {
       return;
     }
@@ -144,7 +153,7 @@ const MonthView = ({
       );
     } else if (type === "person") {
       {
-        assignPerson(destination, itemId);
+        assignPerson(destination, parseInt(itemId));
       }
     } else {
       onReorder(itemId, parseInt(destination), delta);
@@ -153,8 +162,6 @@ const MonthView = ({
 
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragId, setDragId] = useState<string | null>(null);
-  const [locked, setLocked] = useState<boolean>(false);
-  const [showUsers, setShowUsers] = useState<boolean>(false);
 
   const activationConstraint = {
     delay: 0,
@@ -191,7 +198,7 @@ const MonthView = ({
 
     // Collision detection algorithms return an array of collisions
     if (rectIntersectionCollisions.length > 0) {
-      // The trash is intersecting, return early
+      // The toolbar is intersecting, return early
       return rectIntersectionCollisions;
     }
 
@@ -199,7 +206,7 @@ const MonthView = ({
     return closestCorners({
       ...args,
       droppableContainers: droppableContainers.filter(
-        ({ id }) => id !== "trash"
+        ({ id }) => id !== "toolbar"
       ),
     });
   }
@@ -292,13 +299,14 @@ const MonthView = ({
                     color={d.color}
                   />
                 </Editable>
-                {showUsers && (
+                {showPeople && (
                   <PersonAssignment
                     id={d.id}
                     people={d.people || []}
                     disabled={
                       !isDragging || dragType == null || dragType !== "person"
                     }
+                    style={{ marginTop: "-5px" }}
                   />
                 )}
               </Draggable>
@@ -343,6 +351,16 @@ const MonthView = ({
                     color={d.color}
                   ></PostCard>
                 </Editable>
+                {showPeople && (
+                  <PersonAssignment
+                    id={d.id}
+                    people={d.people || []}
+                    disabled={
+                      !isDragging || dragType == null || dragType !== "person"
+                    }
+                    style={{ marginTop: "-5px" }}
+                  />
+                )}
               </Draggable>
             );
         }
@@ -394,7 +412,6 @@ const MonthView = ({
       onDragMove={updateDragState}
       onDragStart={(e) => {
         setIsDragging(true);
-        console.log(e);
       }}
       onDragCancel={(e) => {
         setIsDragging(false);
@@ -409,7 +426,7 @@ const MonthView = ({
         onItemDrag(over, { x, y }, active);
       }}
     >
-      {showUsers && <PersonSelect people={people}></PersonSelect>}
+      {showPeople && <PersonSelect people={people}></PersonSelect>}
       <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative max-h-screen overflow:auto select-none">
         <h2 className="text-center hidden md:block mb-3">Monday</h2>
         <h2 className="text-center hidden md:block mb-3">Tuesday</h2>
@@ -543,7 +560,9 @@ const MonthView = ({
                       }
                       color={event.color}
                       locked={locked}
-                    />
+                      showPeople={showPeople}
+                      people={event.people}
+                    ></DraggableTape>
                   ) : (
                     <Tape
                       key={`event-${offsetDay}-${i}`}
@@ -591,11 +610,12 @@ const MonthView = ({
         onSave={onSave}
         onShare={onShare}
         onToggleLock={() => setLocked(!locked)}
-        onToggleShowUsers={() => setShowUsers(!showUsers)}
+        onToggleShowUsers={() => setShowPeople(!showPeople)}
         saving={saving}
         showNav={true}
         locked={locked}
-        showUsers={showUsers}
+        showUsers={showPeople}
+        pendingChanges={pendingChanges > 0}
       />
       <DraggableOverlay />
     </DndContext>

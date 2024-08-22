@@ -1,86 +1,30 @@
-import React, { MutableRefObject, useEffect, useRef, useState } from "react";
-import { RiArrowRightLine } from "@remixicon/react";
-import { RiArrowLeftLine } from "@remixicon/react";
+import React, { useState } from "react";
 import { RiArrowDownLine } from "@remixicon/react";
-import { Icon, Button } from "@tremor/react";
-import { RiSave2Line } from "@remixicon/react";
-import { RiInformationLine } from "@remixicon/react";
-import { RiArrowRightWideLine } from "@remixicon/react";
-import { RiArrowLeftWideLine } from "@remixicon/react";
+import { Icon } from "@tremor/react";
 import { useDroppable } from "@dnd-kit/core";
-import Person from "./Person";
+import PersonCard from "./PersonCard";
 import Draggable from "./Draggable";
+import { Person } from "@/types/Items";
 
 interface PersonSelectProps {
-  //   onSave: () => void;
-  //   onNext: () => void;
-  //   onPrev: () => void;
-  //   onShare: () => void;
-  //   showNav: boolean;
-  //   saving: boolean;
-  people: string[];
+  people: Person[];
 }
 
-const PersonSelect = ({
-  people,
-}: //   onSave,
-//   onNext,
-//   onPrev,
-//   onShare,
-//   showNav = true,
-//   saving = false,
-PersonSelectProps) => {
+const PersonSelect = ({ people }: PersonSelectProps) => {
   const [open, setOpen] = useState(true);
-
-  const [showLeftScroll, setShowLeftScroll] = useState(false);
-  const [showRightScroll, setShowRightScroll] = useState(true);
-
-  const onScroll = () => {
-    let currentPosition = scrollRef.current.scrollLeft;
-    setShowRightScroll(currentPosition === 0);
-    setShowLeftScroll(currentPosition > 0);
-  };
 
   const { isOver, setNodeRef } = useDroppable({
     id: "toolbar-person",
   });
-
-  const scrollRef = useRef<HTMLDivElement>(
-    null
-  ) as MutableRefObject<HTMLDivElement>;
-  setNodeRef(scrollRef.current);
-
-  useEffect(() => {
-    scrollRef.current.addEventListener("scroll", onScroll);
-    return () => {
-      scrollRef?.current?.removeEventListener("scroll", onScroll);
-    };
-  }, []);
-
-  const onScrollLeft = () => {
-    const pageWidth = window.innerWidth;
-    scrollRef.current.scrollBy({
-      left: -pageWidth,
-      behavior: "smooth",
-    });
-  };
-
-  const onScrollRight = () => {
-    const pageWidth = window.innerWidth;
-    scrollRef.current.scrollBy({
-      left: pageWidth,
-      behavior: "smooth",
-    });
-  };
 
   return (
     <div
       className="overflow-y-visible top-1/2 -translate-y-1/2 z-50  fixed flex touch-none"
       style={{
         transition: "left .5s, top .5s",
-        width: "10vh",
+        width: "8vh",
         height: "50vh",
-        left: open ? "0" : "-10vh",
+        left: open ? "0" : "-8vh",
         outline: isOver ? "1px solid red" : "none",
       }}
     >
@@ -102,7 +46,6 @@ PersonSelectProps) => {
         </div>
       </div>
       <div
-        ref={scrollRef}
         className={`flex flex-col bg-white
         bg-opacity-90 p-auto overflow-x-hidden overflow-y-scroll rounded-tl-xl flex-1 items-center pt-3 justify-start gap-2 touch-none`}
       >
@@ -111,30 +54,12 @@ PersonSelectProps) => {
             key={`person-${i}`}
             element="person"
             style={{ position: "relative" }}
-            id={person}
-            data={{ name: person, type: "person" }}
+            id={person.id.toString()}
+            data={{ person: person, type: "person" }}
           >
-            <Person name={person} />
+            <PersonCard person={person} />
           </Draggable>
         ))}
-        {showLeftScroll && (
-          <div
-            className="md:hidden absolute left-0 bottom-0 flex-1 flex justify-center items-center overflow-visible w-12 h-12  hover:bg-slate-200"
-            onClick={onScrollLeft}
-            style={{ zIndex: 250 }}
-          >
-            <Icon size="lg" icon={RiArrowLeftWideLine} />
-          </div>
-        )}
-        {showRightScroll && (
-          <div
-            className="absolute md:hidden z-50 right-0 bottom-0 flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12  hover:bg-slate-200"
-            onClick={onScrollRight}
-            style={{ zIndex: 250 }}
-          >
-            <Icon size="lg" icon={RiArrowRightWideLine} />
-          </div>
-        )}
       </div>
     </div>
   );
