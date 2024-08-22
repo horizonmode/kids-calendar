@@ -22,13 +22,13 @@ const LoginForm = () => {
     }
   };
   return (
-    <div className="flex flex-col flex-1 justify-center items-center">
+    <div className="flex flex-col justify-center items-center">
       <div className="flex justify-center my-2 mx-4 md:mx-0 relative">
         <form className="w-full max-w-xl bg-white rounded-lg shadow-md p-6">
-          <div className="flex flex-wrap -mx-3 mb-6">
-            <div className="w-full md:w-full px-3 mb-6">
+          <div className="flex flex-wrap -mx-3 gap-2">
+            <div className="w-full md:w-full px-3">
               <label
-                className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
+                className="block tracking-wide text-gray-700 text-s font-bold mb-2"
                 htmlFor="calendarId"
               >
                 Calendar ID
@@ -51,18 +51,14 @@ const LoginForm = () => {
               </button>
             </div>
             <div className="mx-auto pb-1 mt-2">
-              <span className="text-center text-xs text-gray-700">
-                or create new
-              </span>
-            </div>
-            <div className="flex items-center w-full mt-2">
-              <div className="w-full md:w-full px-3">
-                <button
+              <div className="text-center text-gray-700">
+                or
+                <div
+                  className=" text-2xl cursor-pointer underline italic"
                   onClick={createNew}
-                  className="appearance-none block w-full bg-green-400 text-black font-bold border border-gray-200 rounded-lg py-3 px-3 leading-tight hover:bg-green-500 focus:outline-none focus:bg-white focus:border-gray-500"
                 >
-                  Create New
-                </button>
+                  create new
+                </div>
               </div>
             </div>
           </div>

@@ -99,7 +99,7 @@ const initialPeople: Person[] = [
 
 const toolbarItems: GenericItem[] = [
   {
-    id: "toolbar-0-post-it",
+    id: "toolbar-1-post-it",
     type: "post-it",
     content: "new post-it",
     x: 0,
@@ -108,7 +108,7 @@ const toolbarItems: GenericItem[] = [
     color: "#0096FF",
   },
   {
-    id: "toolbar-0-event",
+    id: "toolbar-1-event",
     type: "event",
     content: "new event",
     x: 0,
@@ -117,7 +117,7 @@ const toolbarItems: GenericItem[] = [
     color: "#0000FF",
   },
   {
-    id: "toolbar-0-postcard",
+    id: "toolbar-1-postcard",
     type: "post-card",
     content: "new post-card",
     x: 0,
@@ -751,7 +751,13 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
           Object.fromEntries(
             Object.entries(state).filter(
               ([key]) =>
-                !["days", "events", "people", "pendingChanges"].includes(key)
+                ![
+                  "days",
+                  "events",
+                  "people",
+                  "pendingChanges",
+                  "toolbarItems",
+                ].includes(key)
             )
           ),
         storage: {

@@ -239,7 +239,7 @@ const Toolbar = ({
         )}
         <Button
           className={`opacity-100 pl-5 pr-5 ${
-            pendingChanges && " bg-green-500 text-white"
+            pendingChanges && " border-teal-300 border"
           }`}
           variant="light"
           icon={RiSave2Line}
@@ -262,7 +262,7 @@ const Toolbar = ({
         </div>
         <div
           className={`flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12  ${
-            showUsers ? "bg-green-500" : "hover:bg-slate-200"
+            showUsers ? "  border-teal-300 border" : "hover:bg-slate-200"
           }`}
           onClick={onToggleShowUsers}
         >

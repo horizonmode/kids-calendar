@@ -4,18 +4,18 @@ import Image from "next/image";
 
 const CalendarPage = () => {
   return (
-    <div className="flex flex-col gap-4 flex-1 items-center">
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 p-5">
+    <div className="flex flex-col gap-4 items-center justify-center flex-1">
+      <div className="relative flex justify-center">
         <Image
           src="/static/logo.png"
           alt="Logo"
           width="0"
           height="0"
           sizes="100vw"
-          className="w-52 md:w-64 h-auto"
+          className="w-52 md:w-64 h-auto absolute bottom-full"
         />
+        <LoginForm />
       </div>
-      <LoginForm />
     </div>
   );
 };

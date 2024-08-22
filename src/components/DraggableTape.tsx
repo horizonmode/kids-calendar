@@ -79,14 +79,13 @@ function DraggableTape({
     <div
       id={id}
       ref={moveSetNodeRef}
-      className="w-full flex-shrink-0"
+      className="w-full flex-shrink-0 absolute"
       {...moveListeners}
       {...moveAttributes}
       style={{
         opacity: moveIsDragging ? 0.5 : undefined,
         top: top,
         left: left,
-        position: "absolute",
         ...style,
       }}
     >
@@ -101,7 +100,7 @@ function DraggableTape({
           className={`pointer-events-auto ${locked ? "hidden" : ""}`}
         ></Editable>
       )}
-      {showPeople && (
+      {showPeople && isStart && (
         <PersonAssignment
           id={eventId}
           people={people || []}
