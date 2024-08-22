@@ -700,7 +700,7 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
       });
     },
     fetch: async (id: string) => {
-      const response = (await GetDays(id)) as any;
+      const response = await fetch(`/api/days/${id}`);
       const allData = await response.json();
       const days = allData.filter(
         (r: Schedule | EventItem) => r.type === "day"

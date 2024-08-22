@@ -13,9 +13,10 @@ import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
 import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
 
 export default function Calendar() {
-  const [sync, prevMonth, nextMonth, selectedDay, pendingChanges] =
+  const [fetch, sync, prevMonth, nextMonth, selectedDay, pendingChanges] =
     useCalendarContext(
       (state) => [
+        state.fetch,
         state.sync,
         state.prevMonth,
         state.nextMonth,
@@ -40,10 +41,6 @@ export default function Calendar() {
     };
     save();
   };
-
-  useEffect(() => {
-    if (calendarId && fetch) fetch(calendarId as string);
-  }, [fetch, calendarId]);
 
   const onSwitchClicked = async () => {
     const daysUtil = new Days();
