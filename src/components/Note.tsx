@@ -63,7 +63,7 @@ const Note = ({
     >
       <ContentEditable
         innerRef={editRef}
-        className="resize-none bg-transparent border-none outline-none overflow-y-auto select-none"
+        className="resize-none bg-transparent border-none outline-none overflow-y-hidden select-none hover:overflow-y-auto"
         tagName="div"
         html={content || ""} // innerHTML of the editable div
         disabled={!editable} // use true to disable edition
