@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   RiArrowDownLine,
+  RiDeleteBin3Line,
   RiEditLine,
   RiEye2Line,
   RiUser4Line,
@@ -70,7 +71,7 @@ const PersonSelect = ({
           className="flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 hover:bg-slate-200 cursor-pointer"
           onClick={onToggleEditPeople}
         >
-          <Icon size="lg" icon={RiEditLine} />
+          <Icon size="lg" icon={RiDeleteBin3Line} />
         </div>
       </div>
       <div
@@ -93,7 +94,7 @@ const PersonSelect = ({
           className="flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 hover:bg-slate-200 p-2 cursor-pointer"
           onClick={addPerson}
         >
-          <Icon size="lg" icon={RiUser4Line} />
+          <Icon size="lg" icon={RiEditLine} />
         </div>
       </div>
     </div>

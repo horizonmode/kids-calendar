@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogPanel, Button, Icon } from "@tremor/react";
+
+import { Person } from "@/types/Items";
+import { shallow } from "zustand/shallow";
+import usePersonContext from "@/store/people";
+import { Button, Dialog, DialogPanel, Icon } from "@tremor/react";
 import {
   RiArrowLeftLine,
   RiArrowRightLine,
   RiUserAddLine,
 } from "@remixicon/react";
-import PersonList from "./PersonList";
+
 import PersonCard from "./PersonCard";
-import { Person } from "@/types/Items";
-import usePersonContext from "@/store/people";
-import { shallow } from "zustand/shallow";
 
 interface PeopleDialogProps {
   showModal: string | null;
@@ -73,23 +74,24 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({
     setSelectedPersonId(people[prevIndex].id);
   };
 
-  const cantGoBack =
+  const canGoBack =
+    people.length > 1 &&
     selectedPersonId !== null &&
     people.findIndex((p) => p.id === selectedPersonId) > 0;
-  const cantGoForward =
+
+  const canGoForward =
+    people.length > 1 &&
     selectedPersonId !== null &&
     people.findIndex((p) => p.id === selectedPersonId) < people.length - 1;
 
   return (
     <Dialog open={showModal === "people"} onClose={onClose} static={true}>
       <DialogPanel>
-        <h3 className="text-lg font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
-          Edit People
-        </h3>
+        <h3 className="text-lg font-semibold">Edit People</h3>
         <div className="flex flex-row items-center justify-center">
           <div
-            className={`flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 cursor-pointer  hover:bg-slate-200 ${
-              cantGoBack ? "" : "opacity-50"
+            className={`flex justify-center align-middle items-center w-12 h-12 cursor-pointer hover:bg-slate-200 ${
+              !canGoBack && "opacity-50 hover:bg-none"
             }`}
             onClick={onPrevPerson}
           >
@@ -97,15 +99,17 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({
           </div>
 
           {selectedPerson && (
-            <PersonCard
-              editable={true}
-              person={selectedPerson}
-              onEdit={onEdit}
-            />
+            <div className="flex-1">
+              <PersonCard
+                editable={true}
+                person={selectedPerson}
+                onEdit={onEdit}
+              />
+            </div>
           )}
           <div
-            className={`flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 cursor-pointer  hover:bg-slate-200 ${
-              cantGoForward ? "" : "opacity-50"
+            className={`flex justify-center align-middle items-center overflow-visible w-12 h-12 cursor-pointer hover:bg-slate-200  ${
+              !canGoForward && "opacity-50 hover:bg-none"
             }`}
             onClick={onNextPerson}
           >

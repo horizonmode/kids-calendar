@@ -6,12 +6,12 @@ import { useStoreWithEqualityFn } from "zustand/traditional";
 
 export interface PersonProps {
   people: Person[];
-  id: string;
+  id: string | null;
 }
 
 export interface PersonState {
   people: Person[];
-  id: string;
+  id: string | null;
   add: (person: Person) => void;
   edit: (person: Person) => void;
   delete: (personId: number) => void;

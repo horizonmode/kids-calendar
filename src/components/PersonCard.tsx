@@ -4,8 +4,10 @@ import {
   RiUpload2Line,
   RiUploadCloudLine,
   RiUser2Fill,
+  RiUser3Fill,
   RiUser3Line,
   RiUserAddLine,
+  RiUserLine,
 } from "@remixicon/react";
 import { Icon } from "@tremor/react";
 import Image from "next/image";
@@ -53,11 +55,17 @@ function PersonCard({
             : "border-hidden"
         } ${editable ? "w-32 h-32" : ""}`}
       >
-        {placeholder || !person?.photo ? (
+        {placeholder ? (
           <Icon
             size="lg"
-            icon={RiUser3Line}
+            icon={RiUserLine}
             className="w-full h-full rounded-full"
+          />
+        ) : !person?.photo ? (
+          <Icon
+            size="lg"
+            icon={RiUser3Fill}
+            className="w-full h-full rounded-full bg-black"
           />
         ) : (
           <Image

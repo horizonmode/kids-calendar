@@ -39,7 +39,7 @@ export async function GetDays(calendarId: string): Promise<DayResponse> {
 
 export interface PersonResponse {
   people: Person[];
-  id: string;
+  id: string | null;
   calendarId: string;
 }
 
@@ -52,5 +52,8 @@ export async function GetPeople(calendarId: string): Promise<PersonResponse> {
     console.error(err);
   }
   const [peopleResponse] = people;
+  if (!peopleResponse) {
+    return { people: [{ id: 1, name: "Person 1" }], id: null, calendarId };
+  }
   return peopleResponse;
 }
