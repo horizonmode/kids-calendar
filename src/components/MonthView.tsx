@@ -413,6 +413,8 @@ const MonthView = ({
     shallow
   );
 
+  const peopleMenuActive = content.length > 0 || events.length > 0;
+
   return (
     <DndContext
       id="droppable"
@@ -442,6 +444,7 @@ const MonthView = ({
         showUsers={showPeople}
         onToggleShowPeople={() => setShowPeople(!showPeople)}
         addPerson={() => setShowModal("people")}
+        disabled={!peopleMenuActive}
       ></PersonSelect>
       <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative max-h-screen overflow:auto select-none">
         <h2 className="text-center hidden md:block mb-3">Monday</h2>
