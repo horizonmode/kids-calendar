@@ -29,18 +29,20 @@ const PersonSelect = ({
 }: PersonSelectProps) => {
   const [open, setOpen] = useState(true);
 
-  const { isOver } = useDroppable({
+  const { isOver, setNodeRef, active } = useDroppable({
     id: "toolbar-person",
   });
 
+  const isValidOver = isOver && active?.data?.current?.type === "person";
   return (
     <div
       className="overflow-visible  top-1/2 -translate-y-1/2 z-50  fixed flex touch-none h-auto"
+      ref={setNodeRef}
       style={{
         transition: "left .5s, top .5s",
         width: "8vh",
         left: open ? "0" : "-8vh",
-        outline: isOver ? "2px solid green" : "none",
+        outline: isValidOver ? "2px solid green" : "none",
       }}
     >
       <div
@@ -66,12 +68,6 @@ const PersonSelect = ({
           onClick={onToggleShowPeople}
         >
           <Icon size="lg" icon={RiEye2Line} />
-        </div>
-        <div
-          className="flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 hover:bg-slate-200 cursor-pointer"
-          onClick={onToggleEditPeople}
-        >
-          <Icon size="lg" icon={RiDeleteBin3Line} />
         </div>
       </div>
       <div

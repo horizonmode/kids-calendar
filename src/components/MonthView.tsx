@@ -83,6 +83,7 @@ const MonthView = ({
     selectEvent,
     deselectEvent,
     assignPerson,
+    removePerson,
     pendingChanges,
     locked,
     showPeople,
@@ -108,6 +109,7 @@ const MonthView = ({
       state.selectEvent,
       state.deselectEvent,
       state.assignPerson,
+      state.removePerson,
       state.pendingChanges,
       state.locked,
       state.showPeople,
@@ -117,16 +119,10 @@ const MonthView = ({
     shallow
   );
 
-  const [people, pendingPeoplechanges, editingPeople, setEditingPeople] =
-    usePersonContext(
-      (state) => [
-        state.people,
-        state.pendingChanges,
-        state.editing,
-        state.setEditing,
-      ],
-      shallow
-    );
+  const [people, pendingPeoplechanges] = usePersonContext(
+    (state) => [state.people, state.pendingChanges],
+    shallow
+  );
 
   const day = currentDay.getDate();
   const month = currentDay.getMonth();
@@ -149,9 +145,9 @@ const MonthView = ({
     const itemId = activeItem.id.toString();
 
     if (destination === "toolbar") return;
-    if (destination === "toolbar-person") return;
 
     if (type === "tape") {
+      if (destination === "toolbar-person") return;
       const { isStart, isEnd, itemId } = (activeItem.data.current as any).extra;
       onReorderEvent(
         itemId,
@@ -163,12 +159,18 @@ const MonthView = ({
       );
     } else if (type === "person") {
       {
+        const { itemId } = (activeItem.data.current as any).extra;
         const person = people.find((p) => p.id === parseInt(itemId));
-        if (person) {
+        if (!person) return;
+        if (destination === "toolbar-person") {
+          const { sourceId } = (activeItem.data.current as any).extra;
+          removePerson(sourceId, person);
+        } else {
           assignPerson(destination, person);
         }
       }
     } else {
+      if (destination === "toolbar-person") return;
       onReorder(itemId, parseInt(destination), delta);
     }
   };
@@ -318,7 +320,6 @@ const MonthView = ({
                     disabled={
                       !isDragging || dragType == null || dragType !== "person"
                     }
-                    editing={editingPeople}
                     style={{ marginTop: "-5px" }}
                     onRemove={(person) => {
                       assignPerson(d.id, person);
@@ -374,7 +375,6 @@ const MonthView = ({
                     disabled={
                       !isDragging || dragType == null || dragType !== "person"
                     }
-                    editing={editingPeople}
                     style={{ marginTop: "-5px" }}
                     onRemove={(person) => {
                       assignPerson(d.id, person);
@@ -441,7 +441,6 @@ const MonthView = ({
         people={people}
         showUsers={showPeople}
         onToggleShowPeople={() => setShowPeople(!showPeople)}
-        onToggleEditPeople={() => setEditingPeople(!editingPeople)}
         addPerson={() => setShowModal("people")}
       ></PersonSelect>
       <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative max-h-screen overflow:auto select-none">

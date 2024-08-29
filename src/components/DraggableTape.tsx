@@ -47,7 +47,6 @@ function DraggableTape({
   onDelete,
   onChangeColor,
   onSelect,
-  onRemovePerson,
 }: DraggableTapeProps) {
   const moveProps = useDraggable({
     id: id,
@@ -58,8 +57,6 @@ function DraggableTape({
     },
     disabled: editable,
   });
-
-  const [editingPeople] = usePersonContext((state) => [state.editing], shallow);
 
   const moveAttributes = moveProps.attributes;
   const moveListeners = moveProps.listeners;
@@ -111,9 +108,7 @@ function DraggableTape({
           id={eventId}
           people={people || []}
           disabled={moveType == null || moveType !== "person"}
-          editing={editingPeople}
           style={{ position: "absolute", bottom: "-35px", right: "0" }}
-          onRemove={(person) => onRemovePerson && onRemovePerson(person)}
         />
       )}
       <Tape

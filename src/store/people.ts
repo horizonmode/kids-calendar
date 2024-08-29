@@ -18,8 +18,6 @@ export interface PersonState {
   pendingChanges: number;
   sync: (calendarId: string) => void;
   fetch: (calendarId: string) => void;
-  editing: boolean;
-  setEditing: (editing: boolean) => void;
 }
 
 export const createPersonStore = (initProps?: PersonProps) => {
@@ -27,7 +25,6 @@ export const createPersonStore = (initProps?: PersonProps) => {
     pendingChanges: 0,
     people: initProps?.people || [],
     id: initProps?.id || "",
-    editing: false,
     add: (person: Person) =>
       set({
         people: [...get().people, person],
@@ -69,11 +66,9 @@ export const createPersonStore = (initProps?: PersonProps) => {
     },
     fetch: async (calendarId: string) => {
       const response = await fetch(`/api/people/${calendarId}`);
-      const res = (await response.json()) as PersonResponse[];
-      const [peopleResponse] = res;
-      set({ people: peopleResponse.people, id: peopleResponse.id });
+      const res = (await response.json()) as PersonResponse;
+      set({ people: res.people, id: res.id });
     },
-    setEditing: (editing: boolean) => set({ editing }),
   }));
 };
 

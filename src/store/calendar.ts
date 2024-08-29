@@ -266,6 +266,7 @@ export interface CalendarState extends CalendarProps {
     id: string
   ) => Promise<Response>;
   assignPerson: (itemId: string, person: Person) => void;
+  removePerson: (sourceId: string, person: Person) => void;
   syncItem: (
     updatedItem: Schedule | EventItem,
     id: string
@@ -660,10 +661,42 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
           pendingChanges: state.pendingChanges + 1,
         };
       }),
+    removePerson: (sourceId: string, person: Person) => {
+      set((state: CalendarState) => {
+        let targetItem: EventItem | GenericItem | null = null;
+        const newDays = [...state.days];
+        const newEvents = [...state.events];
+        const sourceDayIndex = newDays.findIndex(
+          (d) => d.items.findIndex((i) => i.id == sourceId) > -1
+        );
+
+        const day = newDays[sourceDayIndex];
+        if (sourceDayIndex === -1) {
+          // look in events
+
+          const sourceEventIndex = newEvents.findIndex(
+            (d) => d.id === sourceId
+          );
+          targetItem = newEvents[sourceEventIndex];
+        } else {
+          const { item } = findItem(day.items, sourceId);
+          targetItem = item;
+        }
+
+        if (!targetItem) return state;
+
+        if (!targetItem.people) targetItem.people = [];
+        if (targetItem.people.includes(person)) {
+          targetItem.people = targetItem.people.filter((p) => p !== person);
+        }
+        return { days: newDays, events: newEvents };
+      });
+    },
     assignPerson: (itemId: string, person: Person) => {
       set((state: CalendarState) => {
         let targetItem: EventItem | GenericItem | null = null;
         const newDays = [...state.days];
+        const newEvents = [...state.events];
         const sourceDayIndex = newDays.findIndex(
           (d) => d.items.findIndex((i) => i.id == itemId) > -1
         );
@@ -671,7 +704,6 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
         const day = newDays[sourceDayIndex];
         if (sourceDayIndex === -1) {
           // look in events
-          const newEvents = [...state.events];
           const sourceEventIndex = newEvents.findIndex((d) => d.id === itemId);
           targetItem = newEvents[sourceEventIndex];
         } else {
@@ -687,7 +719,7 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
         } else {
           targetItem.people.push(person);
         }
-        return { days: newDays };
+        return { days: newDays, events: newEvents };
       });
     },
     syncItem: async (updatedItem: Schedule | EventItem, id: string) => {

@@ -1,4 +1,4 @@
-import cosmosSingleton from "../../../../utils/cosmos";
+import { GetPeople } from "@/utils/cosmosHandler";
 
 export async function GET(
   request: Request,
@@ -11,19 +11,7 @@ export async function GET(
     });
   }
 
-  await cosmosSingleton.initialize();
-  const container = cosmosSingleton.getContainer();
-  if (!container) {
-    return new Response("No Container!", {
-      status: 403,
-    });
-  }
+  const people = await GetPeople(calendarId);
 
-  const { resources } = await container.items
-    .query(
-      `SELECT * from s where (s.type = 'people') and s.calendarId = '${calendarId}'`
-    )
-    .fetchAll();
-
-  return Response.json(resources);
+  return Response.json(people);
 }
