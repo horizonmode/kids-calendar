@@ -295,11 +295,11 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
         const newEvents = [...state.events];
         newDays.forEach((d) => {
           d.items.forEach((i) => {
-            i.editable = locked;
+            i.editable = false;
           });
         });
         newEvents.forEach((e) => {
-          e.editable = locked;
+          e.editable = false;
         });
         return { locked, days: newDays, events: newEvents };
       }),
@@ -717,6 +717,14 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
     },
     sync: async (id: string) => {
       const { days, events, syncItem, deleteDay } = get() as CalendarState;
+      days.forEach((d) => {
+        d.items.forEach((i) => {
+          i.editable = false;
+        });
+      });
+      events.forEach((e) => {
+        e.editable = false;
+      });
       const savedDays = [];
       const savedEvents = [];
       for (var i = 0; i < days.length; i++) {
