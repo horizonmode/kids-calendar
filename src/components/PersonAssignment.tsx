@@ -49,11 +49,10 @@ function PersonAssignment({
       >
         {people && people.length > 0 ? (
           people?.map((person, i) => (
-            <div className="relative">
+            <div className="relative" key={`person-${i}`}>
               <Person
                 highlight={!disabled}
                 selected={isOver && !disabled}
-                key={`person-${i}`}
                 person={person}
                 hideName={true}
               />

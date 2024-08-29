@@ -15,8 +15,6 @@ import { MouseSensor, TouchSensor } from "@/utils/handlers";
 import Note from "./Note";
 import { shallow } from "zustand/shallow";
 import Toolbar from "./Toolbar";
-import Text from "./Text";
-import { useScheduleStore } from "@/store/schedule";
 import PostCard from "./PostCard";
 import { GenericItem, ScheduleItem, Section } from "@/types/Items";
 import { Delta } from "./Delta";
