@@ -1,9 +1,7 @@
 import { createStore } from "zustand";
 import { Days } from "@/utils/days";
-import { persist } from "zustand/middleware";
 import { EventItem, GenericItem, Person } from "@/types/Items";
 import { Delta } from "@/components/Delta";
-import { GetDays } from "@/utils/cosmosHandler";
 import { createContext, useContext } from "react";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 
@@ -214,7 +212,6 @@ const getDaysEvents = ({
 export interface CalendarProps {
   days: Schedule[];
   events: EventItem[];
-  people: Person[];
 }
 
 export interface CalendarState extends CalendarProps {
@@ -268,7 +265,7 @@ export interface CalendarState extends CalendarProps {
     updatedItem: Schedule | EventItem,
     id: string
   ) => Promise<Response>;
-  assignPerson: (itemId: string, personId: number) => void;
+  assignPerson: (itemId: string, person: Person) => void;
   syncItem: (
     updatedItem: Schedule | EventItem,
     id: string
@@ -283,7 +280,6 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
   const DEFAULT: CalendarProps = {
     days: initialDays,
     events: initialEvents,
-    people: initialPeople,
   };
 
   return createStore<CalendarState>()((set, get) => ({
@@ -293,7 +289,20 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
     selectedDay: new Date(),
     pendingChanges: 0,
     locked: false,
-    setLocked: (locked: boolean) => set({ locked }),
+    setLocked: (locked: boolean) =>
+      set((state: CalendarState) => {
+        const newDays = [...state.days];
+        const newEvents = [...state.events];
+        newDays.forEach((d) => {
+          d.items.forEach((i) => {
+            i.editable = locked;
+          });
+        });
+        newEvents.forEach((e) => {
+          e.editable = locked;
+        });
+        return { locked, days: newDays, events: newEvents };
+      }),
     showPeople: true,
     setShowPeople: (showPeople: boolean) => set({ showPeople }),
     nextMonth: () =>
@@ -651,11 +660,8 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
           pendingChanges: state.pendingChanges + 1,
         };
       }),
-    assignPerson: (itemId: string, personId: number) => {
+    assignPerson: (itemId: string, person: Person) => {
       set((state: CalendarState) => {
-        const person = state.people.find((p) => p.id === personId);
-        if (!person) return state;
-
         let targetItem: EventItem | GenericItem | null = null;
         const newDays = [...state.days];
         const sourceDayIndex = newDays.findIndex(
@@ -663,7 +669,6 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
         );
 
         const day = newDays[sourceDayIndex];
-        console.log(day);
         if (sourceDayIndex === -1) {
           // look in events
           const newEvents = [...state.events];
@@ -686,7 +691,7 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
       });
     },
     syncItem: async (updatedItem: Schedule | EventItem, id: string) => {
-      return await fetch(`/api/update/${id}`, {
+      return await fetch(`/api/update/${id}/${updatedItem.type}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedItem),

@@ -7,10 +7,11 @@ import React, {
   useState,
 } from "react";
 import Note from "./Note";
-import Text from "./Text";
 import PostCard from "./PostCard";
 import {
   RiArrowRightLine,
+  RiEditFill,
+  RiEditLine,
   RiLock2Line,
   RiLockUnlockLine,
   RiUser2Line,
@@ -254,7 +255,7 @@ const Toolbar = ({
           className="flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 hover:bg-slate-200"
           onClick={onToggleLock}
         >
-          <Icon size="lg" icon={!locked ? RiLockUnlockLine : RiLock2Line} />
+          <Icon size="lg" icon={!locked ? RiEditLine : RiEditFill} />
         </div>
       </div>
       <div

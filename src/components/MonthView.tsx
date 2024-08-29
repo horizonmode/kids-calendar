@@ -1,8 +1,6 @@
 "use client";
 import React, { CSSProperties, useEffect, useState } from "react";
-
 import classNames from "classnames";
-
 import { Days } from "@/utils/days";
 import { shallow } from "zustand/shallow";
 import Droppable from "@/components/Droppable";
@@ -43,6 +41,8 @@ import Draggable from "./Draggable";
 import PersonSelect from "./PersonSelect";
 import DraggableTape from "./DraggableTape";
 import PersonAssignment from "./PersonAssignment";
+import useModalContext from "@/store/modals";
+import usePersonContext from "@/store/people";
 
 const days = new Days();
 const today = new Date();
@@ -65,7 +65,6 @@ const MonthView = ({
   saving,
 }: MonthViewProps) => {
   const [
-    people,
     currentDay,
     reorderDays,
     reorderEvents,
@@ -91,7 +90,6 @@ const MonthView = ({
     setShowPeople,
   ] = useCalendarContext(
     (state) => [
-      state.people,
       state.selectedDay,
       state.reorderDays,
       state.reorderEvents,
@@ -119,6 +117,17 @@ const MonthView = ({
     shallow
   );
 
+  const [people, pendingPeoplechanges, editingPeople, setEditingPeople] =
+    usePersonContext(
+      (state) => [
+        state.people,
+        state.pendingChanges,
+        state.editing,
+        state.setEditing,
+      ],
+      shallow
+    );
+
   const day = currentDay.getDate();
   const month = currentDay.getMonth();
   const year = currentDay.getFullYear();
@@ -135,6 +144,7 @@ const MonthView = ({
     if (!over) {
       return;
     }
+
     const destination = over.id.toString();
     const itemId = activeItem.id.toString();
 
@@ -153,7 +163,10 @@ const MonthView = ({
       );
     } else if (type === "person") {
       {
-        assignPerson(destination, parseInt(itemId));
+        const person = people.find((p) => p.id === parseInt(itemId));
+        if (person) {
+          assignPerson(destination, person);
+        }
       }
     } else {
       onReorder(itemId, parseInt(destination), delta);
@@ -249,7 +262,6 @@ const MonthView = ({
   };
 
   const calendarDays = daysInMonth + firstDayOfMonth - 1; // always show 7 days x 5 rows
-
   const offset = firstDayOfMonth - 1;
 
   const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
@@ -306,7 +318,11 @@ const MonthView = ({
                     disabled={
                       !isDragging || dragType == null || dragType !== "person"
                     }
+                    editing={editingPeople}
                     style={{ marginTop: "-5px" }}
+                    onRemove={(person) => {
+                      assignPerson(d.id, person);
+                    }}
                   />
                 )}
               </Draggable>
@@ -358,7 +374,11 @@ const MonthView = ({
                     disabled={
                       !isDragging || dragType == null || dragType !== "person"
                     }
+                    editing={editingPeople}
                     style={{ marginTop: "-5px" }}
+                    onRemove={(person) => {
+                      assignPerson(d.id, person);
+                    }}
                   />
                 )}
               </Draggable>
@@ -388,19 +408,10 @@ const MonthView = ({
     setDelta({ x, y });
   };
 
-  useEffect(() => {
-    if (locked) {
-      const items = content
-        .map((d) => d.items)
-        .reduce((acc, val) => acc.concat(val), []);
-      items.forEach((item) => {
-        deselectItem(item.id);
-      });
-      events.forEach((event) => {
-        deselectEvent(event.id);
-      });
-    }
-  }, [locked]);
+  const [setShowModal] = useModalContext(
+    (state) => [state.setShowModal],
+    shallow
+  );
 
   return (
     <DndContext
@@ -429,7 +440,9 @@ const MonthView = ({
       <PersonSelect
         people={people}
         showUsers={showPeople}
-        onToggleShowUsers={() => setShowPeople(!showPeople)}
+        onToggleShowPeople={() => setShowPeople(!showPeople)}
+        onToggleEditPeople={() => setEditingPeople(!editingPeople)}
+        addPerson={() => setShowModal("people")}
       ></PersonSelect>
       <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative max-h-screen overflow:auto select-none">
         <h2 className="text-center hidden md:block mb-3">Monday</h2>
@@ -566,6 +579,9 @@ const MonthView = ({
                       locked={locked}
                       showPeople={showPeople}
                       people={event.people}
+                      onRemovePerson={(person) => {
+                        assignPerson(event.id, person);
+                      }}
                     ></DraggableTape>
                   ) : (
                     <Tape
@@ -617,7 +633,7 @@ const MonthView = ({
         saving={saving}
         showNav={true}
         locked={locked}
-        pendingChanges={pendingChanges > 0}
+        pendingChanges={pendingChanges > 0 || pendingPeoplechanges > 0}
       />
       <DraggableOverlay />
     </DndContext>

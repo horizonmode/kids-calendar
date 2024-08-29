@@ -1,7 +1,25 @@
 import { Person } from "@/types/Items";
-import { RiUserAddLine } from "@remixicon/react";
+import {
+  RiEdit2Line,
+  RiUpload2Line,
+  RiUploadCloudLine,
+  RiUser2Fill,
+  RiUser3Line,
+  RiUserAddLine,
+} from "@remixicon/react";
 import { Icon } from "@tremor/react";
 import Image from "next/image";
+import ContentEditable, { ContentEditableEvent } from "react-contenteditable";
+
+export interface PersonCardProps {
+  person?: Person;
+  hideName?: boolean;
+  selected?: boolean;
+  highlight?: boolean;
+  placeholder?: boolean;
+  editable?: boolean;
+  onEdit?: (person: Person) => void;
+}
 
 function PersonCard({
   person,
@@ -9,15 +27,23 @@ function PersonCard({
   selected,
   highlight,
   placeholder,
-}: {
-  person?: Person;
-  hideName?: boolean;
-  selected?: boolean;
-  highlight?: boolean;
-  placeholder?: boolean;
-}) {
+  editable,
+  onEdit,
+}: PersonCardProps) {
+  const onNameChange = (e: ContentEditableEvent) => {
+    if (person && e.target.value !== person.name && e.target.value !== "") {
+      onEdit && onEdit({ ...person, name: e.target.value });
+    }
+  };
+
+  const onPhotoChange = (e: ContentEditableEvent) => {
+    if (person && e.target.value !== person.photo) {
+      onEdit && onEdit({ ...person, photo: e.target.value });
+    }
+  };
+
   return (
-    <>
+    <div className="flex flex-col justify-start items-center">
       <div
         className={`w-12 h-12 relative rounded-full border-2 border-green-500 ${
           selected
@@ -25,14 +51,18 @@ function PersonCard({
             : highlight
             ? "border-2 border-green-500 border-dashed"
             : "border-hidden"
-        }`}
+        } ${editable ? "w-32 h-32" : ""}`}
       >
-        {placeholder ? (
-          <Icon size="lg" icon={RiUserAddLine} className="rounded-full" />
+        {placeholder || !person?.photo ? (
+          <Icon
+            size="lg"
+            icon={RiUser3Line}
+            className="w-full h-full rounded-full"
+          />
         ) : (
           <Image
             className="bg-black rounded-full"
-            src={person?.photo || "/static/17.jpg"}
+            src={person.photo}
             alt=""
             layout="fill"
           />
@@ -40,12 +70,16 @@ function PersonCard({
       </div>
       {!hideName && person?.name && (
         <div className="py-1">
-          <h3 className=" text-center font-bold text-l text-gray-800 dark:text-white mb-1">
-            {person.name}
-          </h3>
+          <ContentEditable
+            className=" whitespace-normal outline-none p-2"
+            tagName="h3"
+            disabled={!editable} // use true to disable edition
+            html={person.name || ""} // innerHTML of the editable div
+            onChange={onNameChange} // handle innerHTML change
+          />
         </div>
       )}
-    </>
+    </div>
   );
 }
 

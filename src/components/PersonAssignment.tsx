@@ -1,13 +1,20 @@
 import React from "react";
-import { useDroppable } from "@dnd-kit/core";
+
 import classNames from "classnames";
-import Person from "./PersonCard";
+
+import { Icon } from "@tremor/react";
+import { useDroppable } from "@dnd-kit/core";
 import { Person as PersonType } from "@/types/Items";
+import { RiCloseCircleLine } from "@remixicon/react";
+
+import Person from "./PersonCard";
 
 interface PersonAssignmentProps {
   people: PersonType[] | null;
   id: string;
   disabled?: boolean;
+  editing?: boolean;
+  onRemove?: (person: PersonType) => void;
   style?: React.CSSProperties;
 }
 
@@ -15,7 +22,9 @@ function PersonAssignment({
   people,
   id,
   disabled = true,
+  editing = false,
   style,
+  onRemove,
 }: PersonAssignmentProps) {
   const { isOver, setNodeRef } = useDroppable({
     id,
@@ -23,7 +32,11 @@ function PersonAssignment({
   });
 
   return (
-    <div className="flex flex-row justify-start" style={style}>
+    <div
+      className="flex flex-row justify-start"
+      data-no-dnd={editing ? "true" : "false"}
+      style={style}
+    >
       <div
         id={`person-droppable-${id}`}
         ref={setNodeRef}
@@ -36,13 +49,32 @@ function PersonAssignment({
       >
         {people && people.length > 0 ? (
           people?.map((person, i) => (
-            <Person
-              highlight={!disabled}
-              selected={isOver && !disabled}
-              key={`person-${i}`}
-              person={person}
-              hideName={true}
-            />
+            <div className="relative">
+              <Person
+                highlight={!disabled}
+                selected={isOver && !disabled}
+                key={`person-${i}`}
+                person={person}
+                hideName={true}
+              />
+              {editing && (
+                <div
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    onRemove && onRemove(person);
+                  }}
+                  className="pointer-events-auto flex-1 flex justify-center align-middle items-center overflow-visible w-full h-full absolute left-0 top-0 rounded-full z-20 "
+                >
+                  <Icon
+                    size="lg"
+                    className="text-white"
+                    data-no-dnd="true"
+                    icon={RiCloseCircleLine}
+                  />
+                </div>
+              )}
+            </div>
           ))
         ) : (
           <Person

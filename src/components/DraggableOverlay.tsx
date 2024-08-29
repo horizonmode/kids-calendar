@@ -5,7 +5,6 @@ import Tape from "./Tape";
 import Note from "./Note";
 import ResizeIcon from "./ResizeIcon";
 import PostCard from "./PostCard";
-import Text from "./Text";
 import Person from "./PersonCard";
 
 interface OverlayProps {
@@ -26,6 +25,7 @@ function DraggableOverlay({ axis, dragging }: OverlayProps) {
   const getElement = () => {
     switch (active?.data?.current?.type) {
       case "post-it":
+      case "text":
         return (
           <Note
             style={{
@@ -40,13 +40,6 @@ function DraggableOverlay({ axis, dragging }: OverlayProps) {
       case "post-card":
         return (
           <PostCard
-            style={{ ...active.data.current.style }}
-            {...active.data.current.extra}
-          />
-        );
-      case "text":
-        return (
-          <Text
             style={{ ...active.data.current.style }}
             {...active.data.current.extra}
           />

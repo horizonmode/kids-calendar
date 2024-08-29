@@ -1,9 +1,10 @@
+import { ItemType } from "@/types/Items";
 import cosmosSingleton from "@/utils/cosmos";
 export const dynamic = "force-dynamic";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { calendarId: string } }
+  { params }: { params: { calendarId: string; type: ItemType } }
 ) {
   const { calendarId } = params;
   if (!calendarId) {
@@ -14,7 +15,6 @@ export async function PUT(
 
   const res = await request.json();
   const updatedItem = res;
-  console.log(updatedItem);
 
   await cosmosSingleton.initialize();
   const container = cosmosSingleton.getContainer();
@@ -29,6 +29,7 @@ export async function PUT(
   }
 
   updatedItem.calendarId = `${calendarId}`;
+  updatedItem.type = `${params.type}`;
   const result = await container.items.upsert(updatedItem);
 
   if (result.statusCode === 201) {

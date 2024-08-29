@@ -1,4 +1,11 @@
 export type Section = "morning" | "afternoon" | "evening";
+export type ItemType =
+  | "event"
+  | "note"
+  | "task"
+  | "people"
+  | "template"
+  | "schedule";
 
 export interface ScheduleItem {
   day: number;
@@ -26,7 +33,8 @@ export interface Schedule {
 export interface Person {
   id: number;
   name: string;
-  photo: string;
+  photo?: string;
+  softDelete?: boolean;
 }
 
 export interface GenericItem {
@@ -40,6 +48,7 @@ export interface GenericItem {
   order: number;
   editable?: boolean;
   people?: Person[];
+  softDelete?: boolean;
 }
 
 export interface EventItem {

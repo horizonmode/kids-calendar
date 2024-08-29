@@ -1,14 +1,16 @@
 "use client";
 import { useState } from "react";
-import { useEffect } from "react";
 
 import { Days } from "@/utils/days";
 import { shallow } from "zustand/shallow";
+import useModalContext from "@/store/modals";
+import usePersonContext from "@/store/people";
 import MonthView from "@/components/MonthView";
 import Header from "@/components/CalendarHeader";
-import { RiClipboardLine } from "@remixicon/react";
+import PeopleDialog from "@/components/PeopleDialog";
 import { useCalendarContext } from "@/store/calendar";
 import { useParams, useRouter } from "next/navigation";
+import { RiClipboardLine, RiUserAddLine } from "@remixicon/react";
 import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
 import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
 
@@ -26,17 +28,27 @@ export default function Calendar() {
       shallow
     );
 
-  const [showModal, setShowModal] = useState<number | null>(null);
+  const [showModal, setShowModal] = useModalContext(
+    (state) => [state.showModal, state.setShowModal],
+    shallow
+  );
+
+  const [people, syncPeople] = usePersonContext(
+    (state) => [state.people, state.sync],
+    shallow
+  );
+
   const [saving, setSaving] = useState(false);
 
   const router = useRouter();
-  const { calendarId } = useParams();
+  const { calendarId } = useParams<{ calendarId: string }>();
 
   const onSyncClicked = () => {
     const save = async () => {
       setSaving(true);
       if (calendarId && sync) sync(calendarId as string);
-      setShowModal(1);
+      if (people && syncPeople) syncPeople(calendarId as string);
+      setShowModal("saved");
       setSaving(false);
     };
     save();
@@ -51,7 +63,7 @@ export default function Calendar() {
   };
 
   const onShare = () => {
-    setShowModal(2);
+    setShowModal("share");
   };
 
   const onClipboardClick = () => {
@@ -79,7 +91,7 @@ export default function Calendar() {
   };
 
   useWarnIfUnsavedChanges(pendingChanges > 0, () => {
-    setShowModal(3);
+    setShowModal("pending");
     return false;
   });
 
@@ -110,7 +122,7 @@ export default function Calendar() {
         }}
       />
       <Dialog
-        open={showModal === 1}
+        open={showModal === "saved"}
         onClose={(val) => setShowModal(null)}
         static={true}
       >
@@ -127,7 +139,7 @@ export default function Calendar() {
         </DialogPanel>
       </Dialog>
       <Dialog
-        open={showModal === 2}
+        open={showModal === "share"}
         onClose={(val) => setShowModal(null)}
         static={true}
       >
@@ -159,7 +171,7 @@ export default function Calendar() {
         </DialogPanel>
       </Dialog>
       <Dialog
-        open={showModal === 3}
+        open={showModal === "pending"}
         onClose={(val) => setShowModal(null)}
         static={true}
       >
@@ -187,6 +199,11 @@ export default function Calendar() {
           </Button>
         </DialogPanel>
       </Dialog>
+      <PeopleDialog
+        showModal={showModal}
+        onClose={() => setShowModal(null)}
+        calendarId={calendarId}
+      />
     </>
   );
 }
