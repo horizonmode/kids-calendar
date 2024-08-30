@@ -19,7 +19,7 @@ import PostCard from "./PostCard";
 import { GenericItem, ScheduleItem, Section } from "@/types/Items";
 import { Delta } from "./Delta";
 import Draggable from "./Draggable";
-import { useTemplateStore } from "@/store/template";
+import { useTemplateContext } from "@/store/template";
 import Editable from "./Editable";
 
 interface TemplateViewProps {
@@ -43,7 +43,7 @@ const TemplateView = ({
     selectTemplateItem,
     deselectTemplateItem,
     deleteTemplateItem,
-  ] = useTemplateStore(
+  ] = useTemplateContext(
     (state) => [
       state.templates,
       state.toolbarItems,

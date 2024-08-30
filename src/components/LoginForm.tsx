@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { MouseEventHandler, useState } from "react";
-import { RiDoorOpenFill } from "@remixicon/react";
 
 const LoginForm = () => {
   const [calendarId, setCalendarId] = useState("");
@@ -11,14 +10,14 @@ const LoginForm = () => {
   ) => {
     e.preventDefault();
     const id = Date.now();
-    router.push(`/grids/calendar/${id}`);
+    router.push(`/grids/calendar/${id}`, { scroll: false });
   };
   const openCalender: MouseEventHandler<HTMLElement> = (
     event: React.MouseEvent<HTMLElement>
   ) => {
     event.preventDefault();
     if (calendarId) {
-      router.push(`/grids/calendar/${calendarId}`);
+      router.push(`/grids/calendar/${calendarId}`, { scroll: false });
     }
   };
   return (

@@ -14,7 +14,7 @@ import { MouseSensor, TouchSensor } from "@/utils/handlers";
 import Note from "./Note";
 import { shallow } from "zustand/shallow";
 import Toolbar from "./Toolbar";
-import { useScheduleStore } from "@/store/schedule";
+import { useScheduleContext } from "@/store/schedule";
 import PostCard from "./PostCard";
 import { GenericItem, ScheduleItem, Section } from "@/types/Items";
 import { Delta } from "./Delta";
@@ -57,7 +57,7 @@ const ScheduleView = ({
     pendingChanges,
     assignPerson,
     removePerson,
-  ] = useScheduleStore(
+  ] = useScheduleContext(
     (state) => [
       state.schedules,
       state.toolbarItems,
@@ -430,6 +430,7 @@ const ScheduleView = ({
         saving={saving}
         onShare={onShare}
         locked={locked}
+        pendingChanges={pendingChanges > 0 || pendingPeoplechanges > 0}
       />
       <DraggableOverlay />
     </DndContext>

@@ -16,7 +16,7 @@ import {
 import {
   getDaysContent,
   getDaysEvents,
-  Schedule,
+  CalendarDay,
   useCalendarContext,
 } from "@/store/calendar";
 import {
@@ -274,7 +274,7 @@ const MonthView = ({
     transform: d.x === 0 && d.y === 0 ? "translate(-50%,-50%)" : "none",
   });
 
-  const renderItems = (items: Schedule[]) => {
+  const renderItems = (items: CalendarDay[]) => {
     return items.map((day, j) =>
       day.items.map((d, i) => {
         switch (d.type) {

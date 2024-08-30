@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useScheduleStore } from "@/store/schedule";
+import { useScheduleContext } from "@/store/schedule";
 import { shallow } from "zustand/shallow";
 import { Days } from "@/utils/days";
 import { TextInput, Dialog, DialogPanel, Button } from "@tremor/react";
@@ -10,58 +10,62 @@ import { useSearchParams, useParams, useRouter } from "next/navigation";
 import CalendarHeader from "@/components/CalendarHeader";
 import Header from "@/components/ScheduleHeader";
 import ScheduleView from "@/components/ScheduleView";
-import { useTemplateStore } from "@/store/template";
+import { useTemplateContext } from "@/store/template";
 import PeopleDialog from "@/components/PeopleDialog";
-import useModalContext, { ModalType } from "@/store/modals";
+import useModalContext from "@/store/modals";
 
-const SchedulePage = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { id } = useParams<{ id: string }>();
-  const scheduleId = id as string;
-  const year = parseInt(
-    searchParams.get("year") || new Date().getFullYear().toString()
-  );
-  const week = parseInt(
-    searchParams.get("week") || new Days().getWeekNumber(new Date()).toString()
-  );
-  const [templateId, setTemplateId] = useState("");
-  const [saving, setSaving] = useState(false);
+const SchedulePage = ({
+  params,
+  searchParams,
+}: {
+  params: { calendarId: string };
+  searchParams: { week: string; year: string };
+}) => {
+  const [applyTemplate, sync, pendingChanges, week, year, setWeek, setYear] =
+    useScheduleContext(
+      (state) => [
+        state.applyTemplate,
+        state.sync,
+        state.pendingChanges,
+        state.week,
+        state.year,
+        state.setWeek,
+        state.setYear,
+      ],
+      shallow
+    );
 
-  const [applyTemplate, fetch, sync, pendingChanges] = useScheduleStore(
-    (state) => [
-      state.applyTemplate,
-      state.fetch,
-      state.sync,
-      state.pendingChanges,
-    ],
-    shallow
-  );
-
-  const [templates] = useTemplateStore((state) => [state.templates], shallow);
-
+  const [templates] = useTemplateContext((state) => [state.templates], shallow);
   const [showModal, setShowModal] = useModalContext(
     (state) => [state.showModal, state.setShowModal],
     shallow
   );
 
+  const router = useRouter();
+  const { calendarId } = params;
+
+  useEffect(() => {
+    if (searchParams.week) setWeek(parseInt(searchParams.week));
+    if (searchParams.year) setYear(parseInt(searchParams.year));
+  }, [searchParams]);
+
+  const [templateId, setTemplateId] = useState("");
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     if (templates && templates.length > 0) setTemplateId(templates[0].id);
   }, [templates]);
 
-  useEffect(() => {
-    if (id) fetch(scheduleId);
-  }, [id]);
-
   const onSyncClicked = () => {
     setSaving(true);
     const save = async () => {
-      await sync(scheduleId);
+      await sync(calendarId, week, year);
       setShowModal("saved");
       setSaving(false);
     };
     save();
   };
+
   const onNext = () => {
     let nextYear = year;
     let nextWeek = week + 1;
@@ -71,7 +75,10 @@ const SchedulePage = () => {
       nextYear = nextYear + 1;
       nextWeek = 1;
     }
-    router.push(`/grids/schedule/${id}?year=${nextYear}&week=${nextWeek}`);
+    router.push(
+      `/grids/schedule/${calendarId}?year=${nextYear}&week=${nextWeek}`,
+      { scroll: true }
+    );
   };
 
   const onPrev = () => {
@@ -82,7 +89,10 @@ const SchedulePage = () => {
       prevYear = prevYear - 1;
       prevWeek = dateUtil.weeksInYear(prevYear);
     }
-    router.push(`/grids/schedule/${id}?year=${prevYear}&week=${prevWeek - 1}`);
+    router.push(
+      `/grids/schedule/${calendarId}?year=${prevYear}&week=${prevWeek - 1}`,
+      { scroll: true }
+    );
   };
 
   const templateOptions = templates.map((t) => ({
@@ -97,11 +107,11 @@ const SchedulePage = () => {
   };
 
   const onEditTemplateClicked = () => {
-    router.push(`/grids/template/${id}`);
+    router.push(`/grids/template/${calendarId}`, { scroll: false });
   };
 
   const onSwitchClicked = () => {
-    router.push(`/grids/calendar/${id}`);
+    router.push(`/grids/calendar/${calendarId}`, { scroll: false });
   };
 
   const onShare = () => {
@@ -113,7 +123,7 @@ const SchedulePage = () => {
   };
 
   const createNew = () => {
-    router.push("/");
+    router.push("/", { scroll: false });
   };
 
   const tabIndex = 1;
@@ -121,13 +131,13 @@ const SchedulePage = () => {
   const onTabChange = (index: number) => {
     switch (index) {
       case 0:
-        router.push(`/grids/calendar/${id}`);
+        router.push(`/grids/calendar/${calendarId}`, { scroll: false });
         break;
       case 1:
         onSwitchClicked();
         break;
       case 2:
-        router.push(`/grids/template/${id}`);
+        router.push(`/grids/template/${calendarId}`, { scroll: false });
         break;
     }
   };
@@ -136,8 +146,6 @@ const SchedulePage = () => {
     setShowModal("pending");
     return true;
   });
-
-  console.log(showModal);
 
   return (
     <>
@@ -175,7 +183,7 @@ const SchedulePage = () => {
       >
         <DialogPanel>
           <h3 className="text-lg font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
-            Calendar {id} Saved Successfully
+            Calendar {calendarId} Saved Successfully
           </h3>
           <p className="mt-2 leading-6 text-tremor-default text-tremor-content dark:text-dark-tremor-content">
             Your calendar was saved successfully.
@@ -192,7 +200,7 @@ const SchedulePage = () => {
       >
         <DialogPanel>
           <h3 className="text-lg font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
-            Calendar ID: {id}
+            Calendar ID: {calendarId}
           </h3>
           <div className="flex flex-row gap-5 mt-3">
             <TextInput
@@ -238,7 +246,7 @@ const SchedulePage = () => {
             variant="secondary"
             className="mt-4 w-full"
             onClick={async () => {
-              await fetch(scheduleId);
+              await fetch(calendarId);
               setShowModal(null);
             }}
           >
@@ -249,7 +257,7 @@ const SchedulePage = () => {
       <PeopleDialog
         showModal={showModal === "people"}
         onClose={() => setShowModal(null)}
-        calendarId={id}
+        calendarId={calendarId}
       />
     </>
   );

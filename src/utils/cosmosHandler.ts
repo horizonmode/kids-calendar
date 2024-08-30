@@ -1,10 +1,9 @@
-import { Schedule } from "@/store/calendar";
-import { EventItem, Person } from "@/types/Items";
+import { CalendarDay } from "@/store/calendar";
+import { EventItem, Person, Schedule } from "@/types/Items";
 import cosmosSingleton from "./cosmos";
-import Calendar from "@/app/grids/calendar/[calendarId]/page";
 
 interface DayResponse {
-  days: Schedule[];
+  days: CalendarDay[];
   events: EventItem[];
 }
 
@@ -28,8 +27,8 @@ export async function GetDays(calendarId: string): Promise<DayResponse> {
   try {
     const query = `SELECT * from s where (s.type = 'day' or s.type = 'event') and s.calendarId = '${calendarId}'`;
     var json = await get(query);
-    days = json.filter((r: Schedule | EventItem) => r.type === "day");
-    events = json.filter((r: Schedule | EventItem) => r.type === "event");
+    days = json.filter((r: CalendarDay | EventItem) => r.type === "day");
+    events = json.filter((r: CalendarDay | EventItem) => r.type === "event");
   } catch (err) {
     console.error(err);
   } finally {
@@ -56,4 +55,25 @@ export async function GetPeople(calendarId: string): Promise<PersonResponse> {
     return { people: [{ id: 1, name: "Person 1" }], id: null, calendarId };
   }
   return peopleResponse;
+}
+
+export async function GetSchedules(calendarId: string): Promise<Schedule[]> {
+  let schedules: Schedule[] = [];
+  try {
+    const query = `SELECT * from s where s.type = 'schedule' and s.calendarId = '${calendarId}'`;
+    schedules = (await get(query)) as Schedule[];
+  } catch (err) {
+    console.error(err);
+  }
+  return schedules;
+}
+export async function GetTemplates(calendarId: string) {
+  let templates = [];
+  try {
+    const query = `SELECT * from s where s.type = 'template' and s.calendarId = '${calendarId}'`;
+    templates = (await get(query)) as any;
+  } catch (err) {
+    console.error(err);
+  }
+  return templates;
 }

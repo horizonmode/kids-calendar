@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { use, useState } from "react";
 
 import { Days } from "@/utils/days";
 import { shallow } from "zustand/shallow";
@@ -10,7 +10,7 @@ import Header from "@/components/CalendarHeader";
 import PeopleDialog from "@/components/PeopleDialog";
 import { useCalendarContext } from "@/store/calendar";
 import { useParams, useRouter } from "next/navigation";
-import { RiClipboardLine, RiUserAddLine } from "@remixicon/react";
+import { RiClipboardLine } from "@remixicon/react";
 import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
 import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
 
@@ -58,7 +58,8 @@ export default function Calendar() {
     const daysUtil = new Days();
     const week = daysUtil.getWeekNumber(selectedDay);
     router.push(
-      `/grids//schedule/${calendarId}?year=${selectedDay.getFullYear()}&week=${week}`
+      `/grids/schedule/${calendarId}?year=${selectedDay.getFullYear()}&week=${week}`,
+      { scroll: false }
     );
   };
 
@@ -71,7 +72,7 @@ export default function Calendar() {
   };
 
   const createNew = () => {
-    router.push("/");
+    router.push("/", { scroll: false });
   };
 
   const tabIndex = 0;
@@ -79,13 +80,13 @@ export default function Calendar() {
   const onTabChange = (index: number) => {
     switch (index) {
       case 0:
-        router.push(`/grids/calendar/${calendarId}`);
+        router.push(`/grids/calendar/${calendarId}`, { scroll: false });
         break;
       case 1:
         onSwitchClicked();
         break;
       case 2:
-        router.push(`/grids/template/${calendarId}`);
+        router.push(`/grids/template/${calendarId}`, { scroll: false });
         break;
     }
   };

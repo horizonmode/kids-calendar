@@ -28,6 +28,7 @@ export interface Schedule {
   type: string;
   schedule: ScheduleItem[];
   softDelete?: boolean;
+  calendarId?: string;
 }
 
 export interface Person {

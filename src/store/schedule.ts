@@ -1,5 +1,4 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createStore } from "zustand";
 import { v4 as uuidv4 } from "uuid";
 import { Delta } from "@/components/Delta";
 import {
@@ -8,8 +7,10 @@ import {
   Schedule,
   ScheduleItem,
   Section,
-  Template,
 } from "@/types/Items";
+import { createContext, useContext } from "react";
+import { useStoreWithEqualityFn } from "zustand/traditional";
+import { persist } from "zustand/middleware";
 
 const initialSchedules: Schedule[] = [
   {
@@ -177,7 +178,13 @@ const removePersonIfExists = (item: GenericItem, person: Person) => {
   if (personIndex > -1) item.people.splice(personIndex, 1);
 };
 
+export interface ScheduleProps {
+  schedules: Schedule[];
+}
+
 export interface ScheduleState {
+  year: number;
+  week: number;
   schedules: Schedule[];
   toolbarItems: GenericItem[];
   pendingChanges: number;
@@ -195,6 +202,8 @@ export interface ScheduleState {
     year: number,
     week: number
   ) => void;
+  setWeek: (week: number) => void;
+  setYear: (year: number) => void;
   deleteScheduleItem: (itemId: string, year: number, week: number) => void;
   selectItem: (itemId: string, year: number, week: number) => void;
   deselectItem: (itemId: string, year: number, week: number) => void;
@@ -204,341 +213,375 @@ export interface ScheduleState {
   assignPerson: (itemId: string, person: Person) => void;
   removePerson: (sourceId: string, person: Person) => void;
   fetch: (calendarId: string) => Promise<void>;
-  sync: (calendarId: string) => Promise<void>;
+  sync: (calendarId: string, week: number, year: number) => Promise<void>;
 }
 
-const useScheduleStore = create<ScheduleState>()(
-  persist(
-    (set, get) => ({
-      schedules: initialSchedules,
-      toolbarItems: toolbarItems,
-      pendingChanges: 0,
-      reorderSchedule: (
-        itemId: string,
-        targetDay: number,
-        targetSection: string,
-        delta: Delta,
-        year: number,
-        week: number
-      ) =>
-        set((state: ScheduleState) => {
-          const newSchedules = [...state.schedules];
-          const scheduleItemIndex = newSchedules.findIndex(
-            (n) => n.year === year && n.week === week
-          );
-          let scheduleItem = null;
-          if (scheduleItemIndex === -1) {
-            scheduleItem = { year, week, schedule: [], type: "schedule" };
-            newSchedules.push(scheduleItem);
-          } else {
-            scheduleItem = newSchedules[scheduleItemIndex];
-          }
-          const { dayIndex, section, sectionIndex } = findDay(
-            itemId,
-            scheduleItem.schedule
-          );
+export type ScheduleStore = ReturnType<typeof createScheduleStore>;
 
-          let item = null;
-          let newState = {};
+export const createScheduleStore = (initProps?: ScheduleProps) => {
+  const DEFAULT: ScheduleProps = {
+    schedules: initialSchedules,
+  };
 
-          if (dayIndex === null) {
-            // look in toolbar items
-            const newToolbarItems = [...state.toolbarItems];
-            const toolbarIndex = newToolbarItems.findIndex(
-              (d) => d.id === itemId
+  return createStore<ScheduleState>()(
+    persist(
+      (set, get) => ({
+        ...DEFAULT,
+        ...initProps,
+        toolbarItems,
+        year: new Date().getFullYear(),
+        week: 1,
+        pendingChanges: 0,
+        setYear: (year: number) => set({ year }),
+        setWeek: (week: number) => set({ week }),
+        reorderSchedule: (
+          itemId: string,
+          targetDay: number,
+          targetSection: string,
+          delta: Delta,
+          year: number,
+          week: number
+        ) =>
+          set((state: ScheduleState) => {
+            const newSchedules = [...state.schedules];
+            const scheduleItemIndex = newSchedules.findIndex(
+              (n) => n.year === year && n.week === week
             );
-            if (toolbarIndex > -1) {
-              item = newToolbarItems[toolbarIndex];
-              newToolbarItems[toolbarIndex] = {
-                ...item,
-                id: Date.now().toString(),
-              };
-              newState = { ...newState, toolbarItems: newToolbarItems };
+            let scheduleItem = null;
+            if (scheduleItemIndex === -1) {
+              scheduleItem = { year, week, schedule: [], type: "schedule" };
+              newSchedules.push(scheduleItem);
+            } else {
+              scheduleItem = newSchedules[scheduleItemIndex];
             }
-          } else {
-            const sectionProperty = findSection(
-              section as "morning" | "afternoon" | "evening",
-              scheduleItem.schedule[dayIndex]
-            );
-            if (sectionProperty == null) return state;
-            item = sectionProperty[sectionIndex];
-            sectionProperty.splice(sectionIndex, 1);
-          }
-
-          if (item === null) return state;
-          const templateItem = item as GenericItem;
-
-          templateItem.x = delta.x * 100;
-          templateItem.y = delta.y * 100;
-          let targetDayObj = scheduleItem.schedule.find(
-            (d) => d.day === targetDay + 1
-          );
-          if (!targetDayObj) {
-            targetDayObj = {
-              day: targetDay + 1,
-              morning: [],
-              afternoon: [],
-              evening: [],
-            };
-            scheduleItem.schedule.push(targetDayObj);
-          }
-          const targetSectionProperty = findSection(
-            targetSection as "morning" | "afternoon" | "evening",
-            targetDayObj
-          );
-          targetSectionProperty.push(item as GenericItem);
-          newState = {
-            ...newState,
-            schedules: newSchedules,
-            pendingChanges: state.pendingChanges + 1,
-          };
-          return newState;
-        }),
-      editItem: (
-        itemId: string,
-        newItem: GenericItem,
-        year: number,
-        week: number
-      ) =>
-        set((state: ScheduleState) => {
-          const newSchedules = [...state.schedules];
-          const newSchedule = newSchedules.find(
-            (n) => n.year === year && n.week === week
-          )!.schedule;
-          const { dayIndex, section, sectionIndex } = findDay(
-            itemId,
-            newSchedule
-          );
-          if (dayIndex === null) return state;
-          const sectionKey = section as keyof (typeof newSchedule)[0];
-          const items = newSchedule[dayIndex][sectionKey] as GenericItem[];
-          items[sectionIndex] = newItem;
-          reOrderAll(newSchedule[dayIndex][sectionKey] as GenericItem[]);
-          return {
-            schedules: newSchedules,
-            pendingChanges: state.pendingChanges + 1,
-          };
-        }),
-      deleteScheduleItem: (itemId: string, year: number, week: number) =>
-        set((state: ScheduleState) => {
-          const newSchedules = [...state.schedules];
-          const newSchedule = newSchedules.find(
-            (n) => n.year === year && n.week === week
-          )!.schedule;
-          const { dayIndex, section, sectionIndex } = findDay(
-            itemId,
-            newSchedule
-          );
-          if (dayIndex === null) return state;
-          const sectionKey = section as keyof ScheduleItem;
-          const newSection = newSchedule[dayIndex][sectionKey] as GenericItem[];
-          const splicednewSection = [
-            ...newSection.slice(0, sectionIndex),
-            ...newSection.slice(sectionIndex + 1),
-          ];
-          const schedule = newSchedule[dayIndex];
-          if (sectionKey === "morning") {
-            schedule.morning = splicednewSection;
-          }
-          if (sectionKey === "afternoon") {
-            schedule.afternoon = splicednewSection;
-          }
-          if (sectionKey === "evening") {
-            schedule.evening = splicednewSection;
-          }
-
-          reOrderAll(newSchedule[dayIndex][sectionKey] as GenericItem[]);
-          return {
-            schedules: newSchedules,
-            pendingChanges: state.pendingChanges + 1,
-          };
-        }),
-      selectItem: (itemId: string, year: number, week: number) =>
-        set((state: ScheduleState) => {
-          const newSchedules = [...state.schedules];
-          const newSchedule = newSchedules.find(
-            (n) => n.year === year && n.week === week
-          )!.schedule;
-          const { dayIndex, section, sectionIndex } = findDay(
-            itemId,
-            newSchedule
-          );
-          if (dayIndex === null) return state;
-          const sectionKey = section as keyof ScheduleItem;
-          const { item } = findItem(
-            newSchedule[dayIndex][sectionKey] as GenericItem[],
-            itemId
-          );
-          item.editable = true;
-          reOrderLayers(
-            newSchedule[dayIndex][sectionKey] as GenericItem[],
-            item
-          );
-          return {
-            schedules: newSchedules,
-            pendingChanges: state.pendingChanges + 1,
-          };
-        }),
-      deselectItem: (itemId: string, year: number, week: number) =>
-        set((state: ScheduleState) => {
-          const newSchedules = [...state.schedules];
-          const newSchedule = newSchedules.find(
-            (n) => n.year === year && n.week === week
-          )!.schedule;
-          const { dayIndex, section, sectionIndex } = findDay(
-            itemId,
-            newSchedule
-          );
-          if (dayIndex === null) return state;
-          const sectionKey = section as keyof ScheduleItem;
-          const { item } = findItem(
-            newSchedule[dayIndex][sectionKey] as GenericItem[],
-            itemId
-          );
-          item.editable = false;
-          reOrderLayers(
-            newSchedule[dayIndex][sectionKey] as GenericItem[],
-            item
-          );
-          return {
-            schedules: newSchedules,
-            pendingChanges: state.pendingChanges + 1,
-          };
-        }),
-      applyTemplate: (template: ScheduleItem[], week: number, year: number) =>
-        set((state: ScheduleState) => {
-          const newSchedules = [...state.schedules];
-
-          let mergedSchedule = newSchedules.find(
-            (s) => s.year === year && s.week === week
-          );
-
-          if (!mergedSchedule) {
-            mergedSchedule = {
-              week,
-              year,
-              schedule: [],
-              type: "schedule",
-            };
-            newSchedules.push(mergedSchedule);
-          }
-          // Add template items to schedule
-          for (var i = 0; i < template.length; i++) {
-            var daySchedule = template[i];
-            let existingDay = mergedSchedule.schedule.find(
-              (m: ScheduleItem) => m.day === daySchedule.day
+            const { dayIndex, section, sectionIndex } = findDay(
+              itemId,
+              scheduleItem.schedule
             );
 
-            if (!existingDay) {
-              existingDay = {
-                day: daySchedule.day,
+            let item = null;
+            let newState = {};
+
+            if (dayIndex === null) {
+              // look in toolbar items
+              const newToolbarItems = [...state.toolbarItems];
+              const toolbarIndex = newToolbarItems.findIndex(
+                (d) => d.id === itemId
+              );
+              if (toolbarIndex > -1) {
+                item = newToolbarItems[toolbarIndex];
+                const toolbarId = item.id;
+                item.id = uuidv4();
+                newToolbarItems[toolbarIndex] = {
+                  ...item,
+                  id: toolbarId,
+                };
+                newState = { ...newState, toolbarItems: newToolbarItems };
+              }
+            } else {
+              const sectionProperty = findSection(
+                section as "morning" | "afternoon" | "evening",
+                scheduleItem.schedule[dayIndex]
+              );
+              if (sectionProperty == null) return state;
+              item = sectionProperty[sectionIndex];
+              sectionProperty.splice(sectionIndex, 1);
+            }
+
+            if (item === null) return state;
+            const templateItem = item as GenericItem;
+
+            templateItem.x = delta.x * 100;
+            templateItem.y = delta.y * 100;
+            let targetDayObj = scheduleItem.schedule.find(
+              (d) => d.day === targetDay + 1
+            );
+            if (!targetDayObj) {
+              targetDayObj = {
+                day: targetDay + 1,
                 morning: [],
                 afternoon: [],
                 evening: [],
               };
-              mergedSchedule.schedule.push(existingDay);
+              scheduleItem.schedule.push(targetDayObj);
+            }
+            const targetSectionProperty = findSection(
+              targetSection as "morning" | "afternoon" | "evening",
+              targetDayObj
+            );
+            targetSectionProperty.push(item as GenericItem);
+            newState = {
+              ...newState,
+              schedules: newSchedules,
+              pendingChanges: state.pendingChanges + 1,
+            };
+            return newState;
+          }),
+        editItem: (
+          itemId: string,
+          newItem: GenericItem,
+          year: number,
+          week: number
+        ) =>
+          set((state: ScheduleState) => {
+            const newSchedules = [...state.schedules];
+            const newSchedule = newSchedules.find(
+              (n) => n.year === year && n.week === week
+            )!.schedule;
+            const { dayIndex, section, sectionIndex } = findDay(
+              itemId,
+              newSchedule
+            );
+            if (dayIndex === null) return state;
+            const sectionKey = section as keyof (typeof newSchedule)[0];
+            const items = newSchedule[dayIndex][sectionKey] as GenericItem[];
+            items[sectionIndex] = newItem;
+            reOrderAll(newSchedule[dayIndex][sectionKey] as GenericItem[]);
+            return {
+              schedules: newSchedules,
+              pendingChanges: state.pendingChanges + 1,
+            };
+          }),
+        deleteScheduleItem: (itemId: string, year: number, week: number) =>
+          set((state: ScheduleState) => {
+            const newSchedules = [...state.schedules];
+            const newSchedule = newSchedules.find(
+              (n) => n.year === year && n.week === week
+            )!.schedule;
+            const { dayIndex, section, sectionIndex } = findDay(
+              itemId,
+              newSchedule
+            );
+            if (dayIndex === null) return state;
+            const sectionKey = section as keyof ScheduleItem;
+            const newSection = newSchedule[dayIndex][
+              sectionKey
+            ] as GenericItem[];
+            const splicednewSection = [
+              ...newSection.slice(0, sectionIndex),
+              ...newSection.slice(sectionIndex + 1),
+            ];
+            const schedule = newSchedule[dayIndex];
+            if (sectionKey === "morning") {
+              schedule.morning = splicednewSection;
+            }
+            if (sectionKey === "afternoon") {
+              schedule.afternoon = splicednewSection;
+            }
+            if (sectionKey === "evening") {
+              schedule.evening = splicednewSection;
             }
 
-            cloneItems(daySchedule.morning, existingDay.morning);
-            cloneItems(daySchedule.afternoon, existingDay.afternoon);
-            cloneItems(daySchedule.evening, existingDay.evening);
-          }
+            reOrderAll(newSchedule[dayIndex][sectionKey] as GenericItem[]);
+            return {
+              schedules: newSchedules,
+              pendingChanges: state.pendingChanges + 1,
+            };
+          }),
+        selectItem: (itemId: string, year: number, week: number) =>
+          set((state: ScheduleState) => {
+            const newSchedules = [...state.schedules];
+            const newSchedule = newSchedules.find(
+              (n) => n.year === year && n.week === week
+            )!.schedule;
+            const { dayIndex, section, sectionIndex } = findDay(
+              itemId,
+              newSchedule
+            );
+            if (dayIndex === null) return state;
+            const sectionKey = section as keyof ScheduleItem;
+            const { item } = findItem(
+              newSchedule[dayIndex][sectionKey] as GenericItem[],
+              itemId
+            );
+            item.editable = true;
+            reOrderLayers(
+              newSchedule[dayIndex][sectionKey] as GenericItem[],
+              item
+            );
+            return {
+              schedules: newSchedules,
+              pendingChanges: state.pendingChanges + 1,
+            };
+          }),
+        deselectItem: (itemId: string, year: number, week: number) =>
+          set((state: ScheduleState) => {
+            const newSchedules = [...state.schedules];
+            const newSchedule = newSchedules.find(
+              (n) => n.year === year && n.week === week
+            )!.schedule;
+            const { dayIndex, section, sectionIndex } = findDay(
+              itemId,
+              newSchedule
+            );
+            if (dayIndex === null) return state;
+            const sectionKey = section as keyof ScheduleItem;
+            const { item } = findItem(
+              newSchedule[dayIndex][sectionKey] as GenericItem[],
+              itemId
+            );
+            item.editable = false;
+            reOrderLayers(
+              newSchedule[dayIndex][sectionKey] as GenericItem[],
+              item
+            );
+            return {
+              schedules: newSchedules,
+              pendingChanges: state.pendingChanges + 1,
+            };
+          }),
+        applyTemplate: (template: ScheduleItem[], week: number, year: number) =>
+          set((state: ScheduleState) => {
+            const newSchedules = [...state.schedules];
 
-          return {
-            schedules: newSchedules,
-            pendingChanges: state.pendingChanges + 1,
-          };
-        }),
-      syncItem: async (updatedItem: Schedule, calendarId: string) => {
-        return await fetch(`/api/update/${calendarId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedItem),
-        });
-      },
-      deleteItem: async (updatedItem: Schedule, calendarId: string) => {
-        return await fetch(`/api/days/delete/${calendarId}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedItem),
-        });
-      },
-      assignPerson: (itemId: string, person: Person) => {
-        set((state: ScheduleState) => {
-          const newSchedules = [...state.schedules];
-          const item = findItemInSchedules(itemId, newSchedules);
-          if (!item) return state;
-          addPersonIfNotExists(item, person);
+            let mergedSchedule = newSchedules.find(
+              (s) => s.year === year && s.week === week
+            );
 
-          return {
-            schedules: newSchedules,
-            pendingChanges: state.pendingChanges + 1,
-          };
-        });
-      },
-      removePerson: (sourceId: string, person: Person) => {
-        set((state: ScheduleState) => {
-          const newSchedules = [...state.schedules];
-          const item = findItemInSchedules(sourceId, newSchedules);
-          if (!item) return state;
-          removePersonIfExists(item, person);
+            if (!mergedSchedule) {
+              mergedSchedule = {
+                week,
+                year,
+                schedule: [],
+                type: "schedule",
+              };
+              newSchedules.push(mergedSchedule);
+            }
+            // Add template items to schedule
+            for (var i = 0; i < template.length; i++) {
+              var daySchedule = template[i];
+              let existingDay = mergedSchedule.schedule.find(
+                (m: ScheduleItem) => m.day === daySchedule.day
+              );
 
-          return {
-            schedules: newSchedules,
-            pendingChanges: state.pendingChanges + 1,
-          };
-        });
-      },
-      fetch: async (calendarId: string) => {
-        const schedulesRequest = await fetch(`/api/week/${calendarId}`);
-        const schedules = await schedulesRequest.json();
-        set({ schedules, pendingChanges: 0 });
-      },
+              if (!existingDay) {
+                existingDay = {
+                  day: daySchedule.day,
+                  morning: [],
+                  afternoon: [],
+                  evening: [],
+                };
+                mergedSchedule.schedule.push(existingDay);
+              }
 
-      sync: async (calendarId: string) => {
-        const { schedules, syncItem, deleteItem } = get() as ScheduleState;
-        const savedSchedules = [];
-        for (var i = 0; i < schedules.length; i++) {
-          const item = schedules[i];
-          if (item.softDelete) {
-            await deleteItem(item, calendarId);
-          } else {
-            const res = await syncItem(item, calendarId);
-            const resObj = await res.json();
-            savedSchedules.push(resObj);
-          }
-        }
-        set({
-          schedules: savedSchedules,
-          pendingChanges: 0,
-        });
-      },
-    }),
-    {
-      name: "schedule-storage",
-      storage: {
-        getItem: (name) => {
-          const str = localStorage.getItem(name);
-          if (!str) return null;
-          return {
-            state: {
-              ...JSON.parse(str).state,
-              selectedDay: new Date(JSON.parse(str).state.selectedDay),
-            },
-          };
-        },
-        setItem: (name, newValue) => {
-          const str = JSON.stringify({
-            state: {
-              ...newValue.state,
-            },
+              cloneItems(daySchedule.morning, existingDay.morning);
+              cloneItems(daySchedule.afternoon, existingDay.afternoon);
+              cloneItems(daySchedule.evening, existingDay.evening);
+            }
+
+            return {
+              schedules: newSchedules,
+              pendingChanges: state.pendingChanges + 1,
+            };
+          }),
+        syncItem: async (updatedItem: Schedule, calendarId: string) => {
+          return await fetch(`/api/update/${calendarId}/schedule`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedItem),
           });
-          localStorage.setItem(name, str);
         },
-        removeItem: (name) => localStorage.removeItem(name),
-      },
-    }
-  )
-);
+        deleteItem: async (updatedItem: Schedule, calendarId: string) => {
+          return await fetch(`/api/days/delete/${calendarId}`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedItem),
+          });
+        },
+        assignPerson: (itemId: string, person: Person) => {
+          set((state: ScheduleState) => {
+            const newSchedules = [...state.schedules];
+            const item = findItemInSchedules(itemId, newSchedules);
+            if (!item) return state;
+            addPersonIfNotExists(item, person);
 
-export { useScheduleStore };
+            return {
+              schedules: newSchedules,
+              pendingChanges: state.pendingChanges + 1,
+            };
+          });
+        },
+        removePerson: (sourceId: string, person: Person) => {
+          set((state: ScheduleState) => {
+            const newSchedules = [...state.schedules];
+            const item = findItemInSchedules(sourceId, newSchedules);
+            if (!item) return state;
+            removePersonIfExists(item, person);
+
+            return {
+              schedules: newSchedules,
+              pendingChanges: state.pendingChanges + 1,
+            };
+          });
+        },
+        fetch: async (calendarId: string) => {
+          const schedulesRequest = await fetch(`/api/week/${calendarId}`);
+          const schedules = await schedulesRequest.json();
+          set({ schedules, pendingChanges: 0 });
+        },
+
+        sync: async (calendarId: string, week: number, year: number) => {
+          const { schedules, syncItem, deleteItem } = get() as ScheduleState;
+          const savedSchedules = [];
+          for (var i = 0; i < schedules.length; i++) {
+            const item = schedules[i];
+            if (item.softDelete) {
+              await deleteItem(item, calendarId);
+            } else {
+              item.week = week;
+              item.year = year;
+              const res = await syncItem(item, calendarId);
+              const resObj = await res.json();
+              savedSchedules.push(resObj);
+            }
+          }
+          set({
+            schedules: savedSchedules,
+            pendingChanges: 0,
+          });
+        },
+      }),
+      {
+        name: "schedule-storage",
+        partialize: (state) => ({
+          year: state.year,
+          week: state.week,
+        }),
+        storage: {
+          getItem: (name) => {
+            const str = localStorage.getItem(name);
+            if (!str) return null;
+            return {
+              state: {
+                ...JSON.parse(str).state,
+                selectedDay: new Date(JSON.parse(str).state.selectedDay),
+              },
+            };
+          },
+          setItem: (name, newValue) => {
+            const str = JSON.stringify({
+              state: {
+                ...newValue.state,
+              },
+            });
+            localStorage.setItem(name, str);
+          },
+          removeItem: (name) => localStorage.removeItem(name),
+        },
+      }
+    )
+  );
+};
+
+export const ScheduleContext = createContext<ScheduleStore | null>(null);
+
+function useScheduleContext<T>(
+  selector: (state: ScheduleState) => T,
+  equalityFn?: (left: T, right: T) => boolean
+): T {
+  const store = useContext(ScheduleContext);
+  if (!store) throw new Error("Missing ScheduleContext.Provider in the tree");
+  return useStoreWithEqualityFn(store, selector, equalityFn);
+}
+
+export { useScheduleContext };

@@ -30,6 +30,7 @@ export async function PUT(
 
   updatedItem.calendarId = `${calendarId}`;
   updatedItem.type = `${params.type}`;
+  console.log(calendarId, params.type, updatedItem);
   const result = await container.items.upsert(updatedItem);
 
   if (result.statusCode === 201) {

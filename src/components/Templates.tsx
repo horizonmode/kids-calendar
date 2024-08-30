@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@tremor/react";
 import { shallow } from "zustand/shallow";
 import { Button } from "@tremor/react";
-import { useTemplateStore } from "@/store/template";
+import { useTemplateContext } from "@/store/template";
 
 interface AdminProps {
   calendarId: string;
@@ -17,7 +17,7 @@ export default function Admin({ calendarId }: AdminProps) {
   const [selectedTempateId, setSelectedTemplateId] = useState("");
 
   const [templates, createTemplate, deleteTemplate, sync, fetch] =
-    useTemplateStore(
+    useTemplateContext(
       (state) => [
         state.templates,
         state.createTemplate,

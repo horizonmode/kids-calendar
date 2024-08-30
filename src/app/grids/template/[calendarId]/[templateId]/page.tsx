@@ -1,20 +1,19 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Head from "next/head";
-import { useRouter } from "next/navigation";
-import { useScheduleStore } from "@/store/schedule";
+
 import { shallow } from "zustand/shallow";
-import Header from "@/components/CalendarHeader";
-import { TextInput, Dialog, DialogPanel, Button } from "@tremor/react";
-import { RiClipboardLine } from "@remixicon/react";
-import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
+import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
+import Header from "@/components/CalendarHeader";
+import { RiClipboardLine } from "@remixicon/react";
+import { useTemplateContext } from "@/store/template";
 import TemplateView from "@/components/TemplateView";
-import { useTemplateStore } from "@/store/template";
+import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
+import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
 
 const TemplateEditPage = () => {
   const [templates, editTemplate, sync, fetch, pendingChanges] =
-    useTemplateStore(
+    useTemplateContext(
       (state) => [
         state.templates,
         state.editTemplate,
@@ -32,11 +31,6 @@ const TemplateEditPage = () => {
   }>();
 
   const template = templates.find((t) => t.id === templateId);
-
-  useEffect(() => {
-    if (calendarId) fetch(calendarId);
-  }, [calendarId]);
-
   const [showModal, setShowModal] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -55,7 +49,7 @@ const TemplateEditPage = () => {
   };
 
   const onSwitchClicked = () => {
-    router.push(`/grids/template/${calendarId}`);
+    router.push(`/grids/template/${calendarId}`, { scroll: false });
   };
 
   const onSyncClicked = () => {
@@ -77,7 +71,7 @@ const TemplateEditPage = () => {
   };
 
   const createNew = () => {
-    router.push("/");
+    router.push("/", { scroll: false });
   };
 
   return (

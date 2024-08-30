@@ -5,7 +5,7 @@ import { Delta } from "@/components/Delta";
 import { createContext, useContext } from "react";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 
-export interface Schedule {
+export interface CalendarDay {
   day: number;
   month: number;
   year: number;
@@ -15,7 +15,7 @@ export interface Schedule {
   softDelete?: boolean;
 }
 
-const initialDays: Schedule[] = [
+const initialDays: CalendarDay[] = [
   {
     day: 1,
     month: 2,
@@ -183,7 +183,7 @@ const getDaysContent = ({
   days,
   selectedDay,
 }: {
-  days: Schedule[];
+  days: CalendarDay[];
   selectedDay: Date;
 }) => {
   return days.filter(
@@ -210,7 +210,7 @@ const getDaysEvents = ({
 };
 
 export interface CalendarProps {
-  days: Schedule[];
+  days: CalendarDay[];
   events: EventItem[];
 }
 
@@ -223,8 +223,8 @@ export interface CalendarState extends CalendarProps {
   nextMonth: () => void;
   prevMonth: () => void;
   setSelectedDay: (selectedDay: Date) => void;
-  setDays: (days: Schedule[]) => void;
-  addDay: (day: Schedule) => void;
+  setDays: (days: CalendarDay[]) => void;
+  addDay: (day: CalendarDay) => void;
   addEvent: (event: EventItem) => void;
   editDay: (itemId: string, newItem: GenericItem) => void;
   deleteItem: (itemId: string) => void;
@@ -260,13 +260,13 @@ export interface CalendarState extends CalendarProps {
     action: string
   ) => void;
   deleteDay: (
-    updatedItem: Schedule | EventItem,
+    updatedItem: CalendarDay | EventItem,
     id: string
   ) => Promise<Response>;
   assignPerson: (itemId: string, person: Person) => void;
   removePerson: (sourceId: string, person: Person) => void;
   syncItem: (
-    updatedItem: Schedule | EventItem,
+    updatedItem: CalendarDay | EventItem,
     id: string
   ) => Promise<Response>;
   fetch: (id: string) => Promise<void>;
@@ -318,8 +318,8 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
         ),
       })),
     setSelectedDay: (selectedDay: Date) => set(() => ({ selectedDay })),
-    setDays: (days: Schedule[]) => set({ days }),
-    addDay: (day: Schedule) =>
+    setDays: (days: CalendarDay[]) => set({ days }),
+    addDay: (day: CalendarDay) =>
       set((state: CalendarState) => ({ days: [...state.days, day] })),
     addEvent: (event: EventItem) =>
       set((state: CalendarState) => ({ events: [...state.events, event] })),
@@ -438,7 +438,7 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
         let dayItemIndex = newDays.findIndex(
           (d) => d.day === day && d.month === month + 1 && d.year === year
         );
-        let dayItem: Schedule;
+        let dayItem: CalendarDay;
         if (dayItemIndex == -1) {
           dayItem = {
             day: day,
@@ -491,7 +491,7 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
               order: 0,
               color: item.color,
             };
-            let targetDay: Schedule | undefined = newDays.find(
+            let targetDay: CalendarDay | undefined = newDays.find(
               (d) =>
                 d.day === overId && d.month === month + 1 && d.year === year
             );
@@ -719,14 +719,14 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
         return { days: newDays, events: newEvents };
       });
     },
-    syncItem: async (updatedItem: Schedule | EventItem, id: string) => {
+    syncItem: async (updatedItem: CalendarDay | EventItem, id: string) => {
       return await fetch(`/api/update/${id}/${updatedItem.type}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedItem),
       });
     },
-    deleteDay: async (updatedItem: Schedule | EventItem, id: string) => {
+    deleteDay: async (updatedItem: CalendarDay | EventItem, id: string) => {
       return await fetch(`/api/days/${id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -737,10 +737,10 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
       const response = await fetch(`/api/days/${id}`);
       const allData = await response.json();
       const days = allData.filter(
-        (r: Schedule | EventItem) => r.type === "day"
+        (r: CalendarDay | EventItem) => r.type === "day"
       );
       const events = allData.filter(
-        (r: Schedule | EventItem) => r.type === "event"
+        (r: CalendarDay | EventItem) => r.type === "event"
       );
       set({ days, events, pendingChanges: 0 });
     },
