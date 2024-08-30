@@ -6,28 +6,22 @@ import React, {
   useRef,
   useState,
 } from "react";
-import Note from "./Note";
-import PostCard from "./PostCard";
-import {
-  RiArrowRightLine,
-  RiEditFill,
-  RiEditLine,
-  RiLock2Line,
-  RiLockUnlockLine,
-  RiUser2Line,
-  RiUserAddLine,
-} from "@remixicon/react";
+
+import { Button, Icon } from "@tremor/react";
+import { useDroppable } from "@dnd-kit/core";
+import { RiSave2Line } from "@remixicon/react";
 import { RiArrowLeftLine } from "@remixicon/react";
 import { RiArrowDownLine } from "@remixicon/react";
-import { Icon, Button } from "@tremor/react";
-import { RiSave2Line } from "@remixicon/react";
 import { RiInformationLine } from "@remixicon/react";
-import { RiArrowRightWideLine } from "@remixicon/react";
 import { RiArrowLeftWideLine } from "@remixicon/react";
-import { useDroppable } from "@dnd-kit/core";
+import { RiArrowRightWideLine } from "@remixicon/react";
+import { RiArrowRightLine, RiEditFill, RiEditLine } from "@remixicon/react";
+
+import Note from "./Note";
+import PostCard from "./PostCard";
 import Draggable from "./Draggable";
-import { GenericItem, EventItem } from "../types/Items";
 import DraggableTape from "./DraggableTape";
+import { EventItem, GenericItem } from "../types/Items";
 
 interface ToolbarProps {
   toolbarItems: (GenericItem | EventItem)[];
