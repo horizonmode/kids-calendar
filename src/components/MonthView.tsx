@@ -86,9 +86,7 @@ const MonthView = ({
     removePerson,
     pendingChanges,
     locked,
-    showPeople,
     setLocked,
-    setShowPeople,
   ] = useCalendarContext(
     (state) => [
       state.selectedDay,
@@ -112,17 +110,21 @@ const MonthView = ({
       state.removePerson,
       state.pendingChanges,
       state.locked,
-      state.showPeople,
       state.setLocked,
-      state.setShowPeople,
     ],
     shallow
   );
 
-  const [people, pendingPeoplechanges] = usePersonContext(
-    (state) => [state.people, state.pendingChanges],
-    shallow
-  );
+  const [people, pendingPeoplechanges, showPeople, setShowPeople] =
+    usePersonContext(
+      (state) => [
+        state.people,
+        state.pendingChanges,
+        state.showPeople,
+        state.setShowPeople,
+      ],
+      shallow
+    );
 
   const day = currentDay.getDate();
   const month = currentDay.getMonth();

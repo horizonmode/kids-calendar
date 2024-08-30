@@ -18,6 +18,8 @@ export interface PersonState {
   pendingChanges: number;
   sync: (calendarId: string) => void;
   fetch: (calendarId: string) => void;
+  showPeople: boolean;
+  setShowPeople: (showPeople: boolean) => void;
 }
 
 export const createPersonStore = (initProps?: PersonProps) => {
@@ -69,6 +71,8 @@ export const createPersonStore = (initProps?: PersonProps) => {
       const res = (await response.json()) as PersonResponse;
       set({ people: res.people, id: res.id });
     },
+    showPeople: true,
+    setShowPeople: (showPeople: boolean) => set({ showPeople }),
   }));
 };
 

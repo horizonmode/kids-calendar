@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Delta } from "@/components/Delta";
 import {
   GenericItem,
+  Person,
   Schedule,
   ScheduleItem,
   Section,
@@ -118,6 +119,25 @@ const findDay = (itemId: string, schedule: ScheduleItem[]) => {
   return { dayIndex: null, section: null, sectionIndex: null };
 };
 
+const findItemInSchedules = (itemId: string, schedules: Schedule[]) => {
+  for (var i = 0; i < schedules.length; i++) {
+    const schedule = schedules[i];
+    for (var j = 0; j < schedule.schedule.length; j++) {
+      const day = schedule.schedule[j];
+      for (var k = 0; k < day.morning.length; k++) {
+        if (day.morning[k].id === itemId) return day.morning[k];
+      }
+      for (var k = 0; k < day.afternoon.length; k++) {
+        if (day.afternoon[k].id === itemId) return day.afternoon[k];
+      }
+      for (var k = 0; k < day.evening.length; k++) {
+        if (day.evening[k].id === itemId) return day.evening[k];
+      }
+    }
+  }
+  return null;
+};
+
 const cloneItems = (source: any, destination: any) => {
   for (var i = 0; i < source.length; i++) {
     const clone = { ...source[i] };
@@ -145,6 +165,18 @@ const findSection: (
   }
 };
 
+const addPersonIfNotExists = (item: GenericItem, person: Person) => {
+  if (item.people === undefined) item.people = [];
+  if (item.people.findIndex((p) => p.id === person.id) === -1)
+    item.people.push(person);
+};
+
+const removePersonIfExists = (item: GenericItem, person: Person) => {
+  if (item.people === undefined) return;
+  const personIndex = item.people.findIndex((p) => p.id === person.id);
+  if (personIndex > -1) item.people.splice(personIndex, 1);
+};
+
 export interface ScheduleState {
   schedules: Schedule[];
   toolbarItems: GenericItem[];
@@ -169,6 +201,8 @@ export interface ScheduleState {
   syncItem: (updatedItem: any, calendarId: string) => Promise<any>;
   deleteItem: (updatedItem: any, calendarId: string) => Promise<any>;
   applyTemplate: (template: ScheduleItem[], week: number, year: number) => void;
+  assignPerson: (itemId: string, person: Person) => void;
+  removePerson: (sourceId: string, person: Person) => void;
   fetch: (calendarId: string) => Promise<void>;
   sync: (calendarId: string) => Promise<void>;
 }
@@ -427,6 +461,32 @@ const useScheduleStore = create<ScheduleState>()(
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updatedItem),
+        });
+      },
+      assignPerson: (itemId: string, person: Person) => {
+        set((state: ScheduleState) => {
+          const newSchedules = [...state.schedules];
+          const item = findItemInSchedules(itemId, newSchedules);
+          if (!item) return state;
+          addPersonIfNotExists(item, person);
+
+          return {
+            schedules: newSchedules,
+            pendingChanges: state.pendingChanges + 1,
+          };
+        });
+      },
+      removePerson: (sourceId: string, person: Person) => {
+        set((state: ScheduleState) => {
+          const newSchedules = [...state.schedules];
+          const item = findItemInSchedules(sourceId, newSchedules);
+          if (!item) return state;
+          removePersonIfExists(item, person);
+
+          return {
+            schedules: newSchedules,
+            pendingChanges: state.pendingChanges + 1,
+          };
         });
       },
       fetch: async (calendarId: string) => {

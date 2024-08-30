@@ -200,7 +200,7 @@ export default function Calendar() {
         </DialogPanel>
       </Dialog>
       <PeopleDialog
-        showModal={showModal}
+        showModal={showModal === "people"}
         onClose={() => setShowModal(null)}
         calendarId={calendarId}
       />

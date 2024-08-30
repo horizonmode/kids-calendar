@@ -20,6 +20,10 @@ import { GenericItem, ScheduleItem, Section } from "@/types/Items";
 import { Delta } from "./Delta";
 import Draggable from "./Draggable";
 import Editable from "./Editable";
+import PersonSelect from "./PersonSelect";
+import usePersonContext from "@/store/people";
+import useModalContext from "@/store/modals";
+import PersonAssignment from "./PersonAssignment";
 
 interface ScheduleViewProps {
   year: number;
@@ -50,6 +54,9 @@ const ScheduleView = ({
     selectItem,
     deselectItem,
     deleteScheduleItem,
+    pendingChanges,
+    assignPerson,
+    removePerson,
   ] = useScheduleStore(
     (state) => [
       state.schedules,
@@ -59,7 +66,26 @@ const ScheduleView = ({
       state.selectItem,
       state.deselectItem,
       state.deleteScheduleItem,
+      state.pendingChanges,
+      state.assignPerson,
+      state.removePerson,
     ],
+    shallow
+  );
+
+  const [people, pendingPeoplechanges, showPeople, setShowPeople] =
+    usePersonContext(
+      (state) => [
+        state.people,
+        state.pendingChanges,
+        state.showPeople,
+        state.setShowPeople,
+      ],
+      shallow
+    );
+
+  const [setShowModal] = useModalContext(
+    (state) => [state.setShowModal],
     shallow
   );
 
@@ -85,15 +111,29 @@ const ScheduleView = ({
     if (!over) {
       return;
     }
+    const destination = over.id.toString();
     const itemId = activeItem.id;
-    reorderSchedule(
-      itemId.toString(),
-      parseInt(day),
-      sectionName,
-      delta,
-      year,
-      week
-    );
+
+    if (activeItem.data.current?.type === "person") {
+      const { itemId } = (activeItem.data.current as any).extra;
+      const person = people.find((p) => p.id === parseInt(itemId));
+      if (!person) return;
+      if (destination === "toolbar-person") {
+        const { sourceId } = (activeItem.data.current as any).extra;
+        removePerson(sourceId, person);
+      } else {
+        assignPerson(destination, person);
+      }
+    } else {
+      reorderSchedule(
+        itemId.toString(),
+        parseInt(day),
+        sectionName,
+        delta,
+        year,
+        week
+      );
+    }
   };
 
   const [{ algorithm }] = useState({
@@ -102,6 +142,7 @@ const ScheduleView = ({
 
   const [isDragging, setIsDragging] = useState(false);
   const [locked, setLocked] = useState<boolean>(false);
+  const [dragType, setDragType] = useState<string | null>(null);
 
   const activationConstraint = {
     delay: 0,
@@ -193,6 +234,19 @@ const ScheduleView = ({
                   editable={d.editable || false}
                 />
               </Editable>
+              {showPeople && (
+                <PersonAssignment
+                  id={d.id}
+                  people={d.people || []}
+                  disabled={
+                    !isDragging || dragType == null || dragType !== "person"
+                  }
+                  style={{ marginTop: "-5px" }}
+                  onRemove={(person) => {
+                    assignPerson(d.id, person);
+                  }}
+                />
+              )}
             </Draggable>
           );
         case "post-card":
@@ -237,6 +291,19 @@ const ScheduleView = ({
                   color={d.color}
                 ></PostCard>
               </Editable>
+              {showPeople && (
+                <PersonAssignment
+                  id={d.id}
+                  people={d.people || []}
+                  disabled={
+                    !isDragging || dragType == null || dragType !== "person"
+                  }
+                  style={{ marginTop: "-5px" }}
+                  onRemove={(person) => {
+                    assignPerson(d.id, person);
+                  }}
+                />
+              )}
             </Draggable>
           );
       }
@@ -250,10 +317,16 @@ const ScheduleView = ({
     var rect = el.getBoundingClientRect();
     const x = (rect.x + delta.x - over.rect.left) / over.rect.width;
     const y = (rect.y + delta.y - over.rect.top) / over.rect.height;
+    setDragType(e?.active?.data?.current?.type);
   };
 
   const existingSchedule = schedules.find(
     (s) => s.year === year && s.week === week
+  );
+
+  const peopleMenuActive = existingSchedule?.schedule.some(
+    (s) =>
+      s.morning?.length > 0 || s.afternoon.length > 0 || s.evening.length > 0
   );
 
   useEffect(() => {
@@ -340,6 +413,13 @@ const ScheduleView = ({
           );
         })}
       </div>
+      <PersonSelect
+        people={people}
+        showUsers={showPeople}
+        onToggleShowPeople={() => setShowPeople(!showPeople)}
+        addPerson={() => setShowModal("people")}
+        disabled={!peopleMenuActive}
+      ></PersonSelect>
       <Toolbar
         onNext={onNext}
         onPrev={onPrev}

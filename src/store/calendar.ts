@@ -218,8 +218,6 @@ export interface CalendarState extends CalendarProps {
   toolbarItems: (GenericItem | EventItem)[];
   selectedDay: Date;
   pendingChanges: number;
-  showPeople: boolean;
-  setShowPeople: (showPeople: boolean) => void;
   locked: boolean;
   setLocked: (locked: boolean) => void;
   nextMonth: () => void;
@@ -304,8 +302,7 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
         });
         return { locked, days: newDays, events: newEvents };
       }),
-    showPeople: true,
-    setShowPeople: (showPeople: boolean) => set({ showPeople }),
+
     nextMonth: () =>
       set((state: CalendarState) => ({
         selectedDay: adjustDateByMonth(

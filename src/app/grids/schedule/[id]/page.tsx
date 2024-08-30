@@ -11,11 +11,13 @@ import CalendarHeader from "@/components/CalendarHeader";
 import Header from "@/components/ScheduleHeader";
 import ScheduleView from "@/components/ScheduleView";
 import { useTemplateStore } from "@/store/template";
+import PeopleDialog from "@/components/PeopleDialog";
+import useModalContext, { ModalType } from "@/store/modals";
 
 const SchedulePage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const scheduleId = id as string;
   const year = parseInt(
     searchParams.get("year") || new Date().getFullYear().toString()
@@ -24,7 +26,6 @@ const SchedulePage = () => {
     searchParams.get("week") || new Days().getWeekNumber(new Date()).toString()
   );
   const [templateId, setTemplateId] = useState("");
-  const [showModal, setShowModal] = useState<Number | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [applyTemplate, fetch, sync, pendingChanges] = useScheduleStore(
@@ -39,6 +40,11 @@ const SchedulePage = () => {
 
   const [templates] = useTemplateStore((state) => [state.templates], shallow);
 
+  const [showModal, setShowModal] = useModalContext(
+    (state) => [state.showModal, state.setShowModal],
+    shallow
+  );
+
   useEffect(() => {
     if (templates && templates.length > 0) setTemplateId(templates[0].id);
   }, [templates]);
@@ -51,7 +57,7 @@ const SchedulePage = () => {
     setSaving(true);
     const save = async () => {
       await sync(scheduleId);
-      setShowModal(1);
+      setShowModal("saved");
       setSaving(false);
     };
     save();
@@ -99,7 +105,7 @@ const SchedulePage = () => {
   };
 
   const onShare = () => {
-    setShowModal(2);
+    setShowModal("share");
   };
 
   const onClipboardClick = () => {
@@ -127,9 +133,11 @@ const SchedulePage = () => {
   };
 
   useWarnIfUnsavedChanges(pendingChanges > 0, () => {
-    setShowModal(3);
+    setShowModal("pending");
     return true;
   });
+
+  console.log(showModal);
 
   return (
     <>
@@ -161,7 +169,7 @@ const SchedulePage = () => {
         onShare={onShare}
       />
       <Dialog
-        open={showModal === 1}
+        open={showModal === "saved"}
         onClose={(val) => setShowModal(null)}
         static={true}
       >
@@ -178,7 +186,7 @@ const SchedulePage = () => {
         </DialogPanel>
       </Dialog>
       <Dialog
-        open={showModal === 2}
+        open={showModal === "share"}
         onClose={(val) => setShowModal(null)}
         static={true}
       >
@@ -210,7 +218,7 @@ const SchedulePage = () => {
         </DialogPanel>
       </Dialog>
       <Dialog
-        open={showModal === 3}
+        open={showModal === "pending"}
         onClose={(val) => setShowModal(null)}
         static={true}
       >
@@ -238,6 +246,11 @@ const SchedulePage = () => {
           </Button>
         </DialogPanel>
       </Dialog>
+      <PeopleDialog
+        showModal={showModal === "people"}
+        onClose={() => setShowModal(null)}
+        calendarId={id}
+      />
     </>
   );
 };

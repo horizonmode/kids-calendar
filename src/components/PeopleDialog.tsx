@@ -13,7 +13,7 @@ import {
 import PersonCard from "./PersonCard";
 
 interface PeopleDialogProps {
-  showModal: string | null;
+  showModal: boolean;
   onClose: () => void;
   calendarId?: string;
 }
@@ -85,7 +85,7 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({
     people.findIndex((p) => p.id === selectedPersonId) < people.length - 1;
 
   return (
-    <Dialog open={showModal === "people"} onClose={onClose} static={true}>
+    <Dialog open={showModal} onClose={onClose} static={true}>
       <DialogPanel>
         <h3 className="text-lg font-semibold">Edit People</h3>
         <div className="flex flex-row items-center justify-center">
