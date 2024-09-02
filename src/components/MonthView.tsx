@@ -50,10 +50,8 @@ const today = new Date();
 interface MonthViewProps {
   onNext: () => void;
   onPrev: () => void;
-  onSave: () => void;
   onRevert: () => void;
   onShare: () => void;
-  saving: boolean;
 }
 
 const MonthView = ({
@@ -125,6 +123,8 @@ const MonthView = ({
       ],
       shallow
     );
+
+  const {saving, sync} = useSync(calendarId);
 
   const day = currentDay.getDate();
   const month = currentDay.getMonth();
@@ -631,7 +631,7 @@ const MonthView = ({
         toolbarItems={toolbarItems}
         onNext={onNext}
         onPrev={onPrev}
-        onSave={onSave}
+        onSave={sync}
         onShare={onShare}
         onToggleLock={() => setLocked(!locked)}
         saving={saving}

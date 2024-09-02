@@ -13,6 +13,7 @@ import { useParams, useRouter } from "next/navigation";
 import { RiClipboardLine } from "@remixicon/react";
 import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
 import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
+import useSync from "@/hooks/useSync";
 
 export default function Calendar() {
   const [fetch, sync, prevMonth, nextMonth, selectedDay, pendingChanges] =
@@ -33,26 +34,7 @@ export default function Calendar() {
     shallow
   );
 
-  const [people, syncPeople] = usePersonContext(
-    (state) => [state.people, state.sync],
-    shallow
-  );
-
-  const [saving, setSaving] = useState(false);
-
-  const router = useRouter();
   const { calendarId } = useParams<{ calendarId: string }>();
-
-  const onSyncClicked = () => {
-    const save = async () => {
-      setSaving(true);
-      if (calendarId && sync) sync(calendarId as string);
-      if (people && syncPeople) syncPeople(calendarId as string);
-      setShowModal("saved");
-      setSaving(false);
-    };
-    save();
-  };
 
   const onSwitchClicked = async () => {
     const daysUtil = new Days();
@@ -115,9 +97,7 @@ export default function Calendar() {
       <MonthView
         onNext={nextMonth}
         onPrev={prevMonth}
-        onSave={onSyncClicked}
         onShare={onShare}
-        saving={false}
         onRevert={() => {
           console.log("revert");
         }}
