@@ -1,4 +1,4 @@
-import create, { createStore } from "zustand";
+import { createStore } from "zustand";
 import { createContext, useContext } from "react";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import { GenericItem, Person } from "@/types/Items";
