@@ -362,7 +362,7 @@ const ScheduleView = ({
         onItemDrag(over, { x, y }, active);
       }}
     >
-      <div className="w-full h-full relative flex flex-col md:grid md:grid-cols-7">
+      <div className="w-full h-full relative flex flex-col md:grid md:grid-cols-7 p-3">
         {[...Array(7)].map((_, dayIndex) => {
           const dayItems = existingSchedule?.schedule.find(
             (s) => s.day === dayIndex + 1

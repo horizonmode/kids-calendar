@@ -1,5 +1,5 @@
 import ModalProvider from "@/components/ModalProvider";
-import TemplateProvider from "@/components/TemplateProvider";
+import TemplateProvider from "@/components/providers/TemplateProvider";
 import { GetTemplates } from "@/utils/cosmosHandler";
 
 export default async function TemplateLayout({

@@ -20,7 +20,13 @@ export default function DropDown({
   showDefault = true,
 }: DropDownProps) {
   return (
-    <Select key="default" defaultValue="1" onChange={onChange} value={value}>
+    <Select
+      className="w-20"
+      key="default"
+      defaultValue="1"
+      onChange={onChange}
+      value={value}
+    >
       {showDefault && (
         <SelectItem key={`select-${id}-default`} value="none">
           {defaultOption}

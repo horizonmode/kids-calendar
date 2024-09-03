@@ -56,7 +56,7 @@ export default function Admin({ calendarId }: AdminProps) {
 
   return (
     <>
-      <div className="flex flex-col gap-5 items-start flex-1">
+      <div className="flex flex-col gap-5 items-start flex-1 p-3">
         {templates
           .filter((t) => !t.softDelete)
           .map((t, i) => (

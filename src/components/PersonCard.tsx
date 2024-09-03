@@ -9,7 +9,7 @@ import {
   RiUserAddLine,
   RiUserLine,
 } from "@remixicon/react";
-import { Icon } from "@tremor/react";
+import { Button, Icon } from "@tremor/react";
 import Image from "next/image";
 import ContentEditable, { ContentEditableEvent } from "react-contenteditable";
 
@@ -21,6 +21,7 @@ export interface PersonCardProps {
   placeholder?: boolean;
   editable?: boolean;
   onEdit?: (person: Person) => void;
+  openImagePicker?: () => void;
 }
 
 function PersonCard({
@@ -31,6 +32,7 @@ function PersonCard({
   placeholder,
   editable,
   onEdit,
+  openImagePicker,
 }: PersonCardProps) {
   const onNameChange = (e: ContentEditableEvent) => {
     if (person && e.target.value !== person.name && e.target.value !== "") {
@@ -45,7 +47,7 @@ function PersonCard({
   };
 
   return (
-    <div className="flex flex-col justify-start items-center">
+    <div className="flex flex-col justify-start items-center gap-1">
       <div
         className={`w-12 h-12 relative rounded-full border-2 border-green-500 ${
           selected
@@ -77,15 +79,18 @@ function PersonCard({
         )}
       </div>
       {!hideName && person?.name && (
-        <div className="py-1">
-          <ContentEditable
-            className=" whitespace-normal outline-none p-2"
-            tagName="h3"
-            disabled={!editable} // use true to disable edition
-            html={person.name || ""} // innerHTML of the editable div
-            onChange={onNameChange} // handle innerHTML change
-          />
-        </div>
+        <ContentEditable
+          className=" whitespace-normal outline-none p-2"
+          tagName="h3"
+          disabled={!editable} // use true to disable edition
+          html={person.name || ""} // innerHTML of the editable div
+          onChange={onNameChange} // handle innerHTML change
+        />
+      )}
+      {editable && (
+        <Button variant="light" icon={RiEdit2Line} onClick={openImagePicker}>
+          Change Profile Picture
+        </Button>
       )}
     </div>
   );

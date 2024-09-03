@@ -85,7 +85,7 @@ export default function RootLayout({
       />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
       <body style={poppins.style}>
-        <main className="p-5 md:p-12 min-h-screen font-sans w-screen overflow-x-hidden flex">
+        <main className="min-h-screen font-sans w-screen overflow-x-hidden flex">
           {children}
         </main>
       </body>

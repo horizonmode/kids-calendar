@@ -19,24 +19,21 @@ const Header = ({
   onEditTemplateClicked,
 }: HeaderProps) => {
   return (
-    <div className="flex gap-4 justify-start md:justify-between flex-wrap md:flex-nowrap w-full md:w-1/2">
-      <div className="flex-1">
-        <DropDown
-          onChange={(e) => {
-            onTemplateChange(e);
-          }}
-          value={templateId}
-          label="Select Template"
-          options={templateOptions}
-          id="template"
-          showDefault={false}
-        />
-      </div>
-      <Button className="flex-1" variant="primary" onClick={onApplyTemplate}>
+    <div className="flex gap-4 justify-start flex-wrap md:flex-nowrap p-6">
+      <DropDown
+        onChange={(e) => {
+          onTemplateChange(e);
+        }}
+        value={templateId}
+        label="Select Template"
+        options={templateOptions}
+        id="template"
+        showDefault={false}
+      />
+      <Button variant="primary" onClick={onApplyTemplate}>
         Apply
       </Button>
       <Button
-        className="flex-1"
         icon={RiArrowRightLine}
         iconPosition="right"
         variant="secondary"

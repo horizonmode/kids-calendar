@@ -1,28 +1,25 @@
+import { useCalendarContext } from "@/store/calendar";
 import useModalContext from "@/store/modals";
+import usePersonContext from "@/store/people";
+import { useState } from "react";
+import { shallow } from "zustand/shallow";
 
-const useSync = (
-    calendarId,
-) => {
-  const [people, syncPeople] =
-  usePersonContext(
-    (state) => [
-      state.people,
-      state.syncPeople,
-    ],
+const useSync = (calendarId: string) => {
+  const [people, syncPeople] = usePersonContext(
+    (state) => [state.people, state.sync],
     shallow
   );
 
-  const [setShowModal] =
-  useModalContext(
-    (state) => [
-      state.setShowModal,
-    ],
+  const [sync] = useCalendarContext((state) => [state.sync], shallow);
+
+  const [setShowModal] = useModalContext(
+    (state) => [state.setShowModal],
     shallow
   );
 
-  const [saving, setSaving] = useState<boolean>(false)
+  const [saving, setSaving] = useState<boolean>(false);
 
-  const sync = () => {
+  const syncAll = () => {
     const save = async () => {
       setSaving(true);
       if (calendarId && sync) sync(calendarId);
@@ -33,7 +30,7 @@ const useSync = (
     save();
   };
 
-  return {saving, sync};
+  return { saving, sync: syncAll };
 };
 
 export default useSync;

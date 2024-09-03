@@ -11,6 +11,8 @@ import {
 } from "@remixicon/react";
 
 import PersonCard from "./PersonCard";
+import useModalContext from "@/store/modals";
+import useImageContext from "@/store/images";
 
 interface PeopleDialogProps {
   showModal: boolean;
@@ -31,6 +33,24 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({
   const [selectedPersonId, setSelectedPersonId] = useState<number | null>(
     people.length > 0 ? people[0].id : null
   );
+
+  const [setPendingModal, setShowModal] = useModalContext(
+    (state) => [state.setPendingModal, state.setShowModal],
+    shallow
+  );
+
+  const [setEditingPerson] = useImageContext(
+    (state) => [state.setEditingPerson],
+    shallow
+  );
+
+  const openImagePicker = async () => {
+    const person = people.find((p) => p.id === selectedPersonId);
+    if (person) setEditingPerson(person);
+
+    setPendingModal("people");
+    setShowModal("gallery");
+  };
 
   useEffect(() => {
     if (people.length > 0) {
@@ -74,6 +94,12 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({
     setSelectedPersonId(people[prevIndex].id);
   };
 
+  const onDialogClose = () => {
+    setEditingPerson(null);
+    setPendingModal(null);
+    onClose();
+  };
+
   const canGoBack =
     people.length > 1 &&
     selectedPersonId !== null &&
@@ -86,7 +112,7 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({
 
   return (
     <Dialog open={showModal} onClose={onClose} static={true}>
-      <DialogPanel>
+      <DialogPanel className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Edit People</h3>
         <div className="flex flex-row items-center justify-center">
           <div
@@ -104,6 +130,7 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({
                 editable={true}
                 person={selectedPerson}
                 onEdit={onEdit}
+                openImagePicker={openImagePicker}
               />
             </div>
           )}
@@ -128,7 +155,11 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({
             Add Person
           </Button>
           <div className="flex flex-col-reverse justify-center md:flex-row-reverse gap-1">
-            <Button variant="primary" className="flex-1" onClick={onClose}>
+            <Button
+              variant="primary"
+              className="flex-1"
+              onClick={onDialogClose}
+            >
               Close
             </Button>
             <Button
@@ -136,7 +167,7 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({
               className="flex-1"
               onClick={async () => {
                 calendarId && (await fetch(calendarId as string));
-                onClose();
+                onDialogClose();
               }}
             >
               Discard

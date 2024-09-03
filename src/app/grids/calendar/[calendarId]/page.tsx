@@ -1,26 +1,22 @@
 "use client";
-import { use, useState } from "react";
-
 import { Days } from "@/utils/days";
 import { shallow } from "zustand/shallow";
 import useModalContext from "@/store/modals";
-import usePersonContext from "@/store/people";
 import MonthView from "@/components/MonthView";
 import Header from "@/components/CalendarHeader";
+import { RiClipboardLine } from "@remixicon/react";
 import PeopleDialog from "@/components/PeopleDialog";
 import { useCalendarContext } from "@/store/calendar";
 import { useParams, useRouter } from "next/navigation";
-import { RiClipboardLine } from "@remixicon/react";
+import GalleryDialog from "@/components/GalleryDialog";
 import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
 import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
 import useSync from "@/hooks/useSync";
-
 export default function Calendar() {
-  const [fetch, sync, prevMonth, nextMonth, selectedDay, pendingChanges] =
+  const [fetch, prevMonth, nextMonth, selectedDay, pendingChanges] =
     useCalendarContext(
       (state) => [
         state.fetch,
-        state.sync,
         state.prevMonth,
         state.nextMonth,
         state.selectedDay,
@@ -35,6 +31,8 @@ export default function Calendar() {
   );
 
   const { calendarId } = useParams<{ calendarId: string }>();
+
+  const router = useRouter();
 
   const onSwitchClicked = async () => {
     const daysUtil = new Days();
@@ -73,6 +71,8 @@ export default function Calendar() {
     }
   };
 
+  const { sync } = useSync(calendarId);
+
   useWarnIfUnsavedChanges(pendingChanges > 0, () => {
     setShowModal("pending");
     return false;
@@ -101,6 +101,7 @@ export default function Calendar() {
         onRevert={() => {
           console.log("revert");
         }}
+        calendarId={calendarId}
       />
       <Dialog
         open={showModal === "saved"}
@@ -163,7 +164,7 @@ export default function Calendar() {
           <Button
             className="mt-8 w-full"
             onClick={async () => {
-              await onSyncClicked();
+              await sync();
             }}
           >
             Save
@@ -184,6 +185,11 @@ export default function Calendar() {
         showModal={showModal === "people"}
         onClose={() => setShowModal(null)}
         calendarId={calendarId}
+      />
+      <GalleryDialog
+        calendarId={calendarId}
+        showModal={showModal === "gallery"}
+        onClose={() => setShowModal(null)}
       />
     </>
   );

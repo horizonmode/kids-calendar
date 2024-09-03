@@ -1,7 +1,7 @@
 import ModalProvider from "@/components/ModalProvider";
-import PersonProvider from "@/components/PersonProvider";
-import ScheduleProvider from "@/components/ScheduleProvider";
-import TemplateProvider from "@/components/TemplateProvider";
+import PersonProvider from "@/components/providers/PersonProvider";
+import ScheduleProvider from "@/components/providers/ScheduleProvider";
+import TemplateProvider from "@/components/providers/TemplateProvider";
 import { GetPeople, GetSchedules, GetTemplates } from "@/utils/cosmosHandler";
 
 export default async function ScheduleLayout({

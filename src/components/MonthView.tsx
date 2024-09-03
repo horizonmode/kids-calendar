@@ -43,6 +43,8 @@ import DraggableTape from "./DraggableTape";
 import PersonAssignment from "./PersonAssignment";
 import useModalContext from "@/store/modals";
 import usePersonContext from "@/store/people";
+import useImageContext from "@/store/images";
+import useSync from "@/hooks/useSync";
 
 const days = new Days();
 const today = new Date();
@@ -52,15 +54,15 @@ interface MonthViewProps {
   onPrev: () => void;
   onRevert: () => void;
   onShare: () => void;
+  calendarId: string;
 }
 
 const MonthView = ({
   onNext,
   onPrev,
-  onSave,
   onRevert,
   onShare,
-  saving,
+  calendarId,
 }: MonthViewProps) => {
   const [
     currentDay,
@@ -124,7 +126,12 @@ const MonthView = ({
       shallow
     );
 
-  const {saving, sync} = useSync(calendarId);
+  const [setEditingItem] = useImageContext(
+    (state) => [state.setEditingItem],
+    shallow
+  );
+
+  const { saving, sync } = useSync(calendarId);
 
   const day = currentDay.getDate();
   const month = currentDay.getMonth();
@@ -359,15 +366,17 @@ const MonthView = ({
                 >
                   <PostCard
                     key={`drag-postcard-${i}`}
-                    id={d.id}
-                    content={d.content}
+                    content={d.content || ""}
                     editable={d.editable || false}
                     onUpdateContent={(content) =>
                       onItemEdit(d.id, { ...d, content })
                     }
-                    onFileChange={(file) => onItemEdit(d.id, { ...d, file })}
                     fileUrl={d.file}
                     color={d.color}
+                    onAddImageClicked={() => {
+                      setEditingItem(d);
+                      setShowModal("gallery");
+                    }}
                   ></PostCard>
                 </Editable>
                 {showPeople && (
@@ -446,9 +455,9 @@ const MonthView = ({
         showUsers={showPeople}
         onToggleShowPeople={() => setShowPeople(!showPeople)}
         addPerson={() => setShowModal("people")}
-        disabled={!peopleMenuActive}
+        disabled={!peopleMenuActive || (isDragging && dragType !== "people")}
       ></PersonSelect>
-      <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative max-h-screen overflow:auto select-none">
+      <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative max-h-screen overflow:auto select-none p-3">
         <h2 className="text-center hidden md:block mb-3">Monday</h2>
         <h2 className="text-center hidden md:block mb-3">Tuesday</h2>
         <h2 className="text-center hidden md:block mb-3">Wednesday</h2>
@@ -495,7 +504,7 @@ const MonthView = ({
         })}
         <div
           className={classNames(
-            "flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 pointer-events-none absolute top-0 left-0"
+            "flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 pointer-events-none absolute top-0 left-0 p-3"
           )}
         >
           <h2 className="text-center hidden md:block mb-3 opacity-0">Monday</h2>
