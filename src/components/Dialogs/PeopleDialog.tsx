@@ -10,7 +10,7 @@ import {
   RiUserAddLine,
 } from "@remixicon/react";
 
-import PersonCard from "./PersonCard";
+import PersonCard from "@/components/PersonCard";
 import useModalContext from "@/store/modals";
 import useImageContext from "@/store/images";
 

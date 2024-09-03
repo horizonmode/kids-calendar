@@ -5,13 +5,14 @@ import useModalContext from "@/store/modals";
 import MonthView from "@/components/MonthView";
 import Header from "@/components/CalendarHeader";
 import { RiClipboardLine } from "@remixicon/react";
-import PeopleDialog from "@/components/PeopleDialog";
+import PeopleDialog from "@/components/Dialogs/PeopleDialog";
 import { useCalendarContext } from "@/store/calendar";
 import { useParams, useRouter } from "next/navigation";
-import GalleryDialog from "@/components/GalleryDialog";
+import GalleryDialog from "@/components/Dialogs/GalleryDialog";
 import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
 import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
 import useSync from "@/hooks/useSync";
+import PhotoDialog from "@/components/Dialogs/PhotoDialog";
 export default function Calendar() {
   const [fetch, prevMonth, nextMonth, selectedDay, pendingChanges] =
     useCalendarContext(
@@ -191,6 +192,10 @@ export default function Calendar() {
         showModal={showModal === "gallery"}
         onClose={() => setShowModal(null)}
       />
+      <PhotoDialog
+        onClose={() => setShowModal(null)}
+        show={showModal === "photo"}
+      ></PhotoDialog>
     </>
   );
 }

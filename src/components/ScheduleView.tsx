@@ -114,7 +114,7 @@ const ScheduleView = ({
     const destination = over.id.toString();
     const itemId = activeItem.id;
 
-    if (activeItem.data.current?.type === "person") {
+    if (activeItem.data.current?.type === "people") {
       const { itemId } = (activeItem.data.current as any).extra;
       const person = people.find((p) => p.id === parseInt(itemId));
       if (!person) return;
@@ -278,14 +278,10 @@ const ScheduleView = ({
               >
                 <PostCard
                   key={`drag-postcard-${i}`}
-                  id={d.id}
-                  content={d.content}
+                  content={d.content || ""}
                   editable={d.editable || false}
                   onUpdateContent={(content) =>
                     onEdit(d.id, { ...d, content }, year, week)
-                  }
-                  onFileChange={(file) =>
-                    onEdit(d.id, { ...d, file }, year, week)
                   }
                   fileUrl={d.file}
                   color={d.color}

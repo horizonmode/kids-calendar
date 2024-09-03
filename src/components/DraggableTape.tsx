@@ -51,7 +51,7 @@ function DraggableTape({
   const moveProps = useDraggable({
     id: id,
     data: {
-      type: "tape",
+      type: "event",
       action: "move",
       extra: { itemId: eventId, label, isStart, isEnd, color },
     },
@@ -67,7 +67,7 @@ function DraggableTape({
   const resizeProps = useDraggable({
     id: `${id}-resize`,
     data: {
-      type: "tape",
+      type: "event",
       action: "resize",
       extra: { itemId: eventId, label, isStart, isEnd },
     },
@@ -107,7 +107,7 @@ function DraggableTape({
         <PersonAssignment
           id={eventId}
           people={people || []}
-          disabled={moveType == null || moveType !== "person"}
+          disabled={moveType == null || moveType !== "people"}
           style={{ position: "absolute", bottom: "-35px", right: "0" }}
         />
       )}

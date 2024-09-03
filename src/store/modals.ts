@@ -1,7 +1,13 @@
 import { createContext, useContext } from "react";
 import { createStore } from "zustand";
 import { useStoreWithEqualityFn } from "zustand/traditional";
-export type ModalType = "share" | "pending" | "saved" | "people" | "gallery";
+export type ModalType =
+  | "share"
+  | "pending"
+  | "saved"
+  | "people"
+  | "gallery"
+  | "photo";
 
 export interface ModalState {
   showModal: ModalType | null;

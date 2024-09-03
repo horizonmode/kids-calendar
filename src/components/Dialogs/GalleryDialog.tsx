@@ -1,6 +1,6 @@
 import React from "react";
 
-import Gallery from "./Gallery";
+import Gallery from "@/components/Gallery";
 import { Button } from "@tremor/react";
 import {
   Dialog,
@@ -10,7 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "./Dialog";
+} from "@/components/Dialog";
 import useImageContext, { Image } from "@/store/images";
 import { shallow } from "zustand/shallow";
 

@@ -87,10 +87,10 @@ const PersonSelect = ({
         {people.map((person, i) => (
           <Draggable
             key={`person-${i}`}
-            element="person"
+            element="people"
             style={{ position: "relative" }}
             id={person.id.toString()}
-            data={{ person: person, type: "person" }}
+            data={{ person: person }}
           >
             <PersonCard person={person} />
           </Draggable>

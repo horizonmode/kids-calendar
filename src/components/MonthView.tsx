@@ -1,10 +1,10 @@
 "use client";
-import React, { CSSProperties, useEffect, useState } from "react";
+import React, { CSSProperties, useState } from "react";
 import classNames from "classnames";
 import { Days } from "@/utils/days";
 import { shallow } from "zustand/shallow";
 import Droppable from "@/components/Droppable";
-import { EventItem, GenericItem } from "@/types/Items";
+import { EventItem, GenericItem, ItemType } from "@/types/Items";
 import { RectMap } from "@dnd-kit/core/dist/store/types";
 import { MouseSensor, TouchSensor } from "@/utils/handlers";
 import DraggableOverlay from "@/components/DraggableOverlay";
@@ -145,7 +145,10 @@ const MonthView = ({
   };
 
   const onItemDrag = (over: Over, delta: Delta, activeItem: Active) => {
-    const { type, action } = activeItem.data.current as any;
+    const { type, action } = activeItem.data.current as {
+      type: ItemType;
+      action: string;
+    };
     if (!over) {
       return;
     }
@@ -155,7 +158,7 @@ const MonthView = ({
 
     if (destination === "toolbar") return;
 
-    if (type === "tape") {
+    if (type === "event") {
       if (destination === "toolbar-person") return;
       const { isStart, isEnd, itemId } = (activeItem.data.current as any).extra;
       onReorderEvent(
@@ -166,7 +169,7 @@ const MonthView = ({
         delta,
         action
       );
-    } else if (type === "person") {
+    } else if (type === "people") {
       {
         const { itemId } = (activeItem.data.current as any).extra;
         const person = people.find((p) => p.id === parseInt(itemId));
@@ -327,7 +330,7 @@ const MonthView = ({
                     id={d.id}
                     people={d.people || []}
                     disabled={
-                      !isDragging || dragType == null || dragType !== "person"
+                      !isDragging || dragType == null || dragType !== "people"
                     }
                     style={{ marginTop: "-5px" }}
                     onRemove={(person) => {
@@ -377,6 +380,10 @@ const MonthView = ({
                       setEditingItem(d);
                       setShowModal("gallery");
                     }}
+                    onImageClicked={() => {
+                      setEditingItem(d);
+                      setShowModal("photo");
+                    }}
                   ></PostCard>
                 </Editable>
                 {showPeople && (
@@ -384,7 +391,7 @@ const MonthView = ({
                     id={d.id}
                     people={d.people || []}
                     disabled={
-                      !isDragging || dragType == null || dragType !== "person"
+                      !isDragging || dragType == null || dragType !== "people"
                     }
                     style={{ marginTop: "-5px" }}
                     onRemove={(person) => {
@@ -401,7 +408,7 @@ const MonthView = ({
 
   const [delta, setDelta] = useState<Delta | null>(null);
   const [over, setOver] = useState<number | null>(null);
-  const [dragType, setDragType] = useState<string | null>(null);
+  const [dragType, setDragType] = useState<ItemType | null>(null);
   const [dragAction, setDragAction] = useState<string | null>(null);
 
   const updateDragState = (e: DragMoveEvent) => {
@@ -425,6 +432,8 @@ const MonthView = ({
   );
 
   const peopleMenuActive = content.length > 0 || events.length > 0;
+
+  console.log(dragType);
 
   return (
     <DndContext
@@ -490,7 +499,7 @@ const MonthView = ({
                   setDay(dateOfOffset);
                 }}
                 label={days.getWeekDay(dateOfOffset.getDay())}
-                disabled={dragType === "person"}
+                disabled={dragType === "people"}
               >
                 {renderItems(
                   content.filter(

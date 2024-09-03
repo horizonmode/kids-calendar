@@ -80,7 +80,9 @@ function PersonCard({
       </div>
       {!hideName && person?.name && (
         <ContentEditable
-          className=" whitespace-normal outline-none p-2"
+          className={`whitespace-normal outline-none p-2 ${
+            !editable && "text-xs"
+          }`}
           tagName="h3"
           disabled={!editable} // use true to disable edition
           html={person.name || ""} // innerHTML of the editable div

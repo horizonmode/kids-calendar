@@ -49,12 +49,11 @@ function PersonAssignment({
               key={`person-assignment-${id}-${i}`}
               data={{
                 person: person,
-                type: "person",
                 itemId: person.id,
                 sourceId: id,
               }}
               style={{ position: "relative" }}
-              element="person"
+              element="people"
             >
               <PersonCard
                 highlight={!disabled}

@@ -44,11 +44,11 @@ function DraggableOverlay({ axis, dragging }: OverlayProps) {
             {...active.data.current.extra}
           />
         );
-      case "tape":
+      case "event":
         if (active.data.current.action === "move")
           return <Tape {...active.data.current.extra} />;
         if (active.data.current.action === "resize") return <ResizeIcon />;
-      case "person":
+      case "people":
         return <Person {...active.data.current.extra} hideName={true} />;
     }
   };

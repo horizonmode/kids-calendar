@@ -100,8 +100,7 @@ const Toolbar = ({
               data={{ content: ti.content }}
             >
               <PostCard
-                id={ti.id}
-                content={ti.content}
+                content={ti.content || ""}
                 style={{
                   position: "relative",
                   zIndex: 200,
