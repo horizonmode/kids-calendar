@@ -4,9 +4,6 @@ import Tape from "./Tape";
 import ResizeIcon from "./ResizeIcon";
 import Editable from "./Editable";
 import PersonAssignment from "./PersonAssignment";
-import { Person } from "@/types/Items";
-import usePersonContext from "@/store/people";
-import { shallow } from "zustand/shallow";
 
 interface DraggableTapeProps {
   id: string;
@@ -21,12 +18,11 @@ interface DraggableTapeProps {
   color?: string;
   locked?: boolean;
   showPeople?: boolean;
-  people?: Person[];
+  people?: number[];
   onUpdateContent?: (val: string) => void;
   onDelete?: () => void;
   onChangeColor?: (val: string) => void;
   onSelect?: (selected: boolean) => void;
-  onRemovePerson?: (person: Person) => void;
 }
 
 function DraggableTape({
@@ -106,7 +102,7 @@ function DraggableTape({
       {showPeople && isStart && (
         <PersonAssignment
           id={eventId}
-          people={people || []}
+          peopleIds={people || []}
           disabled={moveType == null || moveType !== "people"}
           style={{ position: "absolute", bottom: "-35px", right: "0" }}
         />

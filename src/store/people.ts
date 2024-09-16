@@ -1,17 +1,16 @@
-import { Person } from "@/types/Items";
-import { PersonResponse } from "@/utils/cosmosHandler";
+"use client";
+import { CosmosItem, People, Person } from "@/types/Items";
 import { createContext, useContext } from "react";
 import { createStore } from "zustand";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 
 export interface PersonProps {
   people: Person[];
-  id: string | null;
 }
 
 export interface PersonState {
   people: Person[];
-  id: string | null;
+  setPeople: (people: Person[]) => void;
   add: (person: Person) => void;
   edit: (person: Person) => void;
   delete: (personId: number) => void;
@@ -20,13 +19,14 @@ export interface PersonState {
   fetch: (calendarId: string) => void;
   showPeople: boolean;
   setShowPeople: (showPeople: boolean) => void;
+  getActivePeople: () => Person[];
 }
 
 export const createPersonStore = (initProps?: PersonProps) => {
   return createStore<PersonState>()((set, get) => ({
     pendingChanges: 0,
     people: initProps?.people || [],
-    id: initProps?.id || "",
+    setPeople: (people: Person[]) => set({ people }),
     add: (person: Person) =>
       set({
         people: [...get().people, person],
@@ -53,10 +53,11 @@ export const createPersonStore = (initProps?: PersonProps) => {
         (person) => !person.softDelete
       );
 
-      const people: PersonResponse = {
-        id: get().id,
+      const people: CosmosItem<People> = {
         calendarId: calendarId,
         people: remainingPeople,
+        id: `${calendarId}-people`,
+        type: "people",
       };
 
       await fetch(`/api/update/${calendarId}/people`, {
@@ -68,11 +69,12 @@ export const createPersonStore = (initProps?: PersonProps) => {
     },
     fetch: async (calendarId: string) => {
       const response = await fetch(`/api/people/${calendarId}`);
-      const res = (await response.json()) as PersonResponse;
-      set({ people: res.people, id: res.id });
+      const res = (await response.json()) as CosmosItem<People>;
+      set({ people: res.people });
     },
     showPeople: true,
     setShowPeople: (showPeople: boolean) => set({ showPeople }),
+    getActivePeople: () => get().people.filter((p) => !p.softDelete),
   }));
 };
 

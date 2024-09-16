@@ -1,4 +1,4 @@
-import ModalProvider from "@/components/ModalProvider";
+import ModalProvider from "@/components/providers/ModalProvider";
 import PersonProvider from "@/components/providers/PersonProvider";
 import ScheduleProvider from "@/components/providers/ScheduleProvider";
 import TemplateProvider from "@/components/providers/TemplateProvider";
@@ -18,10 +18,7 @@ export default async function ScheduleLayout({
   const initialTemplateData = await GetTemplates(calendarId);
   return (
     <ModalProvider>
-      <PersonProvider
-        people={initialPeopleData.people}
-        id={initialPeopleData.id}
-      >
+      <PersonProvider people={initialPeopleData.people}>
         <TemplateProvider templates={initialTemplateData}>
           <ScheduleProvider schedules={initialScheduleData}>
             {children}

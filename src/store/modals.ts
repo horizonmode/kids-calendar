@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react";
 import { createStore } from "zustand";
 import { useStoreWithEqualityFn } from "zustand/traditional";
+
 export type ModalType =
   | "share"
   | "pending"
@@ -23,7 +24,6 @@ export const createModalStore = () => {
       const pendingModal = get().pendingModal;
       if (showModal === null && pendingModal) {
         set({ showModal: pendingModal, pendingModal: null });
-        console.log("showModal", showModal);
         return;
       }
       set({ showModal });
@@ -45,10 +45,3 @@ export default function useModalContext<T>(
   if (!store) throw new Error("Missing ModalContext.Provider in the tree");
   return useStoreWithEqualityFn(store, selector, equalityFn);
 }
-
-// const pendingModal = get().pendingModal;
-// if (showModal === null && pendingModal) {
-//   set({ showModal: pendingModal, pendingModal: null });
-//   console.log("showModal", showModal);
-//   return;
-// }

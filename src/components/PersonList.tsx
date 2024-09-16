@@ -1,13 +1,5 @@
 import usePersonContext from "@/store/people";
-import { Person } from "@/types/Items";
-import {
-  RiUser3Line,
-  RiEdit2Line,
-  RiUpload2Line,
-  RiUserAddLine,
-  RiDeleteBack2Line,
-  RiDeleteBin2Line,
-} from "@remixicon/react";
+import { RiUser3Line, RiEdit2Line, RiDeleteBin2Line } from "@remixicon/react";
 import { Icon, List, ListItem } from "@tremor/react";
 import Image from "next/image";
 import { shallow } from "zustand/shallow";
@@ -33,7 +25,7 @@ const PersonEdit = ({ onPersonSelect }: PersonEditProps) => {
               ) : (
                 <Image
                   className="bg-black rounded-full"
-                  src={person.photo}
+                  src={person.photo.url}
                   alt=""
                   width={48}
                   height={48}

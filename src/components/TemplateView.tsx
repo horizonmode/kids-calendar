@@ -16,7 +16,12 @@ import Note from "./Note";
 import { shallow } from "zustand/shallow";
 import Toolbar from "./Toolbar";
 import PostCard from "./PostCard";
-import { GenericItem, ScheduleItem, Section } from "@/types/Items";
+import {
+  GenericItem,
+  PostCardItem,
+  ScheduleItem,
+  Section,
+} from "@/types/Items";
 import { Delta } from "./Delta";
 import Draggable from "./Draggable";
 import { useTemplateContext } from "@/store/template";
@@ -183,6 +188,7 @@ const TemplateView = ({
           );
 
         case "post-card":
+          const postCardItem = d as PostCardItem;
           return (
             <Draggable
               id={d.id}
@@ -191,7 +197,7 @@ const TemplateView = ({
               top={`${d.y || 50 + i * 5}%`}
               style={getStyle(d)}
               element="post-card"
-              data={{ content: d.content, fileUrl: d.file }}
+              data={{ content: d.content, fileUrl: postCardItem.image?.url }}
               disabled={d.editable}
             >
               <Editable
@@ -210,12 +216,10 @@ const TemplateView = ({
               >
                 <PostCard
                   key={`drag-postcard-${i}`}
-                  id={d.id}
-                  content={d.content}
+                  content={d.content || ""}
                   editable={d.editable || false}
                   onUpdateContent={(content) => onEdit(d.id, { ...d, content })}
-                  onFileChange={(file) => onEdit(d.id, { ...d, file })}
-                  fileUrl={d.file}
+                  fileUrl={postCardItem.image?.url}
                   color={d.color}
                 ></PostCard>
               </Editable>

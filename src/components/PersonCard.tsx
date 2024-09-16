@@ -40,12 +40,6 @@ function PersonCard({
     }
   };
 
-  const onPhotoChange = (e: ContentEditableEvent) => {
-    if (person && e.target.value !== person.photo) {
-      onEdit && onEdit({ ...person, photo: e.target.value });
-    }
-  };
-
   return (
     <div className="flex flex-col justify-start items-center gap-1">
       <div
@@ -72,7 +66,7 @@ function PersonCard({
         ) : (
           <Image
             className="bg-black rounded-full"
-            src={person.photo}
+            src={person.photo.url}
             alt=""
             layout="fill"
           />

@@ -1,10 +1,23 @@
 "use client";
+import {
+  startTransition,
+  use,
+  useActionState,
+  useEffect,
+  useOptimistic,
+} from "react";
 import React, { CSSProperties, useState } from "react";
 import classNames from "classnames";
 import { Days } from "@/utils/days";
 import { shallow } from "zustand/shallow";
 import Droppable from "@/components/Droppable";
-import { EventItem, GenericItem, ItemType } from "@/types/Items";
+import {
+  CalendarDay,
+  EventItem,
+  GenericItem,
+  ItemType,
+  PostCardItem,
+} from "@/types/Items";
 import { RectMap } from "@dnd-kit/core/dist/store/types";
 import { MouseSensor, TouchSensor } from "@/utils/handlers";
 import DraggableOverlay from "@/components/DraggableOverlay";
@@ -13,12 +26,7 @@ import {
   Coordinates,
   DragMoveEvent,
 } from "@dnd-kit/core/dist/types";
-import {
-  getDaysContent,
-  getDaysEvents,
-  CalendarDay,
-  useCalendarContext,
-} from "@/store/calendar";
+import { useCalendarContext } from "@/store/calendar";
 import {
   Active,
   closestCorners,
@@ -29,6 +37,11 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+
+import {
+  restrictToFirstScrollableAncestor,
+  restrictToParentElement,
+} from "@dnd-kit/modifiers";
 
 import Note from "./Note";
 import Tape from "./Tape";
@@ -42,9 +55,20 @@ import PersonSelect from "./PersonSelect";
 import DraggableTape from "./DraggableTape";
 import PersonAssignment from "./PersonAssignment";
 import useModalContext from "@/store/modals";
-import usePersonContext from "@/store/people";
 import useImageContext from "@/store/images";
+import calendarService from "@/helpers/calendarService";
+import usePersonContext from "@/store/people";
+import {
+  updateDayAction,
+  UpdateDaysAction,
+  updateDaysAction,
+} from "@/helpers/serverActions/days";
+import { updateEventsAction } from "@/helpers/serverActions/events";
+import { useServerAction } from "@/hooks/useServerAction";
 import useSync from "@/hooks/useSync";
+import CalendarCell from "./CalendarCell";
+import useOptimisticCalendarDays from "@/hooks/useOptimisticCalendarDays";
+const { reorderDays, reorderEvents } = calendarService;
 
 const days = new Days();
 const today = new Date();
@@ -57,91 +81,98 @@ interface MonthViewProps {
   calendarId: string;
 }
 
-const MonthView = ({
-  onNext,
-  onPrev,
-  onRevert,
-  onShare,
-  calendarId,
-}: MonthViewProps) => {
+const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
   const [
     currentDay,
-    reorderDays,
-    reorderEvents,
     editDay,
     deleteItem,
     deleteEvent,
     selectItem,
-    deselectItem,
-    setDay,
+    setSelectedDay,
     editEvent,
-    addDayContent,
-    addEvent,
     content,
     events,
+    pendingChanges,
     toolbarItems,
     selectEvent,
     deselectEvent,
     assignPerson,
     removePerson,
-    pendingChanges,
     locked,
     setLocked,
+    setDays,
+    setEvents,
   ] = useCalendarContext(
     (state) => [
       state.selectedDay,
-      state.reorderDays,
-      state.reorderEvents,
       state.editDay,
       state.deleteItem,
       state.deleteEvent,
       state.selectItem,
-      state.deselectItem,
       state.setSelectedDay,
       state.editEvent,
-      state.addDayContent,
-      state.addEvent,
-      getDaysContent(state),
-      getDaysEvents(state),
+      calendarService.getDaysContent(state.days, state.selectedDay),
+      calendarService.getDaysEvents(state.events, state.selectedDay),
+      state.pendingChanges,
       state.toolbarItems,
       state.selectEvent,
       state.deselectEvent,
       state.assignPerson,
       state.removePerson,
-      state.pendingChanges,
       state.locked,
       state.setLocked,
+      state.setDays,
+      state.setEvents,
     ],
     shallow
   );
 
   const [people, pendingPeoplechanges, showPeople, setShowPeople] =
-    usePersonContext(
-      (state) => [
-        state.people,
-        state.pendingChanges,
-        state.showPeople,
-        state.setShowPeople,
-      ],
-      shallow
-    );
+    usePersonContext((state) => [
+      state.getActivePeople(),
+      state.pendingChanges,
+      state.showPeople,
+      state.setShowPeople,
+    ]);
 
-  const [setEditingItem] = useImageContext(
-    (state) => [state.setEditingItem],
-    shallow
-  );
+  const [updateEvents, isEventsPending] = useServerAction(updateEventsAction);
+  const saving = isEventsPending;
 
-  const { saving, sync } = useSync(calendarId);
-
-  const day = currentDay.getDate();
   const month = currentDay.getMonth();
   const year = currentDay.getFullYear();
   const daysInMonth = days.getDays(year, month);
   const firstDayOfMonth =
     days.getFirstDay(year, month) === 0 ? 7 : days.getFirstDay(year, month);
 
-  const onReorder = (itemId: string, overId: number, delta: Delta) => {
-    if (itemId) reorderDays(itemId, overId, delta, day, month, year);
+  const { calendarDays: calDays, setCalendarDays } =
+    useOptimisticCalendarDays(content);
+
+  const onReorder = async (itemId: string, overId: number, delta: Delta) => {
+    if (itemId) {
+      const reorder = reorderDays(
+        itemId,
+        overId,
+        delta,
+        month,
+        year,
+        calDays,
+        toolbarItems
+      );
+      console.log("reorder", reorder);
+      startTransition(() => {
+        setCalendarDays({
+          sourceDay: reorder.sourceDay,
+          targetDay: reorder.targetDay,
+          targetItemIndex: reorder.targetItemIndex,
+          action: "move",
+        });
+      });
+      await updateDaysAction(
+        calendarId,
+        [reorder.sourceDay, reorder.targetDay],
+        "/grids/"
+      );
+    }
   };
 
   const onItemDrag = (over: Over, delta: Delta, activeItem: Active) => {
@@ -170,16 +201,15 @@ const MonthView = ({
         action
       );
     } else if (type === "people") {
-      {
-        const { itemId } = (activeItem.data.current as any).extra;
-        const person = people.find((p) => p.id === parseInt(itemId));
-        if (!person) return;
-        if (destination === "toolbar-person") {
-          const { sourceId } = (activeItem.data.current as any).extra;
-          removePerson(sourceId, person);
-        } else {
-          assignPerson(destination, person);
-        }
+      const { itemId } = (activeItem.data.current as any).extra;
+      const person = people.find((p) => p.id === parseInt(itemId));
+      if (!person) return;
+      if (destination === "toolbar-person") {
+        const { sourceId } = (activeItem.data.current as any).extra;
+        removePerson(sourceId, person);
+      } else {
+        console.log("assigning person", destination, person);
+        assignPerson(destination, person);
       }
     } else {
       if (destination === "toolbar-person") return;
@@ -215,7 +245,7 @@ const MonthView = ({
     droppableRects: RectMap;
     pointerCoordinates: Coordinates | null;
   }) {
-    // First, let's see if the `trash` droppable rect is intersecting
+    // First, let's see if the `toolbar` droppable rect is intersecting
     const rectIntersectionCollisions = rectIntersection({
       ...args,
       droppableContainers: droppableContainers.filter(
@@ -238,7 +268,7 @@ const MonthView = ({
     });
   }
 
-  const onReorderEvent = (
+  const onReorderEvent = async (
     itemId: string,
     overId: number,
     isStart: boolean,
@@ -246,17 +276,21 @@ const MonthView = ({
     delta: Delta,
     action: string
   ) => {
-    reorderEvents(
+    const reorderedEvents = reorderEvents(
+      events,
       itemId,
       overId,
-      day,
       month,
       year,
       isStart,
       isEnd,
       delta,
-      action
+      action,
+      toolbarItems,
+      currentDay
     );
+    setEvents(reorderedEvents.events);
+    await updateEvents(calendarId, reorderedEvents.events);
   };
 
   const onItemEdit = (itemId: string, newItem: GenericItem) => {
@@ -284,132 +318,11 @@ const MonthView = ({
     transform: d.x === 0 && d.y === 0 ? "translate(-50%,-50%)" : "none",
   });
 
-  const renderItems = (items: CalendarDay[]) => {
-    return items.map((day, j) =>
-      day.items.map((d, i) => {
-        switch (d.type) {
-          case "post-it":
-          case "text":
-            return (
-              <Draggable
-                id={d.id}
-                key={`drag-postit-${d}-${i}`}
-                left={`${d.x || 50 + i * 5}%`}
-                top={`${d.y || 50 + i * 5}%`}
-                element="post-it"
-                style={getStyle(d)}
-                data={{ content: d.content, color: d.color }}
-                disabled={d.editable}
-              >
-                <Editable
-                  key={`drag-postit-${d}-${i}`}
-                  onDelete={() => onItemDelete(d)}
-                  color={d.color || "#0096FF"}
-                  onChangeColor={(color: string) => {
-                    onItemEdit(d.id, { ...d, color });
-                  }}
-                  onSelect={(selected) => {
-                    if (selected) onItemSelect(d);
-                    else deselectItem(d.id);
-                  }}
-                  editable={d.editable || false}
-                  position="right"
-                  className={`${locked ? "hidden" : ""}`}
-                >
-                  <Note
-                    editable={d.editable || false}
-                    content={d.content}
-                    onUpdateContent={(content: string) =>
-                      onItemEdit(d.id, { ...d, content })
-                    }
-                    color={d.color}
-                  />
-                </Editable>
-                {showPeople && (
-                  <PersonAssignment
-                    id={d.id}
-                    people={d.people || []}
-                    disabled={
-                      !isDragging || dragType == null || dragType !== "people"
-                    }
-                    style={{ marginTop: "-5px" }}
-                    onRemove={(person) => {
-                      assignPerson(d.id, person);
-                    }}
-                  />
-                )}
-              </Draggable>
-            );
-
-          case "post-card":
-            return (
-              <Draggable
-                id={d.id}
-                key={`drag-postcard-${d.id}-${i}`}
-                left={`${d.x || 50 + i * 5}%`}
-                top={`${d.y || 50 + i * 5}%`}
-                style={getStyle(d)}
-                element="post-card"
-                data={{ content: d.content, fileUrl: d.file }}
-                disabled={d.editable}
-              >
-                <Editable
-                  onDelete={() => onItemDelete(d)}
-                  color={d.color || "#0096FF"}
-                  onChangeColor={(color: string) => {
-                    onItemEdit(d.id, { ...d, color });
-                  }}
-                  onSelect={(selected) => {
-                    if (selected) onItemSelect(d);
-                    else deselectItem(d.id);
-                  }}
-                  editable={d.editable || false}
-                  className={`${locked ? "hidden" : ""}`}
-                  position="right"
-                >
-                  <PostCard
-                    key={`drag-postcard-${i}`}
-                    content={d.content || ""}
-                    editable={d.editable || false}
-                    onUpdateContent={(content) =>
-                      onItemEdit(d.id, { ...d, content })
-                    }
-                    fileUrl={d.file}
-                    color={d.color}
-                    onAddImageClicked={() => {
-                      setEditingItem(d);
-                      setShowModal("gallery");
-                    }}
-                    onImageClicked={() => {
-                      setEditingItem(d);
-                      setShowModal("photo");
-                    }}
-                  ></PostCard>
-                </Editable>
-                {showPeople && (
-                  <PersonAssignment
-                    id={d.id}
-                    people={d.people || []}
-                    disabled={
-                      !isDragging || dragType == null || dragType !== "people"
-                    }
-                    style={{ marginTop: "-5px" }}
-                    onRemove={(person) => {
-                      assignPerson(d.id, person);
-                    }}
-                  />
-                )}
-              </Draggable>
-            );
-        }
-      })
-    );
-  };
-
   const [delta, setDelta] = useState<Delta | null>(null);
   const [over, setOver] = useState<number | null>(null);
   const [dragType, setDragType] = useState<ItemType | null>(null);
   const [dragAction, setDragAction] = useState<string | null>(null);
+  const { isPending } = useSync(calendarId);
 
   const updateDragState = (e: DragMoveEvent) => {
     const { activatorEvent, delta: deltaChange, over, active } = e;
@@ -433,7 +346,22 @@ const MonthView = ({
 
   const peopleMenuActive = content.length > 0 || events.length > 0;
 
-  console.log(dragType);
+  const onDayEdit = async (
+    day: CalendarDay,
+    itemIndex: number,
+    action: "move" | "delete" | "update"
+  ) => {
+    console.log("setting transition", day, itemIndex, action);
+    startTransition(() => {
+      setCalendarDays({
+        sourceDay: day,
+        targetDay: day,
+        targetItemIndex: itemIndex,
+        action,
+      });
+    });
+    await updateDayAction(calendarId, day, "/grids/");
+  };
 
   return (
     <DndContext
@@ -441,6 +369,7 @@ const MonthView = ({
       autoScroll={false}
       sensors={sensors}
       collisionDetection={customCollisionDetectionAlgorithm}
+      modifiers={[restrictToFirstScrollableAncestor]}
       onDragOver={updateDragState}
       onDragMove={updateDragState}
       onDragStart={(e) => {
@@ -476,40 +405,34 @@ const MonthView = ({
         <h2 className="text-center hidden md:block mb-3">Sunday</h2>
         {[...Array(calendarDays)].map((_, i) => {
           const offsetDay = i + 1 - offset;
-          const dateOfOffset = new Date(year, month, offsetDay);
-          if (offsetDay >= 1 && offsetDay <= daysInMonth)
+          if (offsetDay >= 1 && offsetDay <= daysInMonth) {
+            const day = calDays.find((d) => d.day === offsetDay);
+            const dateOfOffset = new Date(year, month, offsetDay);
             return (
-              <Droppable
+              <CalendarCell
+                key={`day-${i}`}
+                data={calDays.find((d1) => d1.day === offsetDay)}
+                month={month}
+                year={year}
                 day={offsetDay}
-                key={`drop-${i}`}
-                id={offsetDay.toString()}
-                dragging={isDragging}
-                isPast={
-                  offsetDay < today.getDate() &&
-                  month === today.getMonth() &&
-                  year === today.getFullYear()
-                }
-                isToday={
-                  offsetDay === today.getDate() &&
-                  month === today.getMonth() &&
-                  year === today.getFullYear()
-                }
-                highlight={currentDay.getDate() === offsetDay}
-                onClick={() => {
-                  setDay(dateOfOffset);
+                isDragging={isDragging}
+                showPeople={showPeople}
+                selected={currentDay.getDate() === offsetDay}
+                onSelectDay={() => {
+                  setSelectedDay(dateOfOffset);
                 }}
-                label={days.getWeekDay(dateOfOffset.getDay())}
-                disabled={dragType === "people"}
-              >
-                {renderItems(
-                  content.filter(
-                    (d1) =>
-                      d1.day === offsetDay && d1.items && d1.items.length > 0
-                  )
-                )}
-              </Droppable>
+                onEditDay={async (day, itemIndex, action) => {
+                  await onDayEdit(day, itemIndex, action);
+                }}
+                disableDrag={
+                  !isDragging || (isDragging && dragType === "people")
+                }
+                disablePeopleDrag={
+                  !isDragging || (isDragging && dragType !== "people")
+                }
+              />
             );
-          else return <NonDay key={`non-${i}`}></NonDay>;
+          } else return <NonDay key={`non-${i}`}></NonDay>;
         })}
         <div
           className={classNames(
@@ -581,7 +504,7 @@ const MonthView = ({
                       }
                       isStart={event.day === offsetDay}
                       isEnd={offsetDay === event.day + event.days - 1}
-                      label={event.content || event.label}
+                      label={event.content}
                       eventId={event.id}
                       style={{
                         position: "absolute",
@@ -601,9 +524,6 @@ const MonthView = ({
                       locked={locked}
                       showPeople={showPeople}
                       people={event.people}
-                      onRemovePerson={(person) => {
-                        assignPerson(event.id, person);
-                      }}
                     ></DraggableTape>
                   ) : (
                     <Tape
@@ -646,13 +566,12 @@ const MonthView = ({
         </div>
       </div>
       <Toolbar
+        saving={isPending}
         toolbarItems={toolbarItems}
         onNext={onNext}
         onPrev={onPrev}
-        onSave={sync}
         onShare={onShare}
         onToggleLock={() => setLocked(!locked)}
-        saving={saving}
         showNav={true}
         locked={locked}
         pendingChanges={pendingChanges > 0 || pendingPeoplechanges > 0}

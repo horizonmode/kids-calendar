@@ -16,7 +16,12 @@ import { shallow } from "zustand/shallow";
 import Toolbar from "./Toolbar";
 import { useScheduleContext } from "@/store/schedule";
 import PostCard from "./PostCard";
-import { GenericItem, ScheduleItem, Section } from "@/types/Items";
+import {
+  GenericItem,
+  PostCardItem,
+  ScheduleItem,
+  Section,
+} from "@/types/Items";
 import { Delta } from "./Delta";
 import Draggable from "./Draggable";
 import Editable from "./Editable";
@@ -237,19 +242,17 @@ const ScheduleView = ({
               {showPeople && (
                 <PersonAssignment
                   id={d.id}
-                  people={d.people || []}
+                  peopleIds={d.people || []}
                   disabled={
                     !isDragging || dragType == null || dragType !== "person"
                   }
                   style={{ marginTop: "-5px" }}
-                  onRemove={(person) => {
-                    assignPerson(d.id, person);
-                  }}
                 />
               )}
             </Draggable>
           );
         case "post-card":
+          const postCardItem = d as PostCardItem;
           return (
             <Draggable
               id={d.id}
@@ -258,7 +261,7 @@ const ScheduleView = ({
               top={`${d.y || 50 + i * 5}%`}
               style={getStyle(d)}
               element="post-card"
-              data={{ content: d.content, fileUrl: d.file }}
+              data={{ content: d.content, fileUrl: postCardItem.image?.url }}
               disabled={d.editable}
             >
               <Editable
@@ -283,21 +286,18 @@ const ScheduleView = ({
                   onUpdateContent={(content) =>
                     onEdit(d.id, { ...d, content }, year, week)
                   }
-                  fileUrl={d.file}
+                  fileUrl={postCardItem.image?.url}
                   color={d.color}
                 ></PostCard>
               </Editable>
               {showPeople && (
                 <PersonAssignment
                   id={d.id}
-                  people={d.people || []}
+                  peopleIds={d.people || []}
                   disabled={
                     !isDragging || dragType == null || dragType !== "person"
                   }
                   style={{ marginTop: "-5px" }}
-                  onRemove={(person) => {
-                    assignPerson(d.id, person);
-                  }}
                 />
               )}
             </Draggable>

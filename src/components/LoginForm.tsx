@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { MouseEventHandler, useState } from "react";
+import routes from "@/data/routes";
 
 const LoginForm = () => {
   const [calendarId, setCalendarId] = useState("");
@@ -10,14 +11,14 @@ const LoginForm = () => {
   ) => {
     e.preventDefault();
     const id = Date.now();
-    router.push(`/grids/calendar/${id}`, { scroll: false });
+    router.push(routes(id).calendar, { scroll: false });
   };
   const openCalender: MouseEventHandler<HTMLElement> = (
     event: React.MouseEvent<HTMLElement>
   ) => {
     event.preventDefault();
     if (calendarId) {
-      router.push(`/grids/calendar/${calendarId}`, { scroll: false });
+      router.push(routes(calendarId).calendar, { scroll: false });
     }
   };
   return (

@@ -20,22 +20,20 @@ const useUpload = () => {
     const token = process.env.NEXT_PUBLIC_STORAGE_TOKEN;
     setSubmitStatus("uploading");
 
+    const url = `https://${process.env.NEXT_PUBLIC_STORAGE_ACCOUNT}.blob.core.windows.net/images/${calendarId}/${file.name}?${token}`;
+
     try {
-      await axios.put(
-        `https://${process.env.NEXT_PUBLIC_STORAGE_ACCOUNT}.blob.core.windows.net/images/${calendarId}/${file.name}?${token}`,
-        file,
-        {
-          onUploadProgress,
-          headers: {
-            "x-ms-blob-type": "BlockBlob",
-            "Content-Type": file.type,
-          },
-        }
-      );
+      await axios.put(url, file, {
+        onUploadProgress,
+        headers: {
+          "x-ms-blob-type": "BlockBlob",
+          "Content-Type": file.type,
+        },
+      });
 
       setSubmitStatus("waiting");
 
-      return `https://${process.env.NEXT_PUBLIC_STORAGE_ACCOUNT}.blob.core.windows.net/images/${file.name}?${token}`;
+      return url;
     } catch (error) {
       setSubmitStatus("failed");
     } finally {

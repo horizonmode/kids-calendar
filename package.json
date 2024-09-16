@@ -23,7 +23,7 @@
     "classnames": "^2.5.1",
     "colornames": "^1.1.1",
     "hex-color-opacity": "^0.4.2",
-    "next": "14.2.4",
+    "next": "14.2.11",
     "react": "^18",
     "react-contenteditable": "^3.3.7",
     "react-dom": "^18",

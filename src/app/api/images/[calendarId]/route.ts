@@ -12,7 +12,6 @@ export async function GET(
   }
 
   const images = await list(calendarId);
-  console.log("result", images);
 
   return Response.json(images);
 }

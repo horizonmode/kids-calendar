@@ -1,4 +1,4 @@
-import ModalProvider from "@/components/ModalProvider";
+import ModalProvider from "@/components/providers/ModalProvider";
 import TemplateProvider from "@/components/providers/TemplateProvider";
 import { GetTemplates } from "@/utils/cosmosHandler";
 

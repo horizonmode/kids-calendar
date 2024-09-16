@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import siteMetadata from "@/data/siteMetadata";
+import RoutesProvider from "@/components/providers/RoutesProvider";
 
 const poppins = Poppins({
   weight: ["300", "600", "700"],
@@ -44,9 +45,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode;
+  params: { calendarId: string };
 }>) {
+  const { calendarId } = params;
   return (
     <html lang={siteMetadata.language} className={`${poppins.variable}`}>
       <link
@@ -86,7 +90,7 @@ export default function RootLayout({
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
       <body style={poppins.style}>
         <main className="min-h-screen font-sans w-screen overflow-x-hidden flex">
-          {children}
+          <RoutesProvider calendarId={calendarId}>{children}</RoutesProvider>
         </main>
       </body>
     </html>

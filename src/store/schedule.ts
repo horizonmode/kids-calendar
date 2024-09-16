@@ -71,7 +71,6 @@ const toolbarItems: GenericItem[] = [
     x: 0,
     y: 0,
     order: 0,
-    file: "",
     color: "#FF00FF",
   },
 ];
@@ -168,13 +167,13 @@ const findSection: (
 
 const addPersonIfNotExists = (item: GenericItem, person: Person) => {
   if (item.people === undefined) item.people = [];
-  if (item.people.findIndex((p) => p.id === person.id) === -1)
-    item.people.push(person);
+  if (item.people.findIndex((p) => p === person.id) === -1)
+    item.people.push(person.id);
 };
 
 const removePersonIfExists = (item: GenericItem, person: Person) => {
   if (item.people === undefined) return;
-  const personIndex = item.people.findIndex((p) => p.id === person.id);
+  const personIndex = item.people.findIndex((p) => p === person.id);
   if (personIndex > -1) item.people.splice(personIndex, 1);
 };
 

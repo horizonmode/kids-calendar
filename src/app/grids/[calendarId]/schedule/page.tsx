@@ -11,8 +11,9 @@ import CalendarHeader from "@/components/CalendarHeader";
 import Header from "@/components/ScheduleHeader";
 import ScheduleView from "@/components/ScheduleView";
 import { useTemplateContext } from "@/store/template";
-import PeopleDialog from "@/components/PeopleDialog";
+import PeopleDialog from "@/components/dialogs/PeopleDialog";
 import useModalContext from "@/store/modals";
+import { useRoutes } from "@/components/providers/RoutesProvider";
 
 const SchedulePage = ({
   params,
@@ -40,6 +41,8 @@ const SchedulePage = ({
     (state) => [state.showModal, state.setShowModal],
     shallow
   );
+
+  const { calendar, schedule, template } = useRoutes();
 
   const router = useRouter();
   const { calendarId } = params;
@@ -75,10 +78,9 @@ const SchedulePage = ({
       nextYear = nextYear + 1;
       nextWeek = 1;
     }
-    router.push(
-      `/grids/schedule/${calendarId}?year=${nextYear}&week=${nextWeek}`,
-      { scroll: true }
-    );
+    router.push(`${schedule}?year=${nextYear}&week=${nextWeek}`, {
+      scroll: true,
+    });
   };
 
   const onPrev = () => {
@@ -89,13 +91,12 @@ const SchedulePage = ({
       prevYear = prevYear - 1;
       prevWeek = dateUtil.weeksInYear(prevYear);
     }
-    router.push(
-      `/grids/schedule/${calendarId}?year=${prevYear}&week=${prevWeek - 1}`,
-      { scroll: true }
-    );
+    router.push(`${schedule}?year=${prevYear}&week=${prevWeek - 1}`, {
+      scroll: true,
+    });
   };
 
-  const templateOptions = templates.map((t) => ({
+  const templateOptions = templates.map((t, i) => ({
     value: t.id,
     label: t.name,
   }));
@@ -107,11 +108,11 @@ const SchedulePage = ({
   };
 
   const onEditTemplateClicked = () => {
-    router.push(`/grids/template/${calendarId}`, { scroll: false });
+    router.push(`${template}`, { scroll: false });
   };
 
   const onSwitchClicked = () => {
-    router.push(`/grids/calendar/${calendarId}`, { scroll: false });
+    router.push(`${calendar}`, { scroll: false });
   };
 
   const onShare = () => {
@@ -131,13 +132,13 @@ const SchedulePage = ({
   const onTabChange = (index: number) => {
     switch (index) {
       case 0:
-        router.push(`/grids/calendar/${calendarId}`, { scroll: false });
+        router.push(`${calendar}`, { scroll: false });
         break;
       case 1:
         onSwitchClicked();
         break;
       case 2:
-        router.push(`/grids/template/${calendarId}`, { scroll: false });
+        router.push(`${template}`, { scroll: false });
         break;
     }
   };
@@ -254,11 +255,7 @@ const SchedulePage = ({
           </Button>
         </DialogPanel>
       </Dialog>
-      <PeopleDialog
-        showModal={showModal === "people"}
-        onClose={() => setShowModal(null)}
-        calendarId={calendarId}
-      />
+      <PeopleDialog calendarId={calendarId} />
     </>
   );
 };

@@ -1,10 +1,9 @@
 "use client";
-import { useRef, useState } from "react";
+import { useMemo } from "react";
 
 import {
   CalendarContext,
   CalendarProps,
-  CalendarStore,
   createCalendarStore,
 } from "@/store/calendar";
 
@@ -12,15 +11,23 @@ type CalendarProviderProps = React.PropsWithChildren<CalendarProps>;
 
 export default function CalendarProvider({
   children,
-  ...props
+  days,
+  events,
+  editDaysAction,
+  editEventsAction,
 }: CalendarProviderProps) {
-  const storeRef = useRef<CalendarStore>();
-  if (!storeRef.current) {
-    storeRef.current = createCalendarStore(props);
-  }
-
+  const store = useMemo(
+    () =>
+      createCalendarStore({
+        days,
+        events,
+        editDaysAction,
+        editEventsAction,
+      }),
+    [days, editDaysAction, editEventsAction, events]
+  );
   return (
-    <CalendarContext.Provider value={storeRef.current}>
+    <CalendarContext.Provider value={store}>
       {children}
     </CalendarContext.Provider>
   );

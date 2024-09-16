@@ -1,26 +1,21 @@
 import { createStore } from "zustand";
 import { createContext, useContext } from "react";
 import { useStoreWithEqualityFn } from "zustand/traditional";
-import { GenericItem, Person } from "@/types/Items";
-
-export interface Image {
-  id: number;
-  url: string;
-}
+import { Person, GalleryImage, PostCardItem } from "@/types/Items";
 
 export interface ImageProps {
-  images: Image[];
+  images: GalleryImage[];
 }
 
 export interface ImageState {
-  images: Image[];
-  addImage: (image: Image) => void;
+  images: GalleryImage[];
+  addImage: (image: GalleryImage) => void;
   removeImage: (id: number) => void;
   fetchImages: (calendarId: string) => Promise<void>;
-  selectedImage: Image | null;
-  setSelectedImage: (id: Image | null) => void;
-  editingItem: GenericItem | null;
-  setEditingItem: (item: GenericItem | null) => void;
+  selectedImage: GalleryImage | null;
+  setSelectedImage: (image: GalleryImage | null) => void;
+  editingItem: PostCardItem | null;
+  setEditingItem: (item: PostCardItem | null) => void;
   editingPerson: Person | null;
   setEditingPerson: (person: Person | null) => void;
 }
@@ -36,7 +31,7 @@ export const createImageStore = (initProps?: ImageProps) => {
     fetchImages: async (calendarId) => {
       try {
         const response = await fetch(`/api/images/${calendarId}`);
-        const images = (await response.json()) as Image[];
+        const images = (await response.json()) as GalleryImage[];
         set({ images });
       } catch (error) {
         console.error("Failed to fetch images:", error);
@@ -47,18 +42,22 @@ export const createImageStore = (initProps?: ImageProps) => {
       set((state: ImageState) => {
         if (state.editingItem) {
           const editingItem = state.editingItem;
-          editingItem.file = item?.url;
+          editingItem.image = item;
         }
         if (state.editingPerson) {
           const editingPerson = state.editingPerson;
-          editingPerson.photo = item?.url;
+          editingPerson.photo = item;
         }
         return { ...state, selectedImage: item };
       }),
     editingItem: null,
     setEditingItem: (item) =>
       set((state: ImageState) => {
-        return { ...state, editingItem: item };
+        return {
+          ...state,
+          editingItem: item,
+          selectedImage: item?.image,
+        };
       }),
     editingPerson: null,
     setEditingPerson: (person) =>

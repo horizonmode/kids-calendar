@@ -3,13 +3,15 @@ import React from "react";
 import Templates from "@/components/Templates";
 import Header from "@/components/CalendarHeader";
 import { useParams, useRouter } from "next/navigation";
+import { useRoutes } from "@/components/providers/RoutesProvider";
 
 const TemplatePage = () => {
   const { calendarId } = useParams<{ calendarId: string }>();
   const router = useRouter();
+  const { calendar, schedule, template } = useRoutes();
 
   const onSwitchClicked = async () => {
-    router.push(`/grids/schedule/${calendarId}`, { scroll: false });
+    router.push(calendar, { scroll: false });
   };
 
   const tabIndex = 2;
@@ -17,13 +19,13 @@ const TemplatePage = () => {
   const onTabChange = (index: number) => {
     switch (index) {
       case 0:
-        router.push(`/grids/calendar/${calendarId}`, { scroll: false });
+        router.push(calendar, { scroll: false });
         break;
       case 1:
         onSwitchClicked();
         break;
       case 2:
-        router.push(`/grids/template/${calendarId}`, { scroll: false });
+        router.push(template, { scroll: false });
         break;
     }
   };

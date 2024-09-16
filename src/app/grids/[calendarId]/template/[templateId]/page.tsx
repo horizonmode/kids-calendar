@@ -1,51 +1,71 @@
 "use client";
-import { Days } from "@/utils/days";
+import React, { useEffect, useState } from "react";
+
 import { shallow } from "zustand/shallow";
-import useModalContext from "@/store/modals";
-import MonthView from "@/components/MonthView";
+import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Header from "@/components/CalendarHeader";
 import { RiClipboardLine } from "@remixicon/react";
-import PeopleDialog from "@/components/Dialogs/PeopleDialog";
-import { useCalendarContext } from "@/store/calendar";
-import { useParams, useRouter } from "next/navigation";
-import GalleryDialog from "@/components/Dialogs/GalleryDialog";
+import { useTemplateContext } from "@/store/template";
+import TemplateView from "@/components/TemplateView";
 import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
 import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
-import useSync from "@/hooks/useSync";
-import PhotoDialog from "@/components/Dialogs/PhotoDialog";
-export default function Calendar() {
-  const [fetch, prevMonth, nextMonth, selectedDay, pendingChanges] =
-    useCalendarContext(
+import { useRoutes } from "@/components/providers/RoutesProvider";
+
+const TemplateEditPage = () => {
+  const [templates, editTemplate, sync, fetch, pendingChanges] =
+    useTemplateContext(
       (state) => [
+        state.templates,
+        state.editTemplate,
+        state.sync,
         state.fetch,
-        state.prevMonth,
-        state.nextMonth,
-        state.selectedDay,
         state.pendingChanges,
       ],
       shallow
     );
 
-  const [showModal, setShowModal] = useModalContext(
-    (state) => [state.showModal, state.setShowModal],
-    shallow
-  );
-
-  const { calendarId } = useParams<{ calendarId: string }>();
-
   const router = useRouter();
+  const { calendar, template: templateRoute } = useRoutes();
+  const { calendarId, templateId } = useParams<{
+    calendarId: string;
+    templateId: string;
+  }>();
 
-  const onSwitchClicked = async () => {
-    const daysUtil = new Days();
-    const week = daysUtil.getWeekNumber(selectedDay);
-    router.push(
-      `/grids/schedule/${calendarId}?year=${selectedDay.getFullYear()}&week=${week}`,
-      { scroll: false }
-    );
+  const template = templates.find((t) => t.id === templateId);
+  const [showModal, setShowModal] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useWarnIfUnsavedChanges(pendingChanges > 0, () => {
+    setShowModal(3);
+    return false;
+  });
+
+  if (!template) return null;
+
+  const onTitleChange: React.ChangeEventHandler<HTMLInputElement> = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const name = e.target.value;
+    editTemplate(template.id, { ...template, name });
+  };
+
+  const onSwitchClicked = () => {
+    router.push(templateRoute, { scroll: false });
+  };
+
+  const onSyncClicked = () => {
+    setSaving(true);
+    const save = async () => {
+      await sync(calendarId);
+      setShowModal(1);
+      setSaving(false);
+    };
+    save();
   };
 
   const onShare = () => {
-    setShowModal("share");
+    setShowModal(2);
   };
 
   const onClipboardClick = () => {
@@ -56,56 +76,36 @@ export default function Calendar() {
     router.push("/", { scroll: false });
   };
 
-  const tabIndex = 0;
-
-  const onTabChange = (index: number) => {
-    switch (index) {
-      case 0:
-        router.push(`/grids/calendar/${calendarId}`, { scroll: false });
-        break;
-      case 1:
-        onSwitchClicked();
-        break;
-      case 2:
-        router.push(`/grids/template/${calendarId}`, { scroll: false });
-        break;
-    }
-  };
-
-  const { sync } = useSync(calendarId);
-
-  useWarnIfUnsavedChanges(pendingChanges > 0, () => {
-    setShowModal("pending");
-    return false;
-  });
-
   return (
     <>
       <Header
         onSwitchClicked={onSwitchClicked}
-        onTabChange={onTabChange}
-        tabIndex={tabIndex}
-        buttonText="next"
-        showTabs={true}
-      >
-        <h1 className="text-black">
-          {selectedDay.toLocaleString("default", { month: "long" })}
-        </h1>
-        <h1 className="text-black font-extrabold">
-          {selectedDay.getFullYear()}
-        </h1>
-      </Header>
-      <MonthView
-        onNext={nextMonth}
-        onPrev={prevMonth}
-        onShare={onShare}
-        onRevert={() => {
-          console.log("revert");
+        buttonText={"Back to List"}
+        showTabs={false}
+        onTabChange={function (index: number): void {
+          throw new Error("Function not implemented.");
         }}
-        calendarId={calendarId}
+        tabIndex={0}
+      >
+        <h1>Schedule Template</h1>
+      </Header>
+      <div className="max-w-sm space-y-8">
+        <div className="flex">
+          <TextInput
+            onChange={onTitleChange}
+            value={template?.name}
+            placeholder="Name..."
+          />
+        </div>
+      </div>
+      <TemplateView
+        templateId={templateId}
+        onSave={onSyncClicked}
+        saving={saving}
+        onShare={onShare}
       />
       <Dialog
-        open={showModal === "saved"}
+        open={showModal === 1}
         onClose={(val) => setShowModal(null)}
         static={true}
       >
@@ -122,7 +122,7 @@ export default function Calendar() {
         </DialogPanel>
       </Dialog>
       <Dialog
-        open={showModal === "share"}
+        open={showModal === 2}
         onClose={(val) => setShowModal(null)}
         static={true}
       >
@@ -154,7 +154,7 @@ export default function Calendar() {
         </DialogPanel>
       </Dialog>
       <Dialog
-        open={showModal === "pending"}
+        open={showModal === 3}
         onClose={(val) => setShowModal(null)}
         static={true}
       >
@@ -165,7 +165,7 @@ export default function Calendar() {
           <Button
             className="mt-8 w-full"
             onClick={async () => {
-              await sync();
+              await onSyncClicked();
             }}
           >
             Save
@@ -174,7 +174,7 @@ export default function Calendar() {
             variant="secondary"
             className="mt-4 w-full"
             onClick={async () => {
-              calendarId && (await fetch(calendarId as string));
+              await fetch(calendarId);
               setShowModal(null);
             }}
           >
@@ -182,20 +182,8 @@ export default function Calendar() {
           </Button>
         </DialogPanel>
       </Dialog>
-      <PeopleDialog
-        showModal={showModal === "people"}
-        onClose={() => setShowModal(null)}
-        calendarId={calendarId}
-      />
-      <GalleryDialog
-        calendarId={calendarId}
-        showModal={showModal === "gallery"}
-        onClose={() => setShowModal(null)}
-      />
-      <PhotoDialog
-        onClose={() => setShowModal(null)}
-        show={showModal === "photo"}
-      ></PhotoDialog>
     </>
   );
-}
+};
+
+export default TemplateEditPage;

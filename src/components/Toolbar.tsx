@@ -9,7 +9,7 @@ import React, {
 
 import { Button, Icon } from "@tremor/react";
 import { useDroppable } from "@dnd-kit/core";
-import { RiSave2Line } from "@remixicon/react";
+import { RiLoader2Fill, RiSave2Line } from "@remixicon/react";
 import { RiArrowLeftLine } from "@remixicon/react";
 import { RiArrowDownLine } from "@remixicon/react";
 import { RiInformationLine } from "@remixicon/react";
@@ -25,7 +25,6 @@ import { EventItem, GenericItem } from "../types/Items";
 
 interface ToolbarProps {
   toolbarItems: (GenericItem | EventItem)[];
-  onSave: () => void;
   onNext?: () => void;
   onPrev?: () => void;
   onShare: () => void;
@@ -38,7 +37,6 @@ interface ToolbarProps {
 
 const Toolbar = ({
   toolbarItems,
-  onSave,
   onNext,
   onPrev,
   onShare,
@@ -227,17 +225,7 @@ const Toolbar = ({
             <Icon size="lg" icon={RiArrowLeftLine} />
           </div>
         )}
-        <Button
-          className={`opacity-100 pl-5 pr-5 ${
-            pendingChanges && " border-teal-300 border"
-          }`}
-          variant="light"
-          icon={RiSave2Line}
-          onClick={onSave}
-          loading={saving}
-        >
-          Save
-        </Button>
+
         <div
           className="flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 hover:bg-slate-200"
           onClick={onShare}
@@ -250,6 +238,16 @@ const Toolbar = ({
         >
           <Icon size="lg" icon={!locked ? RiEditLine : RiEditFill} />
         </div>
+        {saving && (
+          <div className="flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 hover:bg-slate-200">
+            <span className="pointer-events-none flex shrink-0 items-center justify-center gap-1.5">
+              <RiLoader2Fill
+                className="w-full h-full shrink-0 animate-spin"
+                aria-hidden="true"
+              />
+            </span>
+          </div>
+        )}
       </div>
       <div
         ref={scrollRef}

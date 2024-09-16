@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 
 import Gallery from "@/components/Gallery";
@@ -11,20 +12,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/Dialog";
-import useImageContext, { Image } from "@/store/images";
+import useImageContext from "@/store/images";
 import { shallow } from "zustand/shallow";
+import { GalleryImage } from "@/types/Items";
+import useModalContext from "@/store/modals";
 
 interface GalleryDialogProps {
-  showModal: boolean;
-  onClose: () => void;
   calendarId: string;
 }
 
-const GalleryDialog = ({
-  showModal,
-  onClose,
-  calendarId,
-}: GalleryDialogProps) => {
+const GalleryDialog = ({ calendarId }: GalleryDialogProps) => {
   const [selectedImage, setSelectedImage, setEditingItem] = useImageContext(
     (state) => [
       state.selectedImage,
@@ -34,7 +31,12 @@ const GalleryDialog = ({
     shallow
   );
 
-  const onImageSelected = (image: Image) => {
+  const [showModal, setShowModal] = useModalContext(
+    (state) => [state.showModal, state.setShowModal],
+    shallow
+  );
+
+  const onImageSelected = (image: GalleryImage) => {
     if (selectedImage?.id === image.id) {
       setSelectedImage(null);
     } else {
@@ -44,11 +46,12 @@ const GalleryDialog = ({
 
   const onCloseClicked = () => {
     setEditingItem(null);
-    onClose();
+    setShowModal(null);
   };
+
   return (
     <div className="flex justify-center">
-      <Dialog open={showModal}>
+      <Dialog open={showModal === "gallery"}>
         <DialogContent className="w-full md:w-1/2 max-w-2xl">
           <DialogHeader>
             <DialogTitle>Gallery</DialogTitle>

@@ -7,6 +7,7 @@ import { Card } from "@tremor/react";
 import { shallow } from "zustand/shallow";
 import { Button } from "@tremor/react";
 import { useTemplateContext } from "@/store/template";
+import { useRoutes } from "./providers/RoutesProvider";
 
 interface AdminProps {
   calendarId: string;
@@ -34,6 +35,7 @@ export default function Admin({ calendarId }: AdminProps) {
   };
 
   const router = useRouter();
+  const { calendar, template } = useRoutes();
 
   useEffect(() => {
     const fetchTemplates = async (calendarId: string) => {
@@ -71,9 +73,7 @@ export default function Admin({ calendarId }: AdminProps) {
               <div className="flex flex-row justify-start gap-2">
                 <Icon
                   type="edit"
-                  onClick={() =>
-                    router.push(`/grids/template/${calendarId}/${t.id}`)
-                  }
+                  onClick={() => router.push(`${template}/${t.id}`)}
                 />
                 <Icon type="del" onClick={() => selectForDelete(t.id)} />
               </div>

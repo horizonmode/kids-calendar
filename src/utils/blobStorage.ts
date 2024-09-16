@@ -26,7 +26,7 @@ async function listBlobsFlatWithPageMarker(
   prefix: string
 ): Promise<string[]> {
   // page size
-  const maxPageSize = 2;
+  const maxPageSize = 100;
 
   let i = 1;
   let marker;
@@ -49,11 +49,6 @@ async function listBlobsFlatWithPageMarker(
     .listBlobsFlat(listOptions)
     .byPage({ maxPageSize });
   let response = (await iterator.next()).value;
-
-  // Prints blob names
-  for (const blob of response.segment.blobItems) {
-    console.log(`Flat listing: ${i++}: ${blob.name}`);
-  }
 
   const blobs = response.segment.blobItems.map(
     (blob: typeof Blob) => blob.name

@@ -40,7 +40,7 @@ const PersonSelect = ({
     }
   }, [disabled]);
 
-  const isValidOver = isOver && active?.data?.current?.type === "person";
+  const isValidOver = isOver && active?.data?.current?.type === "people";
   return (
     <div
       className="overflow-visible  top-1/2 -translate-y-1/2 z-50  fixed flex touch-none h-auto"

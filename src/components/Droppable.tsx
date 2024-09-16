@@ -1,6 +1,7 @@
 import React, { ReactNode } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import classNames from "classnames";
+import { RiRefreshLine } from "@remixicon/react";
 
 interface DroppableProps {
   children: ReactNode;
@@ -13,6 +14,7 @@ interface DroppableProps {
   isToday: boolean;
   isPast: boolean;
   disabled?: boolean;
+  loading?: boolean;
 }
 
 function Droppable({
@@ -26,6 +28,7 @@ function Droppable({
   isToday,
   isPast,
   disabled = false,
+  loading = false,
 }: DroppableProps) {
   const { isOver, setNodeRef } = useDroppable({
     id,
@@ -43,14 +46,17 @@ function Droppable({
           "shadow-[inset_#1eb99d_0_0_0_3px,rgba(201,211,219,0.5)_20px_14px_24px]",
         highlight &&
           "shadow-[inset_#0000FF_0_0_0_3px,rgba(201,211,219,0.5)_20px_14px_24px]",
-        isToday &&
-          `bg-[white] after:pointer-events-none after:bg-[url('../assets/circle_free.png')] after:bg-contain after:bg-center after:content-[''] after:w-full after:h-full after:absolute after:z-0`,
         isPast &&
-          `bg-[white] after:pointer-events-none after:bg-[url('../assets/cross.svg')] after:bg-contain after:opacity-25 after:bg-center after:content-[''] after:w-full after:h-full after:absolute after:z-0`
+          `bg-[white] after:pointer-events-none after:bg-[url('../assets/circle_free.png')] after:bg-contain after:bg-center after:content-[''] after:w-full after:h-full after:absolute after:z-0`,
+        isToday &&
+          ` after:pointer-events-none after:bg-[url('../assets/circle_free.png')] bg-teal-100  after:bg-contain after:bg-center after:content-[''] after:w-full after:h-full after:absolute after:z-0`
       )}
       aria-label="Droppable region"
       onClick={onClick}
     >
+      {loading && (
+        <RiRefreshLine className="absolute top-0 right-0 animate-spin" />
+      )}
       {isPast && (
         <div className="w-full absolute text-gray-300 opacity-25"></div>
       )}

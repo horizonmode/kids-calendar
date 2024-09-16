@@ -7,6 +7,11 @@ export type ItemType =
   | "template"
   | "schedule";
 
+export interface GalleryImage {
+  id: number;
+  url: string;
+}
+
 export interface ScheduleItem {
   day: number;
   morning: GenericItem[];
@@ -15,11 +20,11 @@ export interface ScheduleItem {
 }
 
 export interface Template {
-  id: string;
   name: string;
   type: string;
   schedule: ScheduleItem[];
   softDelete?: boolean;
+  id: string;
 }
 
 export interface Schedule {
@@ -28,46 +33,59 @@ export interface Schedule {
   type: string;
   schedule: ScheduleItem[];
   softDelete?: boolean;
-  calendarId?: string;
 }
 
 export interface Person {
   id: number;
   name: string;
-  photo?: string;
+  photo: GalleryImage | null;
   softDelete?: boolean;
 }
 
-export interface GenericItem {
+export type GenericItem = {
   id: string;
   color?: string;
   type: string;
-  content: string | undefined;
-  x?: number;
-  y?: number;
-  file?: string | null;
+  content: string;
+  x: number;
+  y: number;
   order: number;
   editable?: boolean;
-  people?: Person[];
+  people?: number[];
   softDelete?: boolean;
-}
+};
 
-export interface EventItem {
-  id: string;
-  color?: string;
-  type: string;
-  label?: string | undefined;
-  content: string | undefined;
-  x?: number;
-  y?: number;
-  file?: string;
-  order: number;
-  softDelete?: boolean;
+export type PostCardItem = GenericItem & {
+  image: GalleryImage | null;
+};
+
+export type EventItem = GenericItem & {
   day: number;
   month: number;
   year: number;
   days: number;
-  calendarId?: string;
-  editable?: boolean;
-  people?: Person[];
+  dirty?: boolean;
+};
+
+export type SaveStatus = "pending" | "saved" | "error";
+
+export type CalendarDay = {
+  day: number;
+  month: number;
+  year: number;
+  type: "day" | "week";
+  items: GenericItem[];
+  softDelete?: boolean;
+  dirty?: boolean;
+  status?: SaveStatus;
+};
+
+export interface People {
+  people: Person[];
 }
+
+export type CosmosItem<T> = T & {
+  calendarId: string;
+  id: string;
+  type: "day" | "event" | "schedule" | "template" | "people";
+};

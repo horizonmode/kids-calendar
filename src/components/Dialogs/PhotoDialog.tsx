@@ -1,43 +1,46 @@
-import React, { use, useEffect, useState } from "react";
+"use client";
+import React, { useEffect, useState } from "react";
 
-import Gallery from "@/components/Gallery";
+import Image from "next/image";
 import { Button } from "@tremor/react";
+import { shallow } from "zustand/shallow";
+import useImageContext from "@/store/images";
+import { RiCloseLine } from "@remixicon/react";
 import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogFooter,
 } from "@/components/Dialog";
-import useImageContext, { Image as ImageType } from "@/store/images";
-import Image from "next/image";
-import { shallow } from "zustand/shallow";
-import { RiCloseLine } from "@remixicon/react";
+import useModalContext from "@/store/modals";
 
-interface PhotoDialogProps {
-  show: boolean;
-  onClose: () => void;
-}
-
-const PhotoDialog = ({ show, onClose }: PhotoDialogProps) => {
+const PhotoDialog = () => {
   const [editingItem] = useImageContext(
     (state) => [state.editingItem],
     shallow
   );
 
-  const image = editingItem?.file || "";
+  const [showModal, setShowModal] = useModalContext(
+    (state) => [state.showModal, state.setShowModal],
+    shallow
+  );
+
+  const image = editingItem?.image || "";
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (image) {
-      setSelectedImage(image);
+      setSelectedImage(image.url);
     }
   }, [image]);
 
-  console.log(selectedImage);
+  const onClose = () => {
+    setShowModal(null);
+  };
 
   return (
     <div className="flex justify-center">
-      <Dialog open={show}>
+      <Dialog open={showModal === "photo"}>
         <DialogContent className="w-full h-full md:w-1/2 md:h-1/2 max-w-2xl flex flex-col gap-3 p-0 bg-none">
           {selectedImage && (
             <div className="relative flex-1 p-2">

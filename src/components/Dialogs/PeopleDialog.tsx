@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+"use client";
+import React, { useEffect, useRef, useState } from "react";
 
 import { Person } from "@/types/Items";
 import { shallow } from "zustand/shallow";
@@ -13,30 +14,32 @@ import {
 import PersonCard from "@/components/PersonCard";
 import useModalContext from "@/store/modals";
 import useImageContext from "@/store/images";
+import { updatePeopleAction } from "@/helpers/serverActions/people";
 
 interface PeopleDialogProps {
-  showModal: boolean;
-  onClose: () => void;
-  calendarId?: string;
+  calendarId: string;
 }
 
-const PeopleDialog: React.FC<PeopleDialogProps> = ({
-  showModal,
-  onClose,
-  calendarId,
-}) => {
-  const [people, addPerson, deletePerson, editPerson, fetch] = usePersonContext(
-    (state) => [state.people, state.add, state.delete, state.edit, state.fetch],
+const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
+  const [people, editPerson, setPeople] = usePersonContext(
+    (state) => [state.getActivePeople(), state.edit, state.setPeople],
     shallow
   );
+
+  const originalPeople = useRef<Person[]>([]);
+
+  const [setPendingModal, setShowModal, showModal] = useModalContext(
+    (state) => [state.setPendingModal, state.setShowModal, state.showModal],
+    shallow
+  );
+
+  useEffect(() => {
+    if (showModal) originalPeople.current = people;
+    else originalPeople.current = [];
+  }, [showModal]);
 
   const [selectedPersonId, setSelectedPersonId] = useState<number | null>(
     people.length > 0 ? people[0].id : null
-  );
-
-  const [setPendingModal, setShowModal] = useModalContext(
-    (state) => [state.setPendingModal, state.setShowModal],
-    shallow
   );
 
   const [setEditingPerson] = useImageContext(
@@ -97,7 +100,28 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({
   const onDialogClose = () => {
     setEditingPerson(null);
     setPendingModal(null);
-    onClose();
+    setShowModal(null);
+  };
+
+  const onDialogSave = async () => {
+    setPeople(await updatePeopleAction(calendarId, people));
+    onDialogClose();
+  };
+
+  const onDialogCancel = () => {
+    const people = setPeople(originalPeople.current);
+    onDialogClose();
+  };
+
+  const onAddPerson = async () => {
+    setPeople([
+      ...people,
+      { id: people.length + 1, name: "New Person", photo: null },
+    ]);
+  };
+
+  const onDeletePerson = async (personId: number) => {
+    setPeople(people.filter((p) => p.id !== personId));
   };
 
   const canGoBack =
@@ -111,7 +135,7 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({
     people.findIndex((p) => p.id === selectedPersonId) < people.length - 1;
 
   return (
-    <Dialog open={showModal} onClose={onClose} static={true}>
+    <Dialog open={showModal === "people"} onClose={onDialogClose} static={true}>
       <DialogPanel className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Edit People</h3>
         <div className="flex flex-row items-center justify-center">
@@ -143,32 +167,33 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({
             <Icon size="lg" icon={RiArrowRightLine} />
           </div>
         </div>
-        <div className="flex flex-col gap-1">
-          <Button
-            variant="secondary"
-            icon={RiUserAddLine}
-            className="w-full"
-            onClick={async () => {
-              addPerson({ name: "New Person", id: people.length + 1 });
-            }}
-          >
-            Add Person
-          </Button>
-          <div className="flex flex-col-reverse justify-center md:flex-row-reverse gap-1">
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-col md:flex-row gap-1">
+            {selectedPersonId && (
+              <Button
+                variant="secondary"
+                icon={RiUserAddLine}
+                onClick={() => onDeletePerson(selectedPersonId)}
+              >
+                Remove Person
+              </Button>
+            )}
             <Button
-              variant="primary"
-              className="flex-1"
-              onClick={onDialogClose}
+              variant="secondary"
+              icon={RiUserAddLine}
+              onClick={onAddPerson}
             >
-              Close
+              Add Person
+            </Button>
+          </div>
+          <div className="flex flex-col-reverse justify-center md:flex-row-reverse gap-1">
+            <Button variant="primary" className="flex-1" onClick={onDialogSave}>
+              Save
             </Button>
             <Button
               variant="secondary"
               className="flex-1"
-              onClick={async () => {
-                calendarId && (await fetch(calendarId as string));
-                onDialogClose();
-              }}
+              onClick={onDialogCancel}
             >
               Discard
             </Button>
