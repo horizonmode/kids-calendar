@@ -18,13 +18,6 @@ const useOptimisticCalendarDays = (days: CalendarDay[]) => {
             ...targetDay,
             status:
               action === "update" || action === "move" ? "pending" : "pending",
-            items: [
-              ...targetDay.items.slice(0, targetItemIndex),
-              {
-                ...targetDay.items[targetItemIndex],
-              },
-              ...targetDay.items.slice(targetItemIndex + 1),
-            ],
           },
         ]
       : [
@@ -40,17 +33,6 @@ const useOptimisticCalendarDays = (days: CalendarDay[]) => {
             ...targetDay,
             status:
               action === "update" || action === "move" ? "pending" : "pending",
-            items: [
-              ...targetDay.items.slice(0, targetItemIndex),
-              {
-                ...targetDay.items[targetItemIndex],
-                status:
-                  action === "update" || action === "move"
-                    ? "pending"
-                    : "pending",
-              },
-              ...targetDay.items.slice(targetItemIndex + 1),
-            ],
           },
         ]
   );

@@ -72,7 +72,15 @@ export async function GetDays(calendarId: string): Promise<DayResponse> {
       status: "saved" as SaveStatus,
       dirty: false,
     }));
-    return { days: safeDays, events };
+
+    const safeEvents = events.map((e) => ({
+      ...e,
+      softDelete: false,
+      status: "saved" as SaveStatus,
+      dirty: false,
+    }));
+
+    return { days: safeDays, events: safeEvents };
   }
 }
 
@@ -204,7 +212,6 @@ export const UpdateDays = async (days: CalendarDay[], calendarId: string) => {
   if (!container) {
     throw new Error("NoContainer");
   }
-  console.log(days);
   const operations: OperationInput[] = days
     .filter((d) => d.dirty || d.softDelete || d.items.length === 0)
     .map((day: CalendarDay) => {
@@ -229,7 +236,6 @@ export const UpdateDays = async (days: CalendarDay[], calendarId: string) => {
             },
           };
     });
-  console.log(operations);
   await container.items.bulk(operations);
   return days;
 };
@@ -265,7 +271,7 @@ export const UpdateEvents = async (events: EventItem[], calendarId: string) => {
     const eventObject: CosmosItem<EventItem> = {
       ...stripProhibitedKeys(event),
       calendarId,
-      id: `${event.day}-${event.month}-${event.year}-${i}`,
+      id: event.id,
       type: "event",
     };
     return event.softDelete
@@ -284,6 +290,7 @@ export const UpdateEvents = async (events: EventItem[], calendarId: string) => {
         };
   });
 
+  console.log(operations);
   await container.items.bulk(operations);
   return events;
 };

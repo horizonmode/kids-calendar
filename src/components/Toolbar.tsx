@@ -120,14 +120,13 @@ const Toolbar = ({
               isStart={true}
               isEnd={false}
               eventId={ti.id}
-              label={"new event"}
               style={{
                 zIndex: 200,
                 width: "10em",
                 position: "relative",
               }}
-              color={ti.color}
               editable={false}
+              event={ti as EventItem}
             />
           </div>
         );

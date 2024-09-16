@@ -44,7 +44,7 @@ export interface Person {
 
 export type GenericItem = {
   id: string;
-  color?: string;
+  color: string;
   type: string;
   content: string;
   x: number;
@@ -65,6 +65,7 @@ export type EventItem = GenericItem & {
   year: number;
   days: number;
   dirty?: boolean;
+  status?: SaveStatus;
 };
 
 export type SaveStatus = "pending" | "saved" | "error";

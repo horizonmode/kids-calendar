@@ -22,8 +22,6 @@ function PersonAssignment({
     disabled,
   });
 
-  console.log("PersonAssignment", peopleIds);
-
   const [people] = usePersonContext((state) => [state.getActivePeople()]);
 
   const selectedPeople = people.filter((person) =>

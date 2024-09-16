@@ -10,6 +10,6 @@ export const updatePeopleAction = async (
   path?: string
 ) => {
   const updatedPeople = await UpdatePeople(calendarId, people);
-  if (path) revalidatePath(path, "layout");
+  if (path) revalidatePath(path);
   return updatedPeople || [];
 };

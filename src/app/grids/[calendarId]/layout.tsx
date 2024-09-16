@@ -15,12 +15,12 @@ export default async function GridLayout({
   params: { calendarId: string };
 }>) {
   const { calendarId } = params;
-  // const initialPeopleData = await GetPeople(calendarId);
-  // const initialImages = await list(calendarId);
+  const initialPeopleData = await GetPeople(calendarId);
+  const initialImages = await list(calendarId);
 
   return (
-    <PersonProvider people={[]}>
-      <ImageStoreProvider images={[]}>
+    <PersonProvider people={initialPeopleData.people}>
+      <ImageStoreProvider images={initialImages}>
         <ModalProvider>
           <section className="gap-4 flex-1 flex flex-col justify-between items-stretch p-3 md:p-6">
             <PeopleDialog calendarId={calendarId} />

@@ -63,15 +63,18 @@ import {
   UpdateDaysAction,
   updateDaysAction,
 } from "@/helpers/serverActions/days";
-import { updateEventsAction } from "@/helpers/serverActions/events";
+import {
+  updateEventAction,
+  updateEventsAction,
+} from "@/helpers/serverActions/events";
 import { useServerAction } from "@/hooks/useServerAction";
 import useSync from "@/hooks/useSync";
 import CalendarCell from "./CalendarCell";
 import useOptimisticCalendarDays from "@/hooks/useOptimisticCalendarDays";
+import useOptimisticEvents from "@/hooks/useOptimisticEvents";
 const { reorderDays, reorderEvents } = calendarService;
 
 const days = new Days();
-const today = new Date();
 
 interface MonthViewProps {
   onNext: () => void;
@@ -135,9 +138,6 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
       state.setShowPeople,
     ]);
 
-  const [updateEvents, isEventsPending] = useServerAction(updateEventsAction);
-  const saving = isEventsPending;
-
   const month = currentDay.getMonth();
   const year = currentDay.getFullYear();
   const daysInMonth = days.getDays(year, month);
@@ -158,7 +158,6 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
         calDays,
         toolbarItems
       );
-      console.log("reorder", reorder);
       startTransition(() => {
         setCalendarDays({
           sourceDay: reorder.sourceDay,
@@ -208,7 +207,6 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
         const { sourceId } = (activeItem.data.current as any).extra;
         removePerson(sourceId, person);
       } else {
-        console.log("assigning person", destination, person);
         assignPerson(destination, person);
       }
     } else {
@@ -268,6 +266,9 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
     });
   }
 
+  const { calendarEvents, setEvents: setCalEvents } =
+    useOptimisticEvents(events);
+
   const onReorderEvent = async (
     itemId: string,
     overId: number,
@@ -276,8 +277,8 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
     delta: Delta,
     action: string
   ) => {
-    const reorderedEvents = reorderEvents(
-      events,
+    const { events, event } = reorderEvents(
+      calendarEvents,
       itemId,
       overId,
       month,
@@ -289,34 +290,14 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
       toolbarItems,
       currentDay
     );
-    setEvents(reorderedEvents.events);
-    await updateEvents(calendarId, reorderedEvents.events);
-  };
-
-  const onItemEdit = (itemId: string, newItem: GenericItem) => {
-    editDay(itemId, newItem);
-  };
-
-  const onItemDelete = (item: GenericItem) => {
-    deleteItem(item.id);
-  };
-
-  const onEventDelete = (event: EventItem) => {
-    deleteEvent(event.id);
-  };
-
-  const onItemSelect = (item: GenericItem) => {
-    selectItem(item.id);
+    startTransition(() => {
+      setCalEvents({ event, events, action: "move" });
+    });
+    await updateEventAction(calendarId, event, "/grids/");
   };
 
   const calendarDays = daysInMonth + firstDayOfMonth - 1; // always show 7 days x 5 rows
   const offset = firstDayOfMonth - 1;
-
-  const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
-    position: "absolute",
-    zIndex: `${d.order + 2 * 10}`,
-    transform: d.x === 0 && d.y === 0 ? "translate(-50%,-50%)" : "none",
-  });
 
   const [delta, setDelta] = useState<Delta | null>(null);
   const [over, setOver] = useState<number | null>(null);
@@ -351,7 +332,6 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
     itemIndex: number,
     action: "move" | "delete" | "update"
   ) => {
-    console.log("setting transition", day, itemIndex, action);
     startTransition(() => {
       setCalendarDays({
         sourceDay: day,
@@ -361,6 +341,30 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
       });
     });
     await updateDayAction(calendarId, day, "/grids/");
+  };
+
+  const onEventEdit = async (
+    event: EventItem,
+    action: "update" | "delete" | "move"
+  ) => {
+    startTransition(() => {
+      setCalEvents({
+        event,
+        events: calendarEvents,
+        action,
+      });
+    });
+
+    switch (action) {
+      case "update":
+        event.dirty = true;
+        await updateEventAction(calendarId, event, "/grids/");
+        break;
+      case "delete":
+        event.softDelete = true;
+        await updateEventAction(calendarId, event, "/grids/");
+        break;
+    }
   };
 
   return (
@@ -375,10 +379,10 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
       onDragStart={(e) => {
         setIsDragging(true);
       }}
-      onDragCancel={(e) => {
+      onDragCancel={() => {
         setIsDragging(false);
       }}
-      onDragEnd={({ over, delta, active, activatorEvent }) => {
+      onDragEnd={({ over, active }) => {
         const translated = active.rect.current.translated;
         if (!translated) return;
         setIsDragging(false);
@@ -458,7 +462,7 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
             const offsetDay = i + 1 - offset;
             if (!(offsetDay >= 1 && offsetDay <= daysInMonth))
               return <NonDay key={`events-${offsetDay}`} />;
-            const todayEvents = events.filter(
+            const todayEvents = calendarEvents.filter(
               (e) => offsetDay >= e.day && offsetDay < e.day + e.days
             );
             if (!todayEvents) return null;
@@ -499,31 +503,23 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
                       id={`tape-${event.id}-${isStart ? "start" : "end"}`}
                       left={`0%`}
                       top={`${event.y}%`}
-                      onUpdateContent={(e: string) =>
-                        editEvent(event.id, { ...event, content: e })
-                      }
                       isStart={event.day === offsetDay}
                       isEnd={offsetDay === event.day + event.days - 1}
-                      label={event.content}
                       eventId={event.id}
                       style={{
                         position: "absolute",
                         zIndex: event.order + 2,
                         opacity: isDragging && dragId === event.id ? "0" : "1",
                       }}
-                      onSelect={(selected) => {
-                        if (selected) selectEvent(event.id);
-                        else deselectEvent(event.id);
-                      }}
                       editable={event.editable}
-                      onDelete={() => onEventDelete(event)}
-                      onChangeColor={(e) =>
-                        editEvent(event.id, { ...event, color: e })
-                      }
-                      color={event.color}
                       locked={locked}
                       showPeople={showPeople}
                       people={event.people}
+                      loading={event.status === "pending"}
+                      onEditEvent={async (event, action) => {
+                        await onEventEdit(event, action);
+                      }}
+                      event={event}
                     ></DraggableTape>
                   ) : (
                     <Tape

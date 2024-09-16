@@ -1,9 +1,11 @@
-import React, { CSSProperties } from "react";
+import React, { CSSProperties, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import Tape from "./Tape";
 import ResizeIcon from "./ResizeIcon";
 import Editable from "./Editable";
 import PersonAssignment from "./PersonAssignment";
+import { RiRefreshLine } from "@remixicon/react";
+import { EventItem } from "@/types/Items";
 
 interface DraggableTapeProps {
   id: string;
@@ -12,17 +14,15 @@ interface DraggableTapeProps {
   style?: CSSProperties;
   isStart: boolean;
   isEnd: boolean;
-  label?: string;
   eventId: string;
   editable?: boolean;
-  color?: string;
   locked?: boolean;
   showPeople?: boolean;
   people?: number[];
-  onUpdateContent?: (val: string) => void;
+  loading?: boolean;
   onDelete?: () => void;
-  onChangeColor?: (val: string) => void;
-  onSelect?: (selected: boolean) => void;
+  onEditEvent?: (item: EventItem, action: "update" | "delete" | "move") => void;
+  event: EventItem;
 }
 
 function DraggableTape({
@@ -32,24 +32,29 @@ function DraggableTape({
   style,
   isStart,
   isEnd,
-  label,
   eventId,
-  editable,
-  color = "#0000ff",
   locked = true,
   showPeople = false,
   people,
-  onUpdateContent,
-  onDelete,
-  onChangeColor,
-  onSelect,
+  loading = false,
+  event,
+  onEditEvent,
 }: DraggableTapeProps) {
+  const [editingItem, setEditingItem] = useState<EventItem | null>(null);
+  const editable = (editingItem && editingItem.id === event.id) || false;
+  const item = editingItem && editingItem.id === event.id ? editingItem : event;
   const moveProps = useDraggable({
     id: id,
     data: {
       type: "event",
       action: "move",
-      extra: { itemId: eventId, label, isStart, isEnd, color },
+      extra: {
+        itemId: eventId,
+        label: item.content,
+        isStart,
+        isEnd,
+        color: item.color,
+      },
     },
     disabled: editable,
   });
@@ -65,7 +70,13 @@ function DraggableTape({
     data: {
       type: "event",
       action: "resize",
-      extra: { itemId: eventId, label, isStart, isEnd },
+      extra: {
+        itemId: eventId,
+        label: item.content,
+        isStart,
+        isEnd,
+        color: item.color,
+      },
     },
     disabled: editable,
   });
@@ -73,6 +84,31 @@ function DraggableTape({
   const resizeAttributes = resizeProps.attributes;
   const resizeListeners = resizeProps.listeners;
   const resizeSetNodeRef = resizeProps.setNodeRef;
+
+  const onUpdateContent = (event: Partial<EventItem>) => {
+    if (editingItem) {
+      setEditingItem({ ...editingItem, ...event });
+    }
+  };
+
+  const onDelete = async (event: EventItem) => {
+    onEditEvent && onEditEvent(event, "delete");
+    setEditingItem(null);
+  };
+
+  const onSelect = (item: EventItem) => {
+    setEditingItem(item);
+  };
+
+  const onDeselect = async (item: EventItem) => {
+    const newEvent = {
+      ...event,
+      ...editingItem,
+    };
+
+    onEditEvent && onEditEvent(newEvent, "update");
+    setEditingItem(null);
+  };
 
   return (
     <div
@@ -90,11 +126,17 @@ function DraggableTape({
     >
       {isStart && onSelect && (
         <Editable
-          onDelete={onDelete}
-          onChangeColor={onChangeColor}
-          color={color}
-          editable={editable || false}
-          onSelect={onSelect}
+          onDelete={() => onDelete(event)}
+          onChangeColor={(color) => onUpdateContent({ color })}
+          color={item.color}
+          editable={editable}
+          onSelect={(selected) => {
+            if (selected) {
+              onSelect(event);
+            } else {
+              onDeselect(event);
+            }
+          }}
           position="top"
           className={`pointer-events-auto ${locked ? "hidden" : ""}`}
         ></Editable>
@@ -108,20 +150,24 @@ function DraggableTape({
         />
       )}
       <Tape
-        onUpdateContent={onUpdateContent}
-        label={label || ""}
+        onUpdateContent={(content) => onUpdateContent({ content })}
+        label={item.content || ""}
         isStart={isStart}
         isEnd={isEnd}
-        color={color}
+        color={item.color}
         editable={editable}
       ></Tape>
-      {isEnd && (
-        <ResizeIcon
-          ref={resizeSetNodeRef}
-          listeners={resizeListeners}
-          attributes={resizeAttributes}
-          className="absolute pointer-events-auto right-0 -top-12"
-        />
+      {isEnd && loading ? (
+        <RiRefreshLine className="absolute pointer-events-none right-0 -top-12 animate-spin" />
+      ) : (
+        isEnd && (
+          <ResizeIcon
+            ref={resizeSetNodeRef}
+            listeners={resizeListeners}
+            attributes={resizeAttributes}
+            className="absolute pointer-events-auto right-0 -top-12"
+          />
+        )
       )}
     </div>
   );

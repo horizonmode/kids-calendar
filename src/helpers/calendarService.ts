@@ -48,7 +48,7 @@ export interface CalendarService {
     action: string,
     toolbarItems: GenericItem[],
     selectedDay: Date
-  ) => { events: EventItem[] };
+  ) => { events: EventItem[]; event: EventItem };
 }
 
 const toolbarItems: GenericItem[] = [
@@ -144,7 +144,6 @@ const reorderDays = (
   const sourceDayIndex = days.findIndex(
     (d) => d.items.findIndex((i) => i.id == itemId) > -1
   );
-  console.log(days, itemId);
   if (sourceDayIndex === -1) {
     // try to find in toolbars
     const toolbarIndex = toolbarItems.findIndex((d) => d.id === itemId);
@@ -199,7 +198,6 @@ const reorderDays = (
         (d) => d.day === overId && d.month === month + 1 && d.year === year
       );
       if (targetDayIndex > -1) {
-        console.log(targetDayIndex);
         targetDay = { ...days[targetDayIndex] };
       } else {
         targetDay = {
@@ -212,8 +210,6 @@ const reorderDays = (
         };
         days.push(targetDay);
       }
-
-      console.log(targetDay);
 
       targetDay.softDelete = false;
       targetDay.dirty = true;
@@ -259,7 +255,9 @@ const reorderEvents = (
     const itemIndex = toolbarItems.findIndex(
       (e) => e.id === itemId && e.type === "event"
     );
-    if (itemIndex === -1) return { events, toolbarItems };
+    if (itemIndex === -1) {
+      throw new Error("Event not found");
+    }
     event = { ...toolbarItems[itemIndex] } as EventItem;
     event.id = uuidv4();
     event.day = overId;
@@ -270,7 +268,7 @@ const reorderEvents = (
     events.push(event);
 
     reOrderLayers(events, event);
-    return { events };
+    return { events, event };
   }
 
   if (action === "move") {
@@ -285,14 +283,14 @@ const reorderEvents = (
 
     event.y = delta.y * 100;
     reOrderLayers(events, event);
-    return { events };
+    return { events, event };
   }
 
   if (isStart && !isEnd && overId > event.day + event.days) {
-    return { events };
+    return { events, event };
   }
   if (isEnd && !isStart && overId < event.day) {
-    return { events };
+    return { events, event };
   }
 
   if (isStart && isEnd) {
@@ -322,6 +320,7 @@ const reorderEvents = (
   reOrderLayers(events, event);
   return {
     events,
+    event,
   };
 };
 

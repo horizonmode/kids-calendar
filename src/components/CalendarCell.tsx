@@ -8,6 +8,8 @@ import Droppable from "./Droppable";
 import { Days } from "@/utils/days";
 import { renderNote, renderPostCard } from "@/helpers/renderItems";
 import { useState } from "react";
+import useModalContext from "@/store/modals";
+import useImageContext from "@/store/images";
 
 interface CalendarCellProps {
   day: number;
@@ -92,14 +94,22 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
     }
   };
 
-  const onImageClicked = () => {
-    // setEditingItem(item);
+  const [setShowModal] = useModalContext((state) => [state.setShowModal]);
+  const [setImageContextItem] = useImageContext((state) => [
+    state.setEditingItem,
+  ]);
+
+  const onAddImageClicked = (item: PostCardItem) => {
+    setImageContextItem(item);
+    setShowModal("gallery");
   };
 
-  const onAddImageClicked = () => {};
+  const onImageClicked = (item: PostCardItem) => {
+    setImageContextItem(item);
+    setShowModal("photo");
+  };
 
   const renderItem = (item: GenericItem, key: string) => {
-    console.log("show people", showPeople);
     switch (item.type) {
       case "note":
       case "post-it":
@@ -128,16 +138,12 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
           showPeople,
           disablePeopleDrag,
           locked,
-          onAddImageClicked,
-          onImageClicked,
+          () => onAddImageClicked(item as PostCardItem),
+          () => onImageClicked(item as PostCardItem),
           key
         );
     }
   };
-
-  if (data?.status === "pending") {
-    console.log("pending");
-  }
 
   return (
     <Droppable
