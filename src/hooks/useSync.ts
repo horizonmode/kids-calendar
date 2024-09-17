@@ -2,14 +2,8 @@ import { useCalendarContext } from "@/store/calendar";
 import { useEffect } from "react";
 import { shallow } from "zustand/shallow";
 import { useServerAction } from "./useServerAction";
-import {
-  UpdateDaysAction,
-  updateDaysAction,
-} from "@/helpers/serverActions/days";
-import {
-  updateEventsAction,
-  UpdateEventsAction,
-} from "@/helpers/serverActions/events";
+import { UpdateDaysAction, updateDaysAction } from "@/serverActions/days";
+import { updateEventsAction, UpdateEventsAction } from "@/serverActions/events";
 
 const useSync = (calendarId: string) => {
   const [pendingChanges, syncCalendar] = useCalendarContext(
@@ -35,7 +29,7 @@ const useSync = (calendarId: string) => {
   useEffect(() => {
     const doSync = async () => {
       console.log("syncing");
-      // await sync();
+      await sync();
     };
 
     if (pendingChanges > 0) {

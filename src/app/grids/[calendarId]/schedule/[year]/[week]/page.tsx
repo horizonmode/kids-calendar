@@ -1,40 +1,31 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useScheduleContext } from "@/store/schedule";
-import { shallow } from "zustand/shallow";
+
 import { Days } from "@/utils/days";
-import { TextInput, Dialog, DialogPanel, Button } from "@tremor/react";
-import { RiClipboardLine } from "@remixicon/react";
-import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
-import { useSearchParams, useParams, useRouter } from "next/navigation";
-import CalendarHeader from "@/components/CalendarHeader";
-import Header from "@/components/ScheduleHeader";
-import ScheduleView from "@/components/ScheduleView";
-import { useTemplateContext } from "@/store/template";
-import PeopleDialog from "@/components/dialogs/PeopleDialog";
+import { shallow } from "zustand/shallow";
+import { useRouter } from "next/navigation";
 import useModalContext from "@/store/modals";
+import Header from "@/components/ScheduleHeader";
+import { RiClipboardLine } from "@remixicon/react";
+import ScheduleView from "@/components/ScheduleView";
+import { useScheduleContext } from "@/store/schedule";
+import { useTemplateContext } from "@/store/template";
+import CalendarHeader from "@/components/CalendarHeader";
+import PeopleDialog from "@/components/dialogs/PeopleDialog";
 import { useRoutes } from "@/components/providers/RoutesProvider";
+import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
 
 const SchedulePage = ({
   params,
-  searchParams,
 }: {
-  params: { calendarId: string };
-  searchParams: { week: string; year: string };
+  params: { calendarId: string; week: number; year: number };
 }) => {
-  const [applyTemplate, sync, pendingChanges, week, year, setWeek, setYear] =
-    useScheduleContext(
-      (state) => [
-        state.applyTemplate,
-        state.sync,
-        state.pendingChanges,
-        state.week,
-        state.year,
-        state.setWeek,
-        state.setYear,
-      ],
-      shallow
-    );
+  const [applyTemplate, week, year] = useScheduleContext(
+    (state) => [state.applyTemplate, state.week, state.year],
+    shallow
+  );
+
+  console.log(week, year);
 
   const [templates] = useTemplateContext((state) => [state.templates], shallow);
   const [showModal, setShowModal] = useModalContext(
@@ -45,29 +36,14 @@ const SchedulePage = ({
   const { calendar, schedule, template } = useRoutes();
 
   const router = useRouter();
-  const { calendarId } = params;
-
-  useEffect(() => {
-    if (searchParams.week) setWeek(parseInt(searchParams.week));
-    if (searchParams.year) setYear(parseInt(searchParams.year));
-  }, [searchParams]);
+  const { calendarId, ...p } = params;
+  console.log(calendarId, p);
 
   const [templateId, setTemplateId] = useState("");
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (templates && templates.length > 0) setTemplateId(templates[0].id);
   }, [templates]);
-
-  const onSyncClicked = () => {
-    setSaving(true);
-    const save = async () => {
-      await sync(calendarId, week, year);
-      setShowModal("saved");
-      setSaving(false);
-    };
-    save();
-  };
 
   const onNext = () => {
     let nextYear = year;
@@ -78,7 +54,7 @@ const SchedulePage = ({
       nextYear = nextYear + 1;
       nextWeek = 1;
     }
-    router.push(`${schedule}?year=${nextYear}&week=${nextWeek}`, {
+    router.push(`${schedule}/${nextYear}/${nextWeek}`, {
       scroll: true,
     });
   };
@@ -91,7 +67,7 @@ const SchedulePage = ({
       prevYear = prevYear - 1;
       prevWeek = dateUtil.weeksInYear(prevYear);
     }
-    router.push(`${schedule}?year=${prevYear}&week=${prevWeek - 1}`, {
+    router.push(`${schedule}?/${prevYear}/${prevWeek - 1}`, {
       scroll: true,
     });
   };
@@ -138,15 +114,10 @@ const SchedulePage = ({
         onSwitchClicked();
         break;
       case 2:
-        router.push(`${template}`, { scroll: false });
+        router.push(`${template}?year=${year}&week=${week}`, { scroll: false });
         break;
     }
   };
-
-  useWarnIfUnsavedChanges(pendingChanges > 0, () => {
-    setShowModal("pending");
-    return true;
-  });
 
   return (
     <>
@@ -173,9 +144,8 @@ const SchedulePage = ({
         year={year}
         onNext={onNext}
         onPrev={onPrev}
-        onSave={onSyncClicked}
-        saving={saving}
         onShare={onShare}
+        calendarId={calendarId}
       />
       <Dialog
         open={showModal === "saved"}
@@ -235,14 +205,14 @@ const SchedulePage = ({
           <h3 className="text-lg font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
             You have pending changes
           </h3>
-          <Button
+          {/* <Button
             className="mt-8 w-full"
             onClick={async () => {
               await onSyncClicked();
             }}
           >
             Save
-          </Button>
+          </Button> */}
           <Button
             variant="secondary"
             className="mt-4 w-full"

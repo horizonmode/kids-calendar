@@ -30,7 +30,6 @@ interface ToolbarProps {
   onShare: () => void;
   onToggleLock?: () => void;
   showNav: boolean;
-  saving: boolean;
   locked?: boolean;
   pendingChanges?: boolean;
 }
@@ -42,7 +41,6 @@ const Toolbar = ({
   onShare,
   onToggleLock,
   showNav = true,
-  saving = false,
   locked = true,
   pendingChanges = false,
 }: ToolbarProps) => {
@@ -237,7 +235,7 @@ const Toolbar = ({
         >
           <Icon size="lg" icon={!locked ? RiEditLine : RiEditFill} />
         </div>
-        {saving && (
+        {/* {saving && (
           <div className="flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 hover:bg-slate-200">
             <span className="pointer-events-none flex shrink-0 items-center justify-center gap-1.5">
               <RiLoader2Fill
@@ -246,7 +244,7 @@ const Toolbar = ({
               />
             </span>
           </div>
-        )}
+        )} */}
       </div>
       <div
         ref={scrollRef}

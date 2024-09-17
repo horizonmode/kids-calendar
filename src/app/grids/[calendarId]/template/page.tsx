@@ -4,14 +4,23 @@ import Templates from "@/components/Templates";
 import Header from "@/components/CalendarHeader";
 import { useParams, useRouter } from "next/navigation";
 import { useRoutes } from "@/components/providers/RoutesProvider";
+import { useScheduleContext } from "@/store/schedule";
 
-const TemplatePage = () => {
+const TemplatePage = ({
+  searchParams,
+}: {
+  searchParams: { week: number; year: number };
+}) => {
   const { calendarId } = useParams<{ calendarId: string }>();
+  const { week, year } = searchParams;
+
   const router = useRouter();
   const { calendar, schedule, template } = useRoutes();
 
   const onSwitchClicked = async () => {
-    router.push(calendar, { scroll: false });
+    router.push(`schedule/${year || new Date().getFullYear()}/${week || 1}`, {
+      scroll: false,
+    });
   };
 
   const tabIndex = 2;

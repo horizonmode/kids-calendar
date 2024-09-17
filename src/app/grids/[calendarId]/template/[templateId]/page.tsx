@@ -26,7 +26,7 @@ const TemplateEditPage = () => {
     );
 
   const router = useRouter();
-  const { calendar, template: templateRoute } = useRoutes();
+  const { template: templateRoute } = useRoutes();
   const { calendarId, templateId } = useParams<{
     calendarId: string;
     templateId: string;

@@ -1,23 +1,10 @@
 "use client";
-import {
-  startTransition,
-  use,
-  useActionState,
-  useEffect,
-  useOptimistic,
-} from "react";
-import React, { CSSProperties, useState } from "react";
+import { startTransition } from "react";
+import React, { useState } from "react";
 import classNames from "classnames";
 import { Days } from "@/utils/days";
 import { shallow } from "zustand/shallow";
-import Droppable from "@/components/Droppable";
-import {
-  CalendarDay,
-  EventItem,
-  GenericItem,
-  ItemType,
-  PostCardItem,
-} from "@/types/Items";
+import { CalendarDay, EventItem, ItemType } from "@/types/Items";
 import { RectMap } from "@dnd-kit/core/dist/store/types";
 import { MouseSensor, TouchSensor } from "@/utils/handlers";
 import DraggableOverlay from "@/components/DraggableOverlay";
@@ -43,32 +30,17 @@ import {
   restrictToParentElement,
 } from "@dnd-kit/modifiers";
 
-import Note from "./Note";
 import Tape from "./Tape";
 import NonDay from "./NonDay";
 import Toolbar from "./Toolbar";
 import { Delta } from "./Delta";
-import PostCard from "./PostCard";
-import Editable from "./Editable";
-import Draggable from "./Draggable";
 import PersonSelect from "./PersonSelect";
 import DraggableTape from "./DraggableTape";
-import PersonAssignment from "./PersonAssignment";
 import useModalContext from "@/store/modals";
-import useImageContext from "@/store/images";
-import calendarService from "@/helpers/calendarService";
+import calendarService from "@/utils/calendarService";
 import usePersonContext from "@/store/people";
-import {
-  updateDayAction,
-  UpdateDaysAction,
-  updateDaysAction,
-} from "@/helpers/serverActions/days";
-import {
-  updateEventAction,
-  updateEventsAction,
-} from "@/helpers/serverActions/events";
-import { useServerAction } from "@/hooks/useServerAction";
-import useSync from "@/hooks/useSync";
+import { updateDayAction, updateDaysAction } from "@/serverActions/days";
+import { updateEventAction } from "@/serverActions/events";
 import CalendarCell from "./CalendarCell";
 import useOptimisticCalendarDays from "@/hooks/useOptimisticCalendarDays";
 import useOptimisticEvents from "@/hooks/useOptimisticEvents";
@@ -87,56 +59,34 @@ interface MonthViewProps {
 const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
   const [
     currentDay,
-    editDay,
-    deleteItem,
-    deleteEvent,
-    selectItem,
     setSelectedDay,
-    editEvent,
     content,
     events,
-    pendingChanges,
     toolbarItems,
-    selectEvent,
-    deselectEvent,
     assignPerson,
     removePerson,
     locked,
     setLocked,
-    setDays,
-    setEvents,
   ] = useCalendarContext(
     (state) => [
       state.selectedDay,
-      state.editDay,
-      state.deleteItem,
-      state.deleteEvent,
-      state.selectItem,
       state.setSelectedDay,
-      state.editEvent,
       calendarService.getDaysContent(state.days, state.selectedDay),
       calendarService.getDaysEvents(state.events, state.selectedDay),
-      state.pendingChanges,
       state.toolbarItems,
-      state.selectEvent,
-      state.deselectEvent,
       state.assignPerson,
       state.removePerson,
       state.locked,
       state.setLocked,
-      state.setDays,
-      state.setEvents,
     ],
     shallow
   );
 
-  const [people, pendingPeoplechanges, showPeople, setShowPeople] =
-    usePersonContext((state) => [
-      state.getActivePeople(),
-      state.pendingChanges,
-      state.showPeople,
-      state.setShowPeople,
-    ]);
+  const [people, showPeople, setShowPeople] = usePersonContext((state) => [
+    state.getActivePeople(),
+    state.showPeople,
+    state.setShowPeople,
+  ]);
 
   const month = currentDay.getMonth();
   const year = currentDay.getFullYear();
@@ -303,7 +253,6 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
   const [over, setOver] = useState<number | null>(null);
   const [dragType, setDragType] = useState<ItemType | null>(null);
   const [dragAction, setDragAction] = useState<string | null>(null);
-  const { isPending } = useSync(calendarId);
 
   const updateDragState = (e: DragMoveEvent) => {
     const { activatorEvent, delta: deltaChange, over, active } = e;
@@ -425,6 +374,7 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
                 onSelectDay={() => {
                   setSelectedDay(dateOfOffset);
                 }}
+                locked={locked}
                 onEditDay={async (day, itemIndex, action) => {
                   await onDayEdit(day, itemIndex, action);
                 }}
@@ -562,7 +512,6 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
         </div>
       </div>
       <Toolbar
-        saving={isPending}
         toolbarItems={toolbarItems}
         onNext={onNext}
         onPrev={onPrev}
@@ -570,7 +519,6 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
         onToggleLock={() => setLocked(!locked)}
         showNav={true}
         locked={locked}
-        pendingChanges={pendingChanges > 0 || pendingPeoplechanges > 0}
       />
       <DraggableOverlay />
     </DndContext>

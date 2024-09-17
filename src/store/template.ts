@@ -1,99 +1,18 @@
 import { createStore } from "zustand";
 import { Delta } from "@/components/Delta";
-import { GenericItem, ScheduleItem, Section, Template } from "@/types/Items";
+import {
+  GenericItem,
+  ScheduleItem,
+  ScheduleSection,
+  Section,
+  Template,
+} from "@/types/Items";
 import { createContext, useContext } from "react";
 import { useStoreWithEqualityFn } from "zustand/traditional";
-import { persist } from "zustand/middleware";
+import scheduleService from "@/utils/scheduleService";
+import { reOrderAll, reOrderLayers } from "@/utils/layers";
 
-const initialTemplates: Template[] = [
-  {
-    id: "1",
-    name: "school-1",
-    type: "template",
-    schedule: [
-      {
-        day: 1,
-        morning: [
-          {
-            id: "1",
-            type: "post-it",
-            content: "new post-it",
-            x: 0,
-            y: 0,
-            order: 0,
-          },
-        ],
-        afternoon: [],
-        evening: [],
-      },
-    ],
-  },
-];
-
-const toolbarItems: GenericItem[] = [
-  {
-    id: `${Date.now()}-post-it`,
-    type: "post-it",
-    content: "new post-it",
-    x: 0,
-    y: 0,
-    order: 0,
-    color: "#0096FF",
-  },
-  {
-    id: `${Date.now()}-card`,
-    type: "post-card",
-    content: "new post-card",
-    x: 0,
-    y: 0,
-    order: 0,
-    file: "",
-  },
-];
-
-const findItem = (items: GenericItem[], itemId: string) => {
-  const itemIndex = items.findIndex((i) => i.id === itemId);
-  return { item: items[itemIndex], index: itemIndex };
-};
-
-const reOrderLayers = (items: GenericItem[], item: GenericItem) => {
-  if (items.length < 2) return items;
-  const numItems = items.length;
-  if (item.order === numItems - 1) return items;
-  item.order = numItems - 1;
-  const otherItems = items.filter((i) => i.id !== item.id);
-  otherItems.sort((a, b) => (a.order > b.order ? 1 : -1));
-  for (var i = 0; i < otherItems.length; i++) {
-    otherItems[i].order = i;
-  }
-
-  return items;
-};
-
-const reOrderAll = (items: GenericItem[]) => {
-  if (items.length < 2) return items;
-  items.sort((a, b) => (a.order > b.order ? 1 : -1));
-  for (var i = 0; i < items.length; i++) {
-    items[i].order = i;
-  }
-};
-
-const findDay = (itemId: string, schedule: ScheduleItem[]) => {
-  for (var i = 0; i < schedule.length; i++) {
-    const day = schedule[i];
-    let sectionIndex = day.morning.findIndex((d) => d.id == itemId);
-    if (sectionIndex > -1)
-      return { dayIndex: i, section: "morning", sectionIndex };
-    sectionIndex = day.afternoon.findIndex((d) => d.id == itemId);
-    if (sectionIndex > -1)
-      return { dayIndex: i, section: "afternoon", sectionIndex };
-    sectionIndex = day.evening.findIndex((d) => d.id == itemId);
-    if (sectionIndex > -1)
-      return { dayIndex: i, section: "evening", sectionIndex };
-  }
-
-  return { dayIndex: null, section: null, sectionIndex: null };
-};
+const { findDay, toolbarItems } = scheduleService;
 
 export interface TemplateProps {
   templates: Template[];
@@ -127,11 +46,15 @@ export interface TemplateState {
   sync: (calendarId: string) => Promise<void>;
 }
 
+const findItem = (items: GenericItem[], itemId: string) => {
+  const itemIndex = items.findIndex((i) => i.id === itemId);
+  return { item: items[itemIndex], index: itemIndex };
+};
 export type TemplateStore = ReturnType<typeof createTemplateStore>;
 
 export const createTemplateStore = (initProps?: TemplateProps) => {
   const DEFAULT: TemplateProps = {
-    templates: initialTemplates,
+    templates: [],
   };
 
   return createStore<TemplateState>()((set, get) => ({
@@ -150,29 +73,32 @@ export const createTemplateStore = (initProps?: TemplateProps) => {
           newTemplate
         );
         if (dayIndex === null) return state;
+        if (sectionIndex === null) return state;
         const sectionKey = section as keyof ScheduleItem;
-        const newSection = newTemplate[dayIndex][sectionKey] as GenericItem[];
+        const newSection = newTemplate[dayIndex][sectionKey] as ScheduleSection;
         const templateItem = newTemplate[dayIndex];
         if (sectionKey === "morning") {
-          templateItem.morning = [
-            ...newSection.slice(0, sectionIndex),
-            ...newSection.slice(sectionIndex + 1),
+          templateItem.morning.items = [
+            ...newSection.items.slice(0, sectionIndex),
+            ...newSection.items.slice(sectionIndex + 1),
           ];
         }
         if (sectionKey === "afternoon") {
-          templateItem.afternoon = [
-            ...newSection.slice(0, sectionIndex),
-            ...newSection.slice(sectionIndex + 1),
+          templateItem.afternoon.items = [
+            ...newSection.items.slice(0, sectionIndex),
+            ...newSection.items.slice(sectionIndex + 1),
           ];
         }
         if (sectionKey === "evening") {
-          templateItem.evening = [
-            ...newSection.slice(0, sectionIndex),
-            ...newSection.slice(sectionIndex + 1),
+          templateItem.evening.items = [
+            ...newSection.items.slice(0, sectionIndex),
+            ...newSection.items.slice(sectionIndex + 1),
           ];
         }
 
-        reOrderAll(newTemplate[dayIndex][sectionKey] as GenericItem[]);
+        reOrderAll(
+          (newTemplate[dayIndex][sectionKey] as ScheduleSection).items
+        );
         return {
           templates: newTemplates,
           pendingChanges: state.pendingChanges + 1,
@@ -222,10 +148,15 @@ export const createTemplateStore = (initProps?: TemplateProps) => {
         );
 
         if (dayIndex === null) return state;
+        if (sectionIndex === null) return state;
         const sectionKey = section as keyof ScheduleItem;
-        const sectionItems = newTemplate[dayIndex][sectionKey] as GenericItem[];
-        sectionItems[sectionIndex] = newItem;
-        reOrderAll(newTemplate[dayIndex][sectionKey] as GenericItem[]);
+        const sectionItems = newTemplate[dayIndex][
+          sectionKey
+        ] as ScheduleSection;
+        sectionItems.items[sectionIndex] = newItem;
+        reOrderAll(
+          (newTemplate[dayIndex][sectionKey] as ScheduleSection).items
+        );
 
         return {
           templates: newTemplates,
@@ -250,14 +181,7 @@ export const createTemplateStore = (initProps?: TemplateProps) => {
             id: templateId,
             name: "",
             type: "template",
-            schedule: [
-              {
-                day: targetDay + 1,
-                morning: [],
-                afternoon: [],
-                evening: [],
-              },
-            ],
+            schedule: [],
           };
           newTemplates.push(templateItem);
         } else {
@@ -292,13 +216,18 @@ export const createTemplateStore = (initProps?: TemplateProps) => {
           }
         } else {
           if (!templateItem) return state;
+          if (!dayIndex) return state;
+          if (!sectionIndex) return state;
           const sectionKey = section as keyof ScheduleItem;
           const sectionItems = templateItem.schedule[dayIndex][
             sectionKey
-          ] as GenericItem[];
-          item = sectionItems[sectionIndex];
+          ] as ScheduleSection;
+          item = sectionItems.items[sectionIndex];
           const sourceDay = templateItem.schedule[dayIndex];
-          (sourceDay[sectionKey] as GenericItem[]).splice(sectionIndex, 1);
+          (sourceDay[sectionKey] as ScheduleSection).items.splice(
+            sectionIndex,
+            1
+          );
         }
         if (!item) return state;
         item.x = delta.x * 100;
@@ -309,14 +238,14 @@ export const createTemplateStore = (initProps?: TemplateProps) => {
         if (!targetDayObj) {
           targetDayObj = {
             day: targetDay + 1,
-            morning: [],
-            afternoon: [],
-            evening: [],
+            morning: { items: [], status: "saved" },
+            afternoon: { items: [], status: "saved" },
+            evening: { items: [], status: "saved" },
           };
           templateItem.schedule.push(targetDayObj);
         }
         const targetSectionKey = targetSection as keyof ScheduleItem;
-        (targetDayObj[targetSectionKey] as GenericItem[]).push(item);
+        (targetDayObj[targetSectionKey] as ScheduleSection).items.push(item);
         newState = {
           ...newState,
           templates: newTemplates,
@@ -368,11 +297,14 @@ export const createTemplateStore = (initProps?: TemplateProps) => {
         if (dayIndex === null) return state;
         const sectionKey = section as keyof ScheduleItem;
         const { item } = findItem(
-          newTemplate[dayIndex][sectionKey] as GenericItem[],
+          (newTemplate[dayIndex][sectionKey] as ScheduleSection).items,
           itemId
         );
         item.editable = true;
-        reOrderLayers(newTemplate[dayIndex][sectionKey] as GenericItem[], item);
+        reOrderLayers(
+          (newTemplate[dayIndex][sectionKey] as ScheduleSection).items,
+          item
+        );
         return { templates: newTemplates };
       }),
     deselectTemplateItem: (itemId: string, templateId: string) =>
@@ -388,11 +320,14 @@ export const createTemplateStore = (initProps?: TemplateProps) => {
         if (dayIndex === null) return state;
         const sectionKey = section as keyof ScheduleItem;
         const { item } = findItem(
-          newTemplate[dayIndex][sectionKey] as GenericItem[],
+          (newTemplate[dayIndex][sectionKey] as ScheduleSection).items,
           itemId
         );
         item.editable = false;
-        reOrderLayers(newTemplate[dayIndex][sectionKey] as GenericItem[], item);
+        reOrderLayers(
+          (newTemplate[dayIndex][sectionKey] as ScheduleSection).items,
+          item
+        );
         return { templates: newTemplates };
       }),
     syncItem: async (updatedItem: Template, calendarId: string) => {

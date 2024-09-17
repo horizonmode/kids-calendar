@@ -45,12 +45,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-  params,
 }: Readonly<{
   children: React.ReactNode;
-  params: { calendarId: string };
 }>) {
-  const { calendarId } = params;
   return (
     <html lang={siteMetadata.language} className={`${poppins.variable}`}>
       <link
@@ -90,7 +87,7 @@ export default function RootLayout({
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
       <body style={poppins.style}>
         <main className="min-h-screen font-sans w-screen overflow-x-hidden flex">
-          <RoutesProvider calendarId={calendarId}>{children}</RoutesProvider>
+          {children}
         </main>
       </body>
     </html>

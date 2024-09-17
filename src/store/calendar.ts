@@ -1,11 +1,11 @@
 import { createContext, useContext } from "react";
 import { createStore } from "zustand";
 import { Delta } from "@/components/Delta";
-import calendarService from "@/helpers/calendarService";
+import calendarService from "@/utils/calendarService";
 import { reOrderAll, reOrderLayers } from "@/utils/layers";
 import { useStoreWithEqualityFn } from "zustand/traditional";
 import { CalendarDay, EventItem, GenericItem, Person } from "@/types/Items";
-import { UpdateDaysAction } from "@/helpers/serverActions/days";
+import { UpdateDaysAction } from "@/serverActions/days";
 
 export interface CalendarProps {
   days: CalendarDay[];

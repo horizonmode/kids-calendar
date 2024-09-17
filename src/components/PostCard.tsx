@@ -53,9 +53,15 @@ const PostCard = ({
         className={`bg-gradient-to-b  rounded-l-lg shadow-lg w-[10rem] flex flex-col align-top bg-white`}
       >
         {!hasFile ? (
-          <div className="flex items-center w-full h-full p-6 justify-center">
+          <div className="flex items-center w-full h-full p-6 justify-center pointer-events-auto">
             {editable ? (
-              <RiImageAddLine onClick={onAddImageClicked} />
+              <RiImageAddLine
+                onClick={() => {
+                  if (onAddImageClicked) {
+                    onAddImageClicked();
+                  }
+                }}
+              />
             ) : (
               <RiCameraLensFill />
             )}

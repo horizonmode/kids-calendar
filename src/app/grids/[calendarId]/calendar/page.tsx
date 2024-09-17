@@ -7,35 +7,28 @@ import Header from "@/components/CalendarHeader";
 import { RiClipboardLine } from "@remixicon/react";
 import { useCalendarContext } from "@/store/calendar";
 import { useParams, useRouter } from "next/navigation";
-import useWarnIfUnsavedChanges from "@/hooks/useWarnIfUnsavedChanges";
 import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
 import { useRoutes } from "@/components/providers/RoutesProvider";
 
 export default function Calendar() {
-  const [prevMonth, nextMonth, selectedDay, pendingChanges] =
-    useCalendarContext(
-      (state) => [
-        state.prevMonth,
-        state.nextMonth,
-        state.selectedDay,
-        state.pendingChanges,
-      ],
-      shallow
-    );
+  const [prevMonth, nextMonth, selectedDay] = useCalendarContext(
+    (state) => [state.prevMonth, state.nextMonth, state.selectedDay],
+    shallow
+  );
 
   const [showModal, setShowModal] = useModalContext(
     (state) => [state.showModal, state.setShowModal],
     shallow
   );
 
-  const { calendar, template } = useRoutes();
+  const { calendar, template, schedule } = useRoutes();
   const { calendarId } = useParams<{ calendarId: string }>();
   const router = useRouter();
 
   const onSwitchClicked = async () => {
     const daysUtil = new Days();
     const week = daysUtil.getWeekNumber(selectedDay);
-    router.push(`${calendar}?year=${selectedDay.getFullYear()}&week=${week}`, {
+    router.push(`${schedule}/${selectedDay.getFullYear()}/${week}`, {
       scroll: false,
     });
   };
@@ -67,11 +60,6 @@ export default function Calendar() {
         break;
     }
   };
-
-  useWarnIfUnsavedChanges(pendingChanges > 0, () => {
-    setShowModal("pending");
-    return false;
-  });
 
   return (
     <>
@@ -156,14 +144,6 @@ export default function Calendar() {
           <h3 className="text-lg font-semibold text-tremor-content-strong dark:text-dark-tremor-content-strong">
             You have pending changes
           </h3>
-          {/* <Button
-            className="mt-8 w-full"
-            onClick={async () => {
-              await sync();
-            }}
-          >
-            Save
-          </Button> */}
           <Button
             variant="secondary"
             className="mt-4 w-full"

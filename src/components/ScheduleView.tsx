@@ -1,5 +1,4 @@
-import React, { CSSProperties, useEffect, useState } from "react";
-import Droppable from "@/components/Droppable";
+import React, { startTransition, useState } from "react";
 import DraggableOverlay from "@/components/DraggableOverlay";
 import {
   rectIntersection,
@@ -11,24 +10,24 @@ import {
   DragMoveEvent,
 } from "@dnd-kit/core";
 import { MouseSensor, TouchSensor } from "@/utils/handlers";
-import Note from "./Note";
 import { shallow } from "zustand/shallow";
 import Toolbar from "./Toolbar";
 import { useScheduleContext } from "@/store/schedule";
-import PostCard from "./PostCard";
 import {
   GenericItem,
-  PostCardItem,
   ScheduleItem,
+  ScheduleSection,
   Section,
 } from "@/types/Items";
 import { Delta } from "./Delta";
-import Draggable from "./Draggable";
-import Editable from "./Editable";
 import PersonSelect from "./PersonSelect";
 import usePersonContext from "@/store/people";
 import useModalContext from "@/store/modals";
-import PersonAssignment from "./PersonAssignment";
+import useOptimisticSchedules from "@/hooks/useOptimisticWeekSchedules";
+import WeekCell from "./WeekCell";
+import { updateScheduleAction } from "@/serverActions/schedules";
+import scheduleService from "@/utils/scheduleService";
+const { reorderSchedule, toolbarItems } = scheduleService;
 
 interface ScheduleViewProps {
   year: number;
@@ -36,9 +35,8 @@ interface ScheduleViewProps {
   templateId?: string;
   onNext: () => void;
   onPrev: () => void;
-  onSave: () => void;
   onShare: () => void;
-  saving: boolean;
+  calendarId: string;
 }
 
 const ScheduleView = ({
@@ -47,67 +45,29 @@ const ScheduleView = ({
   templateId,
   onNext,
   onPrev,
-  onSave,
   onShare,
-  saving,
+  calendarId,
 }: ScheduleViewProps) => {
-  const [
-    schedules,
-    toolbarItems,
-    reorderSchedule,
-    editItem,
-    selectItem,
-    deselectItem,
-    deleteScheduleItem,
-    pendingChanges,
-    assignPerson,
-    removePerson,
-  ] = useScheduleContext(
-    (state) => [
-      state.schedules,
-      state.toolbarItems,
-      state.reorderSchedule,
-      state.editItem,
-      state.selectItem,
-      state.deselectItem,
-      state.deleteScheduleItem,
-      state.pendingChanges,
-      state.assignPerson,
-      state.removePerson,
-    ],
+  const [schedules, assignPerson, removePerson] = useScheduleContext(
+    (state) => [state.schedules, state.assignPerson, state.removePerson],
     shallow
   );
 
-  const [people, pendingPeoplechanges, showPeople, setShowPeople] =
-    usePersonContext(
-      (state) => [
-        state.people,
-        state.pendingChanges,
-        state.showPeople,
-        state.setShowPeople,
-      ],
-      shallow
-    );
+  const [people, showPeople, setShowPeople] = usePersonContext(
+    (state) => [state.people, state.showPeople, state.setShowPeople],
+    shallow
+  );
 
   const [setShowModal] = useModalContext(
     (state) => [state.setShowModal],
     shallow
   );
 
-  const onEdit = (
-    id: string,
-    item: GenericItem,
-    year: number,
-    week: number
-  ) => {
-    editItem(id, item, year, week);
-  };
+  const existingSchedule = schedules.find(
+    (s) => s.year === year && s.week === week
+  ) || { year, week, schedule: [], type: "schedule" };
 
-  const onItemSelect = (id: string, year: number, week: number) => {
-    selectItem(id, year, week);
-  };
-
-  const onItemDrag = (over: Over, delta: Delta, activeItem: Active) => {
+  const onItemDrag = async (over: Over, delta: Delta, activeItem: Active) => {
     const [day, section] = over.id.toString().split("-");
     const sectionId = parseInt(section);
     const sectionName: Section =
@@ -130,14 +90,52 @@ const ScheduleView = ({
         assignPerson(destination, person);
       }
     } else {
-      reorderSchedule(
+      const {
+        schedules: reorderSchedules,
+        source,
+        target,
+      } = reorderSchedule(
         itemId.toString(),
         parseInt(day),
         sectionName,
         delta,
         year,
-        week
+        week,
+        schedules
       );
+
+      if (!reorderSchedules || !target) throw new Error("Invalid");
+
+      startTransition(() => {
+        setSchedules({
+          source,
+          target,
+          targetSection: sectionName,
+          targetItemIndex: 0,
+          action: "move",
+        });
+      });
+
+      const newSchedule = source
+        ? {
+            ...existingSchedule,
+            schedule: [
+              ...existingSchedule.schedule.filter(
+                (s) => s.day !== target.day && s.day !== source.day
+              ),
+              source,
+              target,
+            ],
+          }
+        : {
+            ...existingSchedule,
+            schedule: [
+              ...existingSchedule.schedule.filter((s) => s.day !== target.day),
+              target,
+            ],
+          };
+
+      await updateScheduleAction(calendarId, newSchedule, "/grids/");
     }
   };
 
@@ -174,7 +172,7 @@ const ScheduleView = ({
     "Sunday",
   ];
 
-  const sections = ["Morning", "Afternoon", "Evening"];
+  const sections: Section[] = ["morning", "afternoon", "evening"];
 
   function getDateOfWeek(w: number, y: number) {
     var d = 1 + (w - 1) * 7; // 1st of January + 7 days for each week
@@ -190,122 +188,6 @@ const ScheduleView = ({
     return date.toLocaleDateString("en-US");
   });
 
-  const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
-    position: "absolute",
-    zIndex: `${d.order + 2 * 10}`,
-    transform: d.x === 0 && d.y === 0 ? "translate(-50%,-50%)" : "none",
-  });
-
-  const deleteItem = (itemId: string, year: number, week: number) => {
-    deleteScheduleItem(itemId, year, week);
-  };
-
-  const renderItems = (items: GenericItem[]) => {
-    return items.map((d, i) => {
-      switch (d.type) {
-        case "post-it":
-        case "text":
-          return (
-            <Draggable
-              id={d.id}
-              key={`drag-postit-${d}-${i}`}
-              left={`${d.x || 50 + i * 5}%`}
-              top={`${d.y || 50 + i * 5}%`}
-              element="post-it"
-              style={getStyle(d)}
-              data={{ content: d.content }}
-            >
-              <Editable
-                onDelete={() => deleteItem(d.id, year, week)}
-                onSelect={(selected: boolean) => {
-                  if (selected) {
-                    onItemSelect(d.id, year, week);
-                  } else deselectItem(d.id, year, week);
-                }}
-                color={d.color || "#0096FF"}
-                onChangeColor={(color: string) => {
-                  onEdit(d.id, { ...d, color }, year, week);
-                }}
-                editable={d.editable || false}
-                position="right"
-                className={`${locked ? "hidden" : ""}`}
-              >
-                <Note
-                  content={d.content}
-                  onUpdateContent={(content) =>
-                    onEdit(d.id, { ...d, content }, year, week)
-                  }
-                  color={d.color}
-                  editable={d.editable || false}
-                />
-              </Editable>
-              {showPeople && (
-                <PersonAssignment
-                  id={d.id}
-                  peopleIds={d.people || []}
-                  disabled={
-                    !isDragging || dragType == null || dragType !== "person"
-                  }
-                  style={{ marginTop: "-5px" }}
-                />
-              )}
-            </Draggable>
-          );
-        case "post-card":
-          const postCardItem = d as PostCardItem;
-          return (
-            <Draggable
-              id={d.id}
-              key={`drag-postcard-${d.id}-${i}`}
-              left={`${d.x || 50 + i * 5}%`}
-              top={`${d.y || 50 + i * 5}%`}
-              style={getStyle(d)}
-              element="post-card"
-              data={{ content: d.content, fileUrl: postCardItem.image?.url }}
-              disabled={d.editable}
-            >
-              <Editable
-                onDelete={() => deleteItem(d.id, year, week)}
-                onSelect={(selected: boolean) => {
-                  if (selected) {
-                    onItemSelect(d.id, year, week);
-                  } else deselectItem(d.id, year, week);
-                }}
-                color={d.color || "#0096FF"}
-                onChangeColor={(color: string) => {
-                  onEdit(d.id, { ...d, color }, year, week);
-                }}
-                editable={d.editable || false}
-                position="right"
-                className={`${locked ? "hidden" : ""}`}
-              >
-                <PostCard
-                  key={`drag-postcard-${i}`}
-                  content={d.content || ""}
-                  editable={d.editable || false}
-                  onUpdateContent={(content) =>
-                    onEdit(d.id, { ...d, content }, year, week)
-                  }
-                  fileUrl={postCardItem.image?.url}
-                  color={d.color}
-                ></PostCard>
-              </Editable>
-              {showPeople && (
-                <PersonAssignment
-                  id={d.id}
-                  peopleIds={d.people || []}
-                  disabled={
-                    !isDragging || dragType == null || dragType !== "person"
-                  }
-                  style={{ marginTop: "-5px" }}
-                />
-              )}
-            </Draggable>
-          );
-      }
-    });
-  };
-
   const updateDragState = (e: DragMoveEvent) => {
     const { activatorEvent, delta, over, collisions } = e;
     if (!over) return;
@@ -316,24 +198,58 @@ const ScheduleView = ({
     setDragType(e?.active?.data?.current?.type);
   };
 
-  const existingSchedule = schedules.find(
-    (s) => s.year === year && s.week === week
-  );
+  const { schedules: optimisticSchedules, setSchedules } =
+    useOptimisticSchedules(existingSchedule.schedule);
+
+  if (!existingSchedule) return null;
 
   const peopleMenuActive = existingSchedule?.schedule.some(
     (s) =>
-      s.morning?.length > 0 || s.afternoon.length > 0 || s.evening.length > 0
+      s.morning?.items?.length > 0 ||
+      s.afternoon.items?.length > 0 ||
+      s.evening.items?.length > 0
   );
 
-  useEffect(() => {
-    if (locked) {
-      existingSchedule?.schedule.forEach((s) => {
-        s.morning?.forEach((m) => deselectItem(m.id, year, week));
-        s.afternoon?.forEach((m) => deselectItem(m.id, year, week));
-        s.evening?.forEach((m) => deselectItem(m.id, year, week));
-      });
+  const onEditCell = async (
+    day: number,
+    section: Section,
+    item: GenericItem,
+    itemIndex: number,
+    action: "move" | "update" | "delete"
+  ) => {
+    const scheduleIndex = existingSchedule.schedule.findIndex(
+      (s) => s.day === day
+    );
+    if (scheduleIndex === -1) return;
+    const scheduleItem = { ...optimisticSchedules[scheduleIndex] };
+
+    switch (action) {
+      case "update":
+        scheduleItem[section].items[itemIndex] = item;
+        break;
+      case "delete":
+        scheduleItem[section].items.splice(itemIndex, 1);
     }
-  }, [locked]);
+
+    startTransition(() => {
+      setSchedules({
+        source: scheduleItem,
+        target: scheduleItem,
+        targetSection: section,
+        targetItemIndex: itemIndex,
+        action,
+      });
+    });
+
+    const newSchedule = {
+      ...existingSchedule,
+      schedule: existingSchedule.schedule.map((s) =>
+        s.day === day ? scheduleItem : s
+      ),
+    };
+
+    await updateScheduleAction(calendarId, newSchedule, "/grids/");
+  };
 
   return (
     <DndContext
@@ -360,7 +276,7 @@ const ScheduleView = ({
     >
       <div className="w-full h-full relative flex flex-col md:grid md:grid-cols-7 p-3">
         {[...Array(7)].map((_, dayIndex) => {
-          const dayItems = existingSchedule?.schedule.find(
+          const dayItems = optimisticSchedules?.find(
             (s) => s.day === dayIndex + 1
           );
           return (
@@ -369,39 +285,37 @@ const ScheduleView = ({
               key={`day-${dayIndex}}`}
             >
               <h2 className="text-center mb-3">{labels[dayIndex]}</h2>
-              {!templateId && (
-                <h3 className="text-center mb-3">{days[dayIndex]}</h3>
-              )}
+              <h3 className="text-center mb-3">{days[dayIndex]}</h3>
               {[...Array(3)].map((_, sectionIndex) => {
-                const section = sections[sectionIndex].toLowerCase();
+                const section = sections[sectionIndex];
                 const sectionKey = section as keyof ScheduleItem;
 
                 return (
                   <div key={`section-${dayIndex}-${sectionIndex}`}>
-                    <Droppable
-                      id={`${dayIndex}-${sectionIndex}`}
-                      dragging={isDragging}
-                      isPast={false}
-                      isToday={false}
-                      onClick={() => {}}
-                    >
-                      {dayItems &&
-                        dayItems[sectionKey] &&
-                        renderItems(dayItems[sectionKey] as GenericItem[])}
-                      <div
-                        className={
-                          "absolute left-0 w-10 h-full bg-slate-400 flex flex-row justify-center items-center"
-                        }
-                        style={{
-                          textAlign: "center",
-                          writingMode: "vertical-rl",
-                          textOrientation: "mixed",
-                          transform: "rotate(180deg)",
-                        }}
-                      >
-                        <span>{sections[sectionIndex]}</span>
-                      </div>
-                    </Droppable>
+                    <WeekCell
+                      data={
+                        (dayItems && dayItems[sectionKey]
+                          ? dayItems[sectionKey]
+                          : []) as ScheduleSection
+                      }
+                      day={dayIndex}
+                      section={section}
+                      sectionIndex={sectionIndex}
+                      isDragging={isDragging}
+                      locked={locked}
+                      showPeople={showPeople}
+                      disableDrag={dragType === "people"}
+                      disablePeopleDrag={dragType !== "people"}
+                      onEditCell={(item, itemIndex, action) =>
+                        onEditCell(
+                          dayIndex + 1,
+                          section,
+                          item,
+                          itemIndex,
+                          action
+                        )
+                      }
+                    />
                   </div>
                 );
               })}
@@ -419,14 +333,11 @@ const ScheduleView = ({
       <Toolbar
         onNext={onNext}
         onPrev={onPrev}
-        onSave={onSave}
         onToggleLock={() => setLocked(!locked)}
         toolbarItems={toolbarItems}
         showNav={!templateId}
-        saving={saving}
         onShare={onShare}
         locked={locked}
-        pendingChanges={pendingChanges > 0 || pendingPeoplechanges > 0}
       />
       <DraggableOverlay />
     </DndContext>

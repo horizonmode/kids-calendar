@@ -1,56 +1,45 @@
 import {
-  CalendarDay,
-  EventItem,
   GenericItem,
   PostCardItem,
+  ScheduleSection,
+  Section,
 } from "@/types/Items";
 import Droppable from "./Droppable";
-import { Days } from "@/utils/days";
 import { renderNote, renderPostCard } from "@/utils/renderItems";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import useModalContext from "@/store/modals";
 import useImageContext from "@/store/images";
 
-interface CalendarCellProps {
+interface WeekCellProps {
+  data?: ScheduleSection;
+  section: Section;
+  sectionIndex: number;
   day: number;
-  month: number;
-  year: number;
-  data?: CalendarDay;
   isDragging: boolean;
-  selected: boolean;
-  onSelectDay: (day: number) => void;
   disableDrag?: boolean;
   showPeople?: boolean;
   disablePeopleDrag?: boolean;
   locked?: boolean;
-  onEditDay?: (
-    day: CalendarDay,
+  onEditCell?: (
+    data: GenericItem,
     itemIndex: number,
     action: "move" | "update" | "delete"
   ) => void;
 }
 
-const days = new Days();
-
-const CalendarCell: React.FC<CalendarCellProps> = ({
-  day,
-  month,
-  year,
+const WeekCell: React.FC<WeekCellProps> = ({
   data,
   isDragging,
-  selected,
-  onSelectDay,
+  section,
+  sectionIndex,
+  day,
   disableDrag = false,
   showPeople = false,
   locked = false,
   disablePeopleDrag = true,
-  onEditDay,
+  onEditCell,
 }) => {
-  const [editingItem, setEditingItem] = useState<
-    GenericItem | EventItem | null
-  >(null);
-
-  const today = new Date();
+  const [editingItem, setEditingItem] = useState<GenericItem | null>(null);
 
   const onItemUpdateContent = (item: Partial<GenericItem>) => {
     if (editingItem) {
@@ -60,37 +49,27 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
 
   const onItemDelete = async (item: GenericItem) => {
     if (data) {
-      const newData = {
-        ...data,
-        items: data.items.filter((i) => i.id !== item.id),
-      };
-
-      onEditDay && onEditDay(newData, data.items.indexOf(item), "delete");
-      setEditingItem(null);
+      onEditCell && onEditCell(item, data.items.indexOf(item), "delete");
     }
+
+    setEditingItem(null);
   };
 
   const onItemSelect = (item: GenericItem) => {
     setEditingItem(item);
   };
 
-  const onItemDeselect = async (item: GenericItem) => {
-    if (data) {
-      const newData = {
-        ...data,
-        items: data.items.map((item) =>
-          editingItem && item.id === editingItem.id ? editingItem : item
-        ),
-      };
-
-      onEditDay &&
-        onEditDay(
-          newData,
-          data.items.findIndex((i) => i.id === item.id),
+  const onItemDeselect = async () => {
+    if (data && editingItem) {
+      onEditCell &&
+        onEditCell(
+          editingItem,
+          data.items.findIndex((di) => di.id === editingItem.id),
           "update"
         );
-      setEditingItem(null);
     }
+
+    setEditingItem(null);
   };
 
   const [setShowModal] = useModalContext((state) => [state.setShowModal]);
@@ -98,15 +77,15 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
     state.setEditingItem,
   ]);
 
-  const onAddImageClicked = (item: PostCardItem) => {
+  const onAddImageClicked = useCallback((item: PostCardItem) => {
     setImageContextItem(item);
     setShowModal("gallery");
-  };
+  }, []);
 
-  const onImageClicked = (item: PostCardItem) => {
+  const onImageClicked = useCallback((item: PostCardItem) => {
     setImageContextItem(item);
     setShowModal("photo");
-  };
+  }, []);
 
   const renderItem = (item: GenericItem, key: string) => {
     switch (item.type) {
@@ -146,28 +125,31 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
 
   return (
     <Droppable
-      day={day}
-      id={day.toString()}
+      id={`${day}-${sectionIndex}`}
       dragging={isDragging}
-      isPast={
-        day < today.getDate() &&
-        month === today.getMonth() &&
-        year === today.getFullYear()
-      }
-      isToday={
-        day === today.getDate() &&
-        month === today.getMonth() &&
-        year === today.getFullYear()
-      }
-      highlight={selected}
-      onClick={() => onSelectDay(day)}
-      label={days.getWeekDay(day)}
-      disabled={disableDrag}
+      isPast={false}
+      isToday={false}
+      onClick={() => {}}
       loading={data?.status === "pending"}
+      disabled={disableDrag}
     >
-      {data && data.items.map((item, i) => renderItem(item, `${item.id}-${i}`))}
+      {data &&
+        data.items?.map((item, i) => renderItem(item, `${item.id}-${i}`))}
+      <div
+        className={
+          "absolute left-0 w-10 h-full bg-slate-400 flex flex-row justify-center items-center"
+        }
+        style={{
+          textAlign: "center",
+          writingMode: "vertical-rl",
+          textOrientation: "mixed",
+          transform: "rotate(180deg)",
+        }}
+      >
+        <span>{section}</span>
+      </div>
     </Droppable>
   );
 };
 
-export default CalendarCell;
+export default WeekCell;

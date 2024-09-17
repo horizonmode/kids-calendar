@@ -12,12 +12,18 @@ export interface GalleryImage {
   url: string;
 }
 
-export interface ScheduleItem {
+export type ScheduleItem = {
   day: number;
-  morning: GenericItem[];
-  afternoon: GenericItem[];
-  evening: GenericItem[];
-}
+  morning: ScheduleSection;
+  afternoon: ScheduleSection;
+  evening: ScheduleSection;
+  status?: SaveStatus;
+};
+
+export type ScheduleSection = {
+  status: SaveStatus;
+  items: GenericItem[];
+};
 
 export interface Template {
   name: string;
@@ -27,13 +33,13 @@ export interface Template {
   id: string;
 }
 
-export interface Schedule {
+export type Schedule = {
   year: number;
   week: number;
   type: string;
   schedule: ScheduleItem[];
   softDelete?: boolean;
-}
+};
 
 export interface Person {
   id: number;

@@ -20,6 +20,7 @@ import {
   GenericItem,
   PostCardItem,
   ScheduleItem,
+  ScheduleSection,
   Section,
 } from "@/types/Items";
 import { Delta } from "./Delta";
@@ -140,9 +141,9 @@ const TemplateView = ({
   useEffect(() => {
     if (locked) {
       existingSchedule?.schedule.forEach((s) => {
-        s.morning?.forEach((m) => deleteTemplateItem(m.id, templateId));
-        s.afternoon?.forEach((m) => deleteTemplateItem(m.id, templateId));
-        s.evening?.forEach((m) => deleteTemplateItem(m.id, templateId));
+        s.morning?.items.forEach((m) => deleteTemplateItem(m.id, templateId));
+        s.afternoon?.items.forEach((m) => deleteTemplateItem(m.id, templateId));
+        s.evening?.items.forEach((m) => deleteTemplateItem(m.id, templateId));
       });
     }
   }, [locked]);
@@ -289,7 +290,9 @@ const TemplateView = ({
                     >
                       {dayItems &&
                         dayItems[sectionKey] &&
-                        renderItems(dayItems[sectionKey] as GenericItem[])}
+                        renderItems(
+                          (dayItems[sectionKey] as ScheduleSection).items
+                        )}
                       <div
                         className={
                           "absolute left-0 w-10 h-full bg-slate-400 flex flex-row justify-center items-center"
@@ -312,10 +315,8 @@ const TemplateView = ({
         })}
       </div>
       <Toolbar
-        onSave={onSave}
         toolbarItems={toolbarItems}
         showNav={!templateId}
-        saving={saving}
         onShare={onShare}
         onToggleLock={() => setLocked(!locked)}
         locked={locked}

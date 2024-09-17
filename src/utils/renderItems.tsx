@@ -5,6 +5,7 @@ import PersonAssignment from "@/components/PersonAssignment";
 import PostCard from "@/components/PostCard";
 import { CSSProperties } from "react";
 import Note from "@/components/Note";
+import { on } from "events";
 
 const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
   position: "absolute",
@@ -83,50 +84,52 @@ export const renderPostCard = (
   onAddImageClicked: () => void,
   onImageClicked: () => void,
   key: string
-) => (
-  <Draggable
-    id={item.id}
-    key={key}
-    left={`${item.x || 50}%`}
-    top={`${item.y || 50}%`}
-    style={getStyle(item)}
-    element="post-card"
-    data={{ content: item.content, fileUrl: item.image?.url }}
-    disabled={editable}
-  >
-    <Editable
-      onDelete={() => onItemDelete(item)}
-      color={item.color || "#0096FF"}
-      onChangeColor={(color: string) => {
-        onItemUpdate({ color });
-      }}
-      onSelect={async (selected) => {
-        if (selected) onItemSelect(item);
-        else await onItemDeselect(item);
-      }}
-      editable={editable}
-      className={`${locked ? "hidden" : ""}`}
-      position="right"
+) => {
+  return (
+    <Draggable
+      id={item.id}
+      key={key}
+      left={`${item.x || 50}%`}
+      top={`${item.y || 50}%`}
+      style={getStyle(item)}
+      element="post-card"
+      data={{ content: item.content, fileUrl: item.image?.url }}
+      disabled={editable}
     >
-      <PostCard
-        content={item.content || ""}
-        editable={editable}
-        onUpdateContent={(content: string) => {
-          onItemUpdate({ content });
+      <Editable
+        onDelete={() => onItemDelete(item)}
+        color={item.color || "#0096FF"}
+        onChangeColor={(color: string) => {
+          onItemUpdate({ color });
         }}
-        fileUrl={item.image?.url}
-        color={item.color}
-        onAddImageClicked={onAddImageClicked}
-        onImageClicked={onImageClicked}
-      ></PostCard>
-    </Editable>
-    {showPeople && (
-      <PersonAssignment
-        id={item.id}
-        peopleIds={item.people || []}
-        disabled={disablePeople}
-        style={{ marginTop: "-5px" }}
-      />
-    )}
-  </Draggable>
-);
+        onSelect={async (selected) => {
+          if (selected) onItemSelect(item);
+          else await onItemDeselect(item);
+        }}
+        editable={editable}
+        className={`${locked ? "hidden" : ""}`}
+        position="right"
+      >
+        <PostCard
+          content={item.content || ""}
+          editable={editable}
+          onUpdateContent={(content: string) => {
+            onItemUpdate({ content });
+          }}
+          fileUrl={item.image?.url}
+          color={item.color}
+          onAddImageClicked={onAddImageClicked}
+          onImageClicked={onImageClicked}
+        ></PostCard>
+      </Editable>
+      {showPeople && (
+        <PersonAssignment
+          id={item.id}
+          peopleIds={item.people || []}
+          disabled={disablePeople}
+          style={{ marginTop: "-5px" }}
+        />
+      )}
+    </Draggable>
+  );
+};

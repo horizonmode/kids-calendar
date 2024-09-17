@@ -14,7 +14,7 @@ import {
 import PersonCard from "@/components/PersonCard";
 import useModalContext from "@/store/modals";
 import useImageContext from "@/store/images";
-import { updatePeopleAction } from "@/helpers/serverActions/people";
+import { updatePeopleAction } from "@/serverActions/people";
 
 interface PeopleDialogProps {
   calendarId: string;
@@ -36,10 +36,10 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
   useEffect(() => {
     if (showModal) originalPeople.current = people;
     else originalPeople.current = [];
-  }, [showModal]);
+  }, [people, showModal]);
 
-  const [selectedPersonId, setSelectedPersonId] = useState<number | null>(
-    people.length > 0 ? people[0].id : null
+  const [selectedPersonIndex, setSelectedPersonIndex] = useState<number | null>(
+    people.length > 0 ? 0 : null
   );
 
   const [setEditingPerson] = useImageContext(
@@ -48,7 +48,8 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
   );
 
   const openImagePicker = async () => {
-    const person = people.find((p) => p.id === selectedPersonId);
+    if (selectedPersonIndex === null) return;
+    const person = people[selectedPersonIndex];
     if (person) setEditingPerson(person);
 
     setPendingModal("people");
@@ -57,7 +58,7 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
 
   useEffect(() => {
     if (people.length > 0) {
-      setSelectedPersonId(people[people.length - 1].id);
+      setSelectedPersonIndex(people.length - 1);
     }
   }, [people.length]);
 
@@ -65,28 +66,27 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
     editPerson(person);
   };
 
-  const selectedPerson = people.find((p) => p.id === selectedPersonId);
+  const selectedPerson = people[selectedPersonIndex || 0];
 
   const onNextPerson = () => {
-    if (selectedPersonId === null) {
+    if (selectedPersonIndex === null) {
       return;
     }
-    const currentIndex = people.findIndex((p) => p.id === selectedPersonId);
-    if (currentIndex === -1) {
+    if (selectedPersonIndex === -1) {
       return;
     }
-    const nextIndex = currentIndex + 1;
+    const nextIndex = selectedPersonIndex + 1;
     if (nextIndex >= people.length) {
       return;
     }
-    setSelectedPersonId(people[nextIndex].id);
+    setSelectedPersonIndex(nextIndex);
   };
 
   const onPrevPerson = () => {
-    if (selectedPersonId === null) {
+    if (selectedPersonIndex === null) {
       return;
     }
-    const currentIndex = people.findIndex((p) => p.id === selectedPersonId);
+    const currentIndex = selectedPersonIndex;
     if (currentIndex === -1) {
       return;
     }
@@ -94,7 +94,7 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
     if (prevIndex < 0) {
       return;
     }
-    setSelectedPersonId(people[prevIndex].id);
+    setSelectedPersonIndex(prevIndex);
   };
 
   const onDialogClose = () => {
@@ -126,13 +126,13 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
 
   const canGoBack =
     people.length > 1 &&
-    selectedPersonId !== null &&
-    people.findIndex((p) => p.id === selectedPersonId) > 0;
+    selectedPersonIndex !== null &&
+    selectedPersonIndex > people.length - 1;
 
   const canGoForward =
     people.length > 1 &&
-    selectedPersonId !== null &&
-    people.findIndex((p) => p.id === selectedPersonId) < people.length - 1;
+    selectedPersonIndex !== null &&
+    people.length > selectedPersonIndex + 1;
 
   return (
     <Dialog open={showModal === "people"} onClose={onDialogClose} static={true}>
@@ -169,11 +169,11 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex flex-col md:flex-row gap-1">
-            {selectedPersonId && (
+            {selectedPersonIndex != null && (
               <Button
                 variant="secondary"
                 icon={RiUserAddLine}
-                onClick={() => onDeletePerson(selectedPersonId)}
+                onClick={() => onDeletePerson(people[selectedPersonIndex].id)}
               >
                 Remove Person
               </Button>

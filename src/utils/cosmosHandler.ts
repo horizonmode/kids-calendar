@@ -290,7 +290,117 @@ export const UpdateEvents = async (events: EventItem[], calendarId: string) => {
         };
   });
 
-  console.log(operations);
   await container.items.bulk(operations);
   return events;
+};
+
+export const UpdateSchedule = async (
+  schedule: Schedule,
+  calendarId: string
+) => {
+  await cosmosSingleton.initialize();
+  const container = cosmosSingleton.getContainer();
+  if (!container) {
+    throw new Error("NoContainer");
+  }
+
+  const scheduleObject: CosmosItem<Schedule> = {
+    ...stripProhibitedKeys(schedule),
+    calendarId,
+    id: `schedule.${schedule.year}.${schedule.week}`,
+    type: "schedule",
+  };
+
+  const operation = schedule.softDelete
+    ? {
+        operationType: BulkOperationType.Delete,
+        partitionKey: calendarId,
+        id: scheduleObject.id,
+      }
+    : {
+        operationType: BulkOperationType.Upsert,
+        partitionKey: calendarId,
+        id: scheduleObject.id,
+        resourceBody: {
+          ...scheduleObject,
+        },
+      };
+
+  await container.items.bulk([operation]);
+  return schedule;
+};
+
+export const UpdateSchedules = async (
+  schedules: Schedule[],
+  calendarId: string
+) => {
+  await cosmosSingleton.initialize();
+  const container = cosmosSingleton.getContainer();
+  if (!container) {
+    throw new Error("NoContainer");
+  }
+
+  const operations: OperationInput[] = schedules.map(
+    (schedule: Schedule, i) => {
+      const scheduleObject: CosmosItem<Schedule> = {
+        ...stripProhibitedKeys(schedule),
+        calendarId,
+        id: `schedule.${schedule.year}.${schedule.week}`,
+        type: "schedule",
+      };
+      return schedule.softDelete
+        ? {
+            operationType: BulkOperationType.Delete,
+            partitionKey: calendarId,
+            id: scheduleObject.id,
+          }
+        : {
+            operationType: BulkOperationType.Upsert,
+            partitionKey: calendarId,
+            id: scheduleObject.id,
+            resourceBody: {
+              ...scheduleObject,
+            },
+          };
+    }
+  );
+
+  await container.items.bulk(operations);
+  return schedules;
+};
+
+export const UpdateTemplate = async (
+  template: Template,
+  calendarId: string
+) => {
+  await cosmosSingleton.initialize();
+  const container = cosmosSingleton.getContainer();
+  if (!container) {
+    throw new Error("NoContainer");
+  }
+
+  const templateObject: CosmosItem<Template> = {
+    ...stripProhibitedKeys(template),
+    calendarId,
+    id: template.id,
+    type: "template",
+  };
+
+  const operation = template.softDelete
+    ? {
+        operationType: BulkOperationType.Delete,
+        partitionKey: calendarId,
+        id: templateObject.id,
+      }
+    : {
+        operationType: BulkOperationType.Upsert,
+        partitionKey: calendarId,
+        id: templateObject.id,
+        resourceBody: {
+          ...templateObject,
+        },
+      };
+
+  await container.items.bulk([operation]);
+  return template;
 };
