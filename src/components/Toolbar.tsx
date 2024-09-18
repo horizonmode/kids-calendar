@@ -7,9 +7,8 @@ import React, {
   useState,
 } from "react";
 
-import { Button, Icon } from "@tremor/react";
+import { Icon } from "@tremor/react";
 import { useDroppable } from "@dnd-kit/core";
-import { RiLoader2Fill, RiSave2Line } from "@remixicon/react";
 import { RiArrowLeftLine } from "@remixicon/react";
 import { RiArrowDownLine } from "@remixicon/react";
 import { RiInformationLine } from "@remixicon/react";
@@ -123,7 +122,6 @@ const Toolbar = ({
                 width: "10em",
                 position: "relative",
               }}
-              editable={false}
               event={ti as EventItem}
             />
           </div>
@@ -235,16 +233,6 @@ const Toolbar = ({
         >
           <Icon size="lg" icon={!locked ? RiEditLine : RiEditFill} />
         </div>
-        {/* {saving && (
-          <div className="flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 hover:bg-slate-200">
-            <span className="pointer-events-none flex shrink-0 items-center justify-center gap-1.5">
-              <RiLoader2Fill
-                className="w-full h-full shrink-0 animate-spin"
-                aria-hidden="true"
-              />
-            </span>
-          </div>
-        )} */}
       </div>
       <div
         ref={scrollRef}

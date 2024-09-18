@@ -1,5 +1,4 @@
 "use client";
-import { useMemo } from "react";
 
 import {
   CalendarContext,
@@ -13,19 +12,13 @@ export default function CalendarProvider({
   children,
   days,
   events,
-  editDaysAction,
-  editEventsAction,
+  selectedDay,
 }: CalendarProviderProps) {
-  const store = useMemo(
-    () =>
-      createCalendarStore({
-        days,
-        events,
-        editDaysAction,
-        editEventsAction,
-      }),
-    [days, editDaysAction, editEventsAction, events]
-  );
+  const store = createCalendarStore({
+    days,
+    events,
+    selectedDay,
+  });
   return (
     <CalendarContext.Provider value={store}>
       {children}

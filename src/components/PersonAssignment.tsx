@@ -22,7 +22,7 @@ function PersonAssignment({
     disabled,
   });
 
-  const [people] = usePersonContext((state) => [state.getActivePeople()]);
+  const [people] = usePersonContext((state) => [state.people]);
 
   const selectedPeople = people.filter((person) =>
     peopleIds?.includes(person.id)

@@ -1,11 +1,4 @@
-export type Section = "morning" | "afternoon" | "evening";
-export type ItemType =
-  | "event"
-  | "note"
-  | "task"
-  | "people"
-  | "template"
-  | "schedule";
+export type ItemType = "event" | "note" | "post-it" | "people";
 
 export interface GalleryImage {
   id: number;
@@ -17,7 +10,6 @@ export type ScheduleItem = {
   morning: ScheduleSection;
   afternoon: ScheduleSection;
   evening: ScheduleSection;
-  status?: SaveStatus;
 };
 
 export type ScheduleSection = {
@@ -25,28 +17,30 @@ export type ScheduleSection = {
   items: GenericItem[];
 };
 
-export interface Template {
+export type Template = ActionStatus & {
   name: string;
   type: string;
   schedule: ScheduleItem[];
-  softDelete?: boolean;
   id: string;
-}
+};
 
-export type Schedule = {
+export type Schedule = ActionStatus & {
   year: number;
   week: number;
   type: string;
   schedule: ScheduleItem[];
-  softDelete?: boolean;
 };
 
 export interface Person {
   id: number;
   name: string;
   photo: GalleryImage | null;
-  softDelete?: boolean;
 }
+
+export type ActionStatus = {
+  status?: SaveStatus;
+  action?: Action;
+};
 
 export type GenericItem = {
   id: string;
@@ -56,40 +50,39 @@ export type GenericItem = {
   x: number;
   y: number;
   order: number;
-  editable?: boolean;
   people?: number[];
-  softDelete?: boolean;
 };
 
 export type PostCardItem = GenericItem & {
   image: GalleryImage | null;
 };
 
-export type EventItem = GenericItem & {
-  day: number;
-  month: number;
-  year: number;
-  days: number;
-  dirty?: boolean;
-  status?: SaveStatus;
-};
+export type EventItem = GenericItem &
+  ActionStatus & {
+    day: number;
+    month: number;
+    year: number;
+    days: number;
+  };
 
 export type SaveStatus = "pending" | "saved" | "error";
 
-export type CalendarDay = {
+export type Action = "update" | "delete" | "move";
+
+export type Section = "morning" | "afternoon" | "evening";
+
+export type CalendarDay = ActionStatus & {
   day: number;
   month: number;
   year: number;
   type: "day" | "week";
   items: GenericItem[];
-  softDelete?: boolean;
-  dirty?: boolean;
-  status?: SaveStatus;
+  id?: string;
 };
 
-export interface People {
+export type People = ActionStatus & {
   people: Person[];
-}
+};
 
 export type CosmosItem<T> = T & {
   calendarId: string;

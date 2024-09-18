@@ -6,13 +6,17 @@ export default async function CalendarLayout({
   params,
 }: Readonly<{
   children: React.ReactNode;
-  params: { calendarId: string };
+  params: { calendarId: string; year: number; month: number };
 }>) {
-  const { calendarId } = params;
+  const { calendarId, year, month } = params;
   const initialData = await GetDays(calendarId);
 
   return (
-    <CalendarProvider days={initialData.days} events={initialData.events}>
+    <CalendarProvider
+      days={initialData.days}
+      events={initialData.events}
+      selectedDay={new Date(year, month, 1)}
+    >
       <>{children}</>
     </CalendarProvider>
   );

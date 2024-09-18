@@ -1,7 +1,5 @@
 import { Delta } from "@/components/Delta";
 import {
-  CalendarDay,
-  EventItem,
   GenericItem,
   Person,
   Schedule,
@@ -28,7 +26,10 @@ export interface ScheduleService {
   toolbarItems: GenericItem[];
   reorderSchedule: reorderScheduleFunc;
   cloneItems: (source: any, destination: any) => any;
-  findItemInSchedules: (itemId: string, schedules: Schedule[]) => GenericItem;
+  findItemInSchedules: (
+    itemId: string,
+    schedules: Schedule[]
+  ) => GenericItem | null;
   findSection: (
     sectionKey: "morning" | "afternoon" | "evening",
     schedule: ScheduleItem
@@ -66,36 +67,6 @@ const toolbarItems: GenericItem[] = [
     color: "#FF00FF",
   },
 ];
-
-const findItem = (section: ScheduleSection, itemId: string) => {
-  const items = section.items;
-  const itemIndex = items.findIndex((i) => i.id == itemId);
-  return { item: items[itemIndex], index: itemIndex };
-};
-
-const reOrderLayers = (section: ScheduleSection, item: GenericItem) => {
-  const items = section.items;
-  if (items.length < 2) return items;
-  const numItems = items.length;
-  if (item.order === numItems - 1) return items;
-  item.order = numItems - 1;
-  const otherItems = items.filter((i) => i.id !== item.id);
-  otherItems.sort((a, b) => (a.order > b.order ? 1 : -1));
-  for (var i = 0; i < otherItems.length; i++) {
-    otherItems[i].order = i;
-  }
-
-  return items;
-};
-
-const reOrderAll = (section: ScheduleSection) => {
-  const items = section.items;
-  if (items.length < 2) return items;
-  items.sort((a, b) => (a.order > b.order ? 1 : -1));
-  for (var i = 0; i < items.length; i++) {
-    items[i].order = i;
-  }
-};
 
 const findDay = (itemId: string, schedule: ScheduleItem[]) => {
   for (var i = 0; i < schedule.length; i++) {
@@ -197,7 +168,6 @@ const reorderSchedule: reorderScheduleFunc = (
   );
 
   let item = null;
-  let newState = {};
 
   if (dayIndex === null) {
     // look in toolbar items
@@ -236,9 +206,7 @@ const reorderSchedule: reorderScheduleFunc = (
     targetDayObj
   );
   targetSectionProperty.items.push(item as GenericItem);
-  newState = {
-    schedules,
-  };
+
   return {
     schedules,
     source: dayIndex ? scheduleItem.schedule[dayIndex] : null,
@@ -246,7 +214,7 @@ const reorderSchedule: reorderScheduleFunc = (
   };
 };
 
-export default {
+const scheduleService: ScheduleService = {
   toolbarItems,
   reorderSchedule,
   cloneItems,
@@ -255,4 +223,6 @@ export default {
   findDay,
   addPersonIfNotExists,
   removePersonIfExists,
-} as ScheduleService;
+};
+
+export default scheduleService;

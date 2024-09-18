@@ -1,6 +1,5 @@
-import Calendar from "@/app/grids/[calendarId]/calendar/page";
 import { Delta } from "@/components/Delta";
-import { CalendarDay, EventItem, GenericItem } from "@/types/Items";
+import { CalendarDay, EventItem, GenericItem, Person } from "@/types/Items";
 import { Days } from "@/utils/days";
 import { reOrderAll, reOrderLayers } from "@/utils/layers";
 import { v4 as uuidv4 } from "uuid";
@@ -32,7 +31,7 @@ export interface CalendarService {
     toolbarItems: (GenericItem | EventItem)[]
   ) => {
     days: CalendarDay[];
-    sourceDay: CalendarDay;
+    sourceDay: CalendarDay | null;
     targetDay: CalendarDay;
     targetItemIndex: number;
   };
@@ -49,6 +48,19 @@ export interface CalendarService {
     toolbarItems: GenericItem[],
     selectedDay: Date
   ) => { events: EventItem[]; event: EventItem };
+  addPersonIfNotExists: (item: GenericItem, person: Person) => void;
+  removePersonIfExists: (item: GenericItem, person: Person) => void;
+  findItemType: (
+    itemId: string,
+    days: CalendarDay[],
+    events: EventItem[]
+  ) => {
+    type: string;
+    itemIndex?: number;
+    dayIndex?: number;
+    eventIndex?: number;
+    toolbarIndex?: number;
+  };
 }
 
 const toolbarItems: GenericItem[] = [
@@ -60,7 +72,6 @@ const toolbarItems: GenericItem[] = [
     y: 0,
     order: 0,
     color: "#0096FF",
-    editable: false,
     people: [],
   },
   {
@@ -71,7 +82,6 @@ const toolbarItems: GenericItem[] = [
     y: 0,
     order: 0,
     color: "#0000FF",
-    editable: false,
     people: [],
   },
   {
@@ -82,7 +92,6 @@ const toolbarItems: GenericItem[] = [
     y: 0,
     order: 0,
     color: "#FF00FF",
-    editable: false,
     people: [],
   },
 ];
@@ -90,6 +99,30 @@ const toolbarItems: GenericItem[] = [
 const findItem = (items: GenericItem[], itemId: string) => {
   const itemIndex = items.findIndex((i) => i.id == itemId);
   return { item: items[itemIndex], index: itemIndex };
+};
+
+const findItemType = (
+  itemId: string,
+  days: CalendarDay[],
+  events: EventItem[]
+) => {
+  const dayIndex = days.findIndex(
+    (d) => d.items.findIndex((i) => i.id == itemId) > -1
+  );
+  if (dayIndex > -1) {
+    const itemIndex = days[dayIndex].items.findIndex((i) => i.id === itemId);
+    return { type: "day", dayIndex, itemIndex };
+  }
+
+  const eventIndex = events.findIndex((d) => d.id === itemId);
+  if (eventIndex > -1) {
+    return { type: "event", eventIndex };
+  }
+
+  return {
+    type: "toolbar",
+    toolbarIndex: toolbarItems.findIndex((d) => d.id === itemId),
+  };
 };
 
 const adjustDateByMonth = (month: number, selectedDay: Date) => {
@@ -131,6 +164,18 @@ const getDaysEvents = (events: EventItem[], selectedDay: Date) => {
   );
 };
 
+const addPersonIfNotExists = (item: GenericItem, person: Person) => {
+  if (item.people === undefined) item.people = [];
+  if (item.people.findIndex((p) => p === person.id) === -1)
+    item.people.push(person.id);
+};
+
+const removePersonIfExists = (item: GenericItem, person: Person) => {
+  if (item.people === undefined) return;
+  const personIndex = item.people.findIndex((p) => p === person.id);
+  if (personIndex > -1) item.people.splice(personIndex, 1);
+};
+
 const reorderDays = (
   itemId: string,
   overId: number,
@@ -141,6 +186,11 @@ const reorderDays = (
   toolbarItems: (GenericItem | EventItem)[]
 ) => {
   let targetDay: CalendarDay;
+  let sourceDay: CalendarDay | null = null;
+  let sourceItem: GenericItem | EventItem | null = null;
+  let sourceItemIndex: number | null = null;
+
+  // find source item
   const sourceDayIndex = days.findIndex(
     (d) => d.items.findIndex((i) => i.id == itemId) > -1
   );
@@ -149,91 +199,55 @@ const reorderDays = (
     const toolbarIndex = toolbarItems.findIndex((d) => d.id === itemId);
     if (toolbarIndex > -1) {
       //
-      const item = { ...toolbarItems[toolbarIndex] };
-      item.id = uuidv4();
-      const targetDayIndex = days.findIndex(
-        (d) => d.day === overId && d.month === month + 1 && d.year === year
-      );
-      if (targetDayIndex > -1) {
-        targetDay = days[targetDayIndex];
-      } else {
-        targetDay = {
-          day: overId,
-          month: month + 1,
-          year: year,
-          items: [],
-          type: "day",
-          dirty: true,
-        };
-        days.push(targetDay);
-      }
-
-      targetDay.softDelete = false;
-      targetDay.dirty = true;
-
-      item.x = delta.x * 100;
-      item.y = delta.y * 100;
-      targetDay.items.push(item);
-      reOrderLayers(targetDay.items, item);
-
-      return {
-        days: [...days],
-        sourceDay: { ...targetDay },
-        targetDay: { ...targetDay },
-        targetItemIndex: targetDay.items.findIndex((i) => i.id === itemId),
-      };
-    } else {
-      throw new Error("Item not found");
+      sourceItem = { ...toolbarItems[toolbarIndex] };
+      sourceItem.id = uuidv4();
     }
   } else {
-    const day = { ...days[sourceDayIndex] };
-    const sourceIndex = day.items.findIndex((i) => i.id == itemId);
-    const item = day.items[sourceIndex];
-
-    if (day.day !== overId) {
-      day.items.splice(sourceIndex, 1);
-      day.softDelete = day.items.length === 0;
-      day.dirty = true;
-      const targetDayIndex = days.findIndex(
-        (d) => d.day === overId && d.month === month + 1 && d.year === year
-      );
-      if (targetDayIndex > -1) {
-        targetDay = { ...days[targetDayIndex] };
-      } else {
-        targetDay = {
-          day: overId,
-          month: month + 1,
-          year: year,
-          items: [],
-          type: "day",
-          dirty: true,
-        };
-        days.push(targetDay);
-      }
-
-      targetDay.softDelete = false;
-      targetDay.dirty = true;
-
-      item.x = delta.x * 100;
-      item.y = delta.y * 100;
-      targetDay.items.push(item);
-      reOrderLayers(targetDay.items, item);
-      reOrderAll(day.items);
-    } else {
-      targetDay = day;
-      item.x = delta.x * 100;
-      item.y = delta.y * 100;
-      day.dirty = true;
-      reOrderLayers(day.items, item);
-    }
-
-    return {
-      days: [...days],
-      sourceDay: { ...day },
-      targetDay: { ...targetDay },
-      targetItemIndex: targetDay?.items.findIndex((i) => i.id === itemId) || 0,
-    };
+    sourceDay = days[sourceDayIndex];
+    const { item, index } = findItem(sourceDay.items, itemId);
+    sourceItem = item;
+    sourceItemIndex = index;
   }
+
+  // find target day
+  const targetDayIndex = days.findIndex(
+    (d) => d.day === overId && d.month === month + 1 && d.year === year
+  );
+  if (targetDayIndex > -1) {
+    targetDay = days[targetDayIndex];
+  } else {
+    targetDay = {
+      day: overId,
+      month: month + 1,
+      year: year,
+      items: [],
+      type: "day",
+    };
+    days.push(targetDay);
+  }
+
+  if (!sourceItem) throw new Error("Item not found");
+
+  // modify item
+  sourceItem.x = delta.x * 100;
+  sourceItem.y = delta.y * 100;
+
+  if (sourceDay && sourceItemIndex !== null) {
+    // item has moved from one day to another
+    // remove from source
+    sourceDay.items.splice(sourceItemIndex, 1);
+    reOrderAll(sourceDay.items);
+  }
+
+  targetDay.items.push(sourceItem);
+  reOrderAll(targetDay.items);
+
+  return {
+    days,
+    sourceDay,
+    targetDay,
+    targetItemIndex: targetDay?.items.findIndex((i) => i.id === itemId) || 0,
+  };
 };
 
 const reorderEvents = (
@@ -336,6 +350,9 @@ const service: CalendarService = {
   getDaysEvents,
   reorderDays,
   reorderEvents,
+  addPersonIfNotExists,
+  removePersonIfExists,
+  findItemType,
 };
 
 export default service;

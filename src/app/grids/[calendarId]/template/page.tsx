@@ -4,7 +4,10 @@ import Templates from "@/components/Templates";
 import Header from "@/components/CalendarHeader";
 import { useParams, useRouter } from "next/navigation";
 import { useRoutes } from "@/components/providers/RoutesProvider";
-import { useScheduleContext } from "@/store/schedule";
+
+const getMonthFromWeek = (week: number) => {
+  return new Date(1000 * 60 * 60 * 24 * 7 * week).getMonth();
+};
 
 const TemplatePage = ({
   searchParams,
@@ -15,7 +18,7 @@ const TemplatePage = ({
   const { week, year } = searchParams;
 
   const router = useRouter();
-  const { calendar, schedule, template } = useRoutes();
+  const { calendar, template } = useRoutes();
 
   const onSwitchClicked = async () => {
     router.push(`schedule/${year || new Date().getFullYear()}/${week || 1}`, {
@@ -28,7 +31,14 @@ const TemplatePage = ({
   const onTabChange = (index: number) => {
     switch (index) {
       case 0:
-        router.push(calendar, { scroll: false });
+        router.push(
+          `${calendar}/${year || new Date().getFullYear()}/${
+            week ? getMonthFromWeek(week) : 0
+          }`,
+          {
+            scroll: true,
+          }
+        );
         break;
       case 1:
         onSwitchClicked();

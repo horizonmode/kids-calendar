@@ -5,13 +5,13 @@ const useOptimisticCalendarDays = (days: CalendarDay[]) => {
   const [calendarDays, setCalendarDays] = useOptimistic<
     CalendarDay[],
     {
-      sourceDay: CalendarDay;
+      sourceDay: CalendarDay | null;
       targetDay: CalendarDay;
       targetItemIndex: number;
       action: "move" | "delete" | "update";
     }
   >(days, (previousState, { sourceDay, targetDay, targetItemIndex, action }) =>
-    sourceDay.day === targetDay.day
+    sourceDay == null || sourceDay.day === targetDay.day
       ? [
           ...previousState.filter((d) => d.day !== targetDay.day),
           {
@@ -21,9 +21,7 @@ const useOptimisticCalendarDays = (days: CalendarDay[]) => {
           },
         ]
       : [
-          ...previousState.filter(
-            (d) => d.day !== targetDay.day && d.day !== sourceDay.day
-          ),
+          ...previousState.filter((d) => d.day !== targetDay.day),
           {
             ...sourceDay,
             status:

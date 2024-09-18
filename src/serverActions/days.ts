@@ -16,8 +16,6 @@ export type UpdateDayAction = (
   path?: string
 ) => Promise<CalendarDay>;
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 export const updateDaysAction: UpdateDaysAction = async (
   calendarId: string,
   days: CalendarDay[],

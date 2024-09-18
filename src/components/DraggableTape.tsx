@@ -15,7 +15,6 @@ interface DraggableTapeProps {
   isStart: boolean;
   isEnd: boolean;
   eventId: string;
-  editable?: boolean;
   locked?: boolean;
   showPeople?: boolean;
   people?: number[];

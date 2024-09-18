@@ -15,6 +15,7 @@ import Toolbar from "./Toolbar";
 import { useScheduleContext } from "@/store/schedule";
 import {
   GenericItem,
+  Person,
   ScheduleItem,
   ScheduleSection,
   Section,
@@ -27,7 +28,13 @@ import useOptimisticSchedules from "@/hooks/useOptimisticWeekSchedules";
 import WeekCell from "./WeekCell";
 import { updateScheduleAction } from "@/serverActions/schedules";
 import scheduleService from "@/utils/scheduleService";
-const { reorderSchedule, toolbarItems } = scheduleService;
+const {
+  reorderSchedule,
+  toolbarItems,
+  addPersonIfNotExists,
+  removePersonIfExists,
+  findItemInSchedules,
+} = scheduleService;
 
 interface ScheduleViewProps {
   year: number;
@@ -48,10 +55,7 @@ const ScheduleView = ({
   onShare,
   calendarId,
 }: ScheduleViewProps) => {
-  const [schedules, assignPerson, removePerson] = useScheduleContext(
-    (state) => [state.schedules, state.assignPerson, state.removePerson],
-    shallow
-  );
+  const [schedules] = useScheduleContext((state) => [state.schedules], shallow);
 
   const [people, showPeople, setShowPeople] = usePersonContext(
     (state) => [state.people, state.showPeople, state.setShowPeople],
@@ -62,6 +66,16 @@ const ScheduleView = ({
     (state) => [state.setShowModal],
     shallow
   );
+
+  const assignPerson = async (destination: GenericItem, person: Person) => {
+    addPersonIfNotExists(destination, person);
+    await updateScheduleAction(calendarId, existingSchedule, "/grids/");
+  };
+
+  const removePerson = async (source: GenericItem, person: Person) => {
+    removePersonIfExists(source, person);
+    await updateScheduleAction(calendarId, existingSchedule, "/grids/");
+  };
 
   const existingSchedule = schedules.find(
     (s) => s.year === year && s.week === week
@@ -87,7 +101,9 @@ const ScheduleView = ({
         const { sourceId } = (activeItem.data.current as any).extra;
         removePerson(sourceId, person);
       } else {
-        assignPerson(destination, person);
+        const item = findItemInSchedules(itemId, [existingSchedule]);
+        if (!item) throw new Error("Invalid Item");
+        assignPerson(item, person);
       }
     } else {
       const {

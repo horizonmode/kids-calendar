@@ -15,6 +15,10 @@ import PeopleDialog from "@/components/dialogs/PeopleDialog";
 import { useRoutes } from "@/components/providers/RoutesProvider";
 import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
 
+const getMonthFromWeek = (week: number) => {
+  return new Date(1000 * 60 * 60 * 24 * 7 * week).getMonth();
+};
+
 const SchedulePage = ({
   params,
 }: {
@@ -24,8 +28,6 @@ const SchedulePage = ({
     (state) => [state.applyTemplate, state.week, state.year],
     shallow
   );
-
-  console.log(week, year);
 
   const [templates] = useTemplateContext((state) => [state.templates], shallow);
   const [showModal, setShowModal] = useModalContext(
@@ -37,8 +39,6 @@ const SchedulePage = ({
 
   const router = useRouter();
   const { calendarId, ...p } = params;
-  console.log(calendarId, p);
-
   const [templateId, setTemplateId] = useState("");
 
   useEffect(() => {
@@ -108,7 +108,9 @@ const SchedulePage = ({
   const onTabChange = (index: number) => {
     switch (index) {
       case 0:
-        router.push(`${calendar}`, { scroll: false });
+        router.push(`${calendar}/${year}/${getMonthFromWeek(week)}`, {
+          scroll: false,
+        });
         break;
       case 1:
         onSwitchClicked();

@@ -212,30 +212,28 @@ export const UpdateDays = async (days: CalendarDay[], calendarId: string) => {
   if (!container) {
     throw new Error("NoContainer");
   }
-  const operations: OperationInput[] = days
-    .filter((d) => d.dirty || d.softDelete || d.items.length === 0)
-    .map((day: CalendarDay) => {
-      const dayObject: CosmosItem<CalendarDay> = {
-        ...stripProhibitedKeys(day),
-        calendarId,
-        id: `${day.day}-${day.month}-${day.year}`,
-        type: "day",
-      };
-      return day.softDelete || day.items.length === 0
-        ? {
-            operationType: BulkOperationType.Delete,
-            partitionKey: calendarId,
-            id: dayObject.id,
-          }
-        : {
-            operationType: BulkOperationType.Upsert,
-            partitionKey: calendarId,
-            id: dayObject.id,
-            resourceBody: {
-              ...dayObject,
-            },
-          };
-    });
+  const operations: OperationInput[] = days.map((day: CalendarDay) => {
+    const dayObject: CosmosItem<CalendarDay> = {
+      ...stripProhibitedKeys(day),
+      calendarId,
+      id: day.id || `${day.day}-${day.month}-${day.year}`,
+      type: "day",
+    };
+    return day.items.length === 0
+      ? {
+          operationType: BulkOperationType.Delete,
+          partitionKey: calendarId,
+          id: dayObject.id,
+        }
+      : {
+          operationType: BulkOperationType.Upsert,
+          partitionKey: calendarId,
+          id: dayObject.id,
+          resourceBody: {
+            ...dayObject,
+          },
+        };
+  });
   await container.items.bulk(operations);
   return days;
 };
@@ -250,7 +248,7 @@ export const UpdateDay = async (day: CalendarDay, calendarId: string) => {
   const cosmosDay: CosmosItem<CalendarDay> = {
     ...stripProhibitedKeys(day),
     calendarId,
-    id: `${day.day}-${day.month}-${day.year}`,
+    id: day.id || `${day.day}-${day.month}-${day.year}`,
     type: "day",
   };
   const { resource } = await container.items.upsert<CosmosItem<CalendarDay>>(
@@ -274,7 +272,7 @@ export const UpdateEvents = async (events: EventItem[], calendarId: string) => {
       id: event.id,
       type: "event",
     };
-    return event.softDelete
+    return event.action === "delete"
       ? {
           operationType: BulkOperationType.Delete,
           partitionKey: calendarId,
@@ -311,20 +309,21 @@ export const UpdateSchedule = async (
     type: "schedule",
   };
 
-  const operation = schedule.softDelete
-    ? {
-        operationType: BulkOperationType.Delete,
-        partitionKey: calendarId,
-        id: scheduleObject.id,
-      }
-    : {
-        operationType: BulkOperationType.Upsert,
-        partitionKey: calendarId,
-        id: scheduleObject.id,
-        resourceBody: {
-          ...scheduleObject,
-        },
-      };
+  const operation =
+    schedule.action === "delete"
+      ? {
+          operationType: BulkOperationType.Delete,
+          partitionKey: calendarId,
+          id: scheduleObject.id,
+        }
+      : {
+          operationType: BulkOperationType.Upsert,
+          partitionKey: calendarId,
+          id: scheduleObject.id,
+          resourceBody: {
+            ...scheduleObject,
+          },
+        };
 
   await container.items.bulk([operation]);
   return schedule;
@@ -348,7 +347,7 @@ export const UpdateSchedules = async (
         id: `schedule.${schedule.year}.${schedule.week}`,
         type: "schedule",
       };
-      return schedule.softDelete
+      return schedule.action === "delete"
         ? {
             operationType: BulkOperationType.Delete,
             partitionKey: calendarId,
@@ -386,21 +385,9 @@ export const UpdateTemplate = async (
     type: "template",
   };
 
-  const operation = template.softDelete
-    ? {
-        operationType: BulkOperationType.Delete,
-        partitionKey: calendarId,
-        id: templateObject.id,
-      }
-    : {
-        operationType: BulkOperationType.Upsert,
-        partitionKey: calendarId,
-        id: templateObject.id,
-        resourceBody: {
-          ...templateObject,
-        },
-      };
+  const { resource } = await container.items.upsert<CosmosItem<Template>>(
+    templateObject
+  );
 
-  await container.items.bulk([operation]);
-  return template;
+  return resource;
 };

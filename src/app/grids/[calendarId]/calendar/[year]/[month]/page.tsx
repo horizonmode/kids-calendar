@@ -6,13 +6,20 @@ import MonthView from "@/components/MonthView";
 import Header from "@/components/CalendarHeader";
 import { RiClipboardLine } from "@remixicon/react";
 import { useCalendarContext } from "@/store/calendar";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
 import { useRoutes } from "@/components/providers/RoutesProvider";
 
-export default function Calendar() {
-  const [prevMonth, nextMonth, selectedDay] = useCalendarContext(
-    (state) => [state.prevMonth, state.nextMonth, state.selectedDay],
+export default function CalendarPage({
+  params,
+}: Readonly<{
+  params: { calendarId: string; year: string; month: string };
+}>) {
+  const router = useRouter();
+  const { calendarId, year, month } = params;
+
+  const [selectedDay] = useCalendarContext(
+    (state) => [state.selectedDay],
     shallow
   );
 
@@ -21,9 +28,26 @@ export default function Calendar() {
     shallow
   );
 
+  const yearInt = parseInt(year);
+  const monthInt = parseInt(month);
+
+  const onNextMonth = () => {
+    const nextYear = monthInt === 11 ? yearInt + 1 : yearInt;
+    const nextMonth = monthInt === 11 ? 0 : monthInt + 1;
+    router.push(`/grids/${calendarId}/calendar/${nextYear}/${nextMonth}`, {
+      scroll: true,
+    });
+  };
+
+  const onPrevMonth = () => {
+    const prevYear = monthInt === 0 ? yearInt - 1 : year;
+    const prevMonth = monthInt === 0 ? 11 : monthInt - 1;
+    router.push(`/grids/${calendarId}/calendar/${prevYear}/${prevMonth}`, {
+      scroll: true,
+    });
+  };
+
   const { calendar, template, schedule } = useRoutes();
-  const { calendarId } = useParams<{ calendarId: string }>();
-  const router = useRouter();
 
   const onSwitchClicked = async () => {
     const daysUtil = new Days();
@@ -78,8 +102,8 @@ export default function Calendar() {
         </h1>
       </Header>
       <MonthView
-        onNext={nextMonth}
-        onPrev={prevMonth}
+        onNext={onNextMonth}
+        onPrev={onPrevMonth}
         onShare={onShare}
         onRevert={() => {
           console.log("revert");

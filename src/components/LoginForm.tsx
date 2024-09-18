@@ -2,16 +2,20 @@
 import { useRouter } from "next/navigation";
 import { MouseEventHandler, useState } from "react";
 import routes from "@/data/routes";
+import { v4 as uuidv4 } from "uuid";
 
 const LoginForm = () => {
   const [calendarId, setCalendarId] = useState("");
   const router = useRouter();
+
   const createNew: MouseEventHandler<HTMLElement> = (
     e: React.MouseEvent<HTMLElement>
   ) => {
     e.preventDefault();
-    const id = Date.now();
-    router.push(routes(id).calendar, { scroll: false });
+    const id = uuidv4();
+    const year = new Date().getFullYear();
+    const month = new Date().getMonth();
+    router.push(`${routes(id).calendar}/${year}/${month}`, { scroll: false });
   };
   const openCalender: MouseEventHandler<HTMLElement> = (
     event: React.MouseEvent<HTMLElement>

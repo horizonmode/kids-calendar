@@ -44,7 +44,14 @@ import { updateEventAction } from "@/serverActions/events";
 import CalendarCell from "./CalendarCell";
 import useOptimisticCalendarDays from "@/hooks/useOptimisticCalendarDays";
 import useOptimisticEvents from "@/hooks/useOptimisticEvents";
-const { reorderDays, reorderEvents } = calendarService;
+const {
+  reorderDays,
+  reorderEvents,
+  toolbarItems,
+  addPersonIfNotExists,
+  removePersonIfExists,
+  findItemType,
+} = calendarService;
 
 const days = new Days();
 
@@ -57,33 +64,21 @@ interface MonthViewProps {
 }
 
 const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
-  const [
-    currentDay,
-    setSelectedDay,
-    content,
-    events,
-    toolbarItems,
-    assignPerson,
-    removePerson,
-    locked,
-    setLocked,
-  ] = useCalendarContext(
-    (state) => [
-      state.selectedDay,
-      state.setSelectedDay,
-      calendarService.getDaysContent(state.days, state.selectedDay),
-      calendarService.getDaysEvents(state.events, state.selectedDay),
-      state.toolbarItems,
-      state.assignPerson,
-      state.removePerson,
-      state.locked,
-      state.setLocked,
-    ],
-    shallow
-  );
+  const [currentDay, setSelectedDay, content, events, locked, setLocked] =
+    useCalendarContext(
+      (state) => [
+        state.selectedDay,
+        state.setSelectedDay,
+        calendarService.getDaysContent(state.days, state.selectedDay),
+        calendarService.getDaysEvents(state.events, state.selectedDay),
+        state.locked,
+        state.setLocked,
+      ],
+      shallow
+    );
 
   const [people, showPeople, setShowPeople] = usePersonContext((state) => [
-    state.getActivePeople(),
+    state.people,
     state.showPeople,
     state.setShowPeople,
   ]);
@@ -116,15 +111,85 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
           action: "move",
         });
       });
-      await updateDaysAction(
-        calendarId,
-        [reorder.sourceDay, reorder.targetDay],
-        "/grids/"
-      );
+      const updates = [reorder.targetDay];
+
+      if (reorder.sourceDay && reorder.sourceDay.day !== reorder.targetDay.day)
+        updates.push(reorder.sourceDay);
+
+      console.log(updates);
+      await updateDaysAction(calendarId, updates, "/grids/");
     }
   };
 
-  const onItemDrag = (over: Over, delta: Delta, activeItem: Active) => {
+  const { calendarEvents, setEvents: setCalEvents } =
+    useOptimisticEvents(events);
+
+  const onDayEdit = async (
+    day: CalendarDay,
+    itemIndex: number,
+    action: "move" | "delete" | "update"
+  ) => {
+    startTransition(() => {
+      setCalendarDays({
+        sourceDay: day,
+        targetDay: day,
+        targetItemIndex: itemIndex,
+        action,
+      });
+    });
+    await updateDayAction(calendarId, day, "/grids/");
+  };
+
+  const onEventEdit = async (
+    event: EventItem,
+    action: "update" | "delete" | "move"
+  ) => {
+    startTransition(() => {
+      setCalEvents({
+        event,
+        events: calendarEvents,
+        action,
+      });
+    });
+
+    switch (action) {
+      case "update":
+        await updateEventAction(calendarId, event, "/grids/");
+        break;
+      case "delete":
+        await updateEventAction(calendarId, event, "/grids/");
+        break;
+    }
+  };
+
+  const onReorderEvent = async (
+    itemId: string,
+    overId: number,
+    isStart: boolean,
+    isEnd: boolean,
+    delta: Delta,
+    action: string
+  ) => {
+    const { events, event } = reorderEvents(
+      calendarEvents,
+      itemId,
+      overId,
+      month,
+      year,
+      isStart,
+      isEnd,
+      delta,
+      action,
+      toolbarItems,
+      currentDay
+    );
+    startTransition(() => {
+      setCalEvents({ event, events, action: "move" });
+    });
+    await updateEventAction(calendarId, event, "/grids/");
+  };
+
+  const onItemDrag = async (over: Over, delta: Delta, activeItem: Active) => {
     const { type, action } = activeItem.data.current as {
       type: ItemType;
       action: string;
@@ -152,12 +217,40 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
     } else if (type === "people") {
       const { itemId } = (activeItem.data.current as any).extra;
       const person = people.find((p) => p.id === parseInt(itemId));
-      if (!person) return;
+      if (!person) throw new Error("Person not found");
       if (destination === "toolbar-person") {
         const { sourceId } = (activeItem.data.current as any).extra;
-        removePerson(sourceId, person);
+        const { type, itemIndex, dayIndex, eventIndex } = findItemType(
+          sourceId,
+          calDays,
+          events
+        );
+        if (type === "day" && dayIndex != null && itemIndex != null) {
+          const day = content[dayIndex];
+          const item = day.items[itemIndex];
+          removePersonIfExists(item, person);
+          await onDayEdit(day, itemIndex, "update");
+        } else if (type === "event" && eventIndex != null) {
+          const event = events[eventIndex];
+          removePersonIfExists(event, person);
+          await onEventEdit(event, "update");
+        }
       } else {
-        assignPerson(destination, person);
+        const { type, itemIndex, dayIndex, eventIndex } = findItemType(
+          destination,
+          calDays,
+          events
+        );
+        if (type === "day" && dayIndex != null && itemIndex != null) {
+          const day = content[dayIndex];
+          const item = day.items[itemIndex];
+          addPersonIfNotExists(item, person);
+          await onDayEdit(day, itemIndex, "update");
+        } else if (type === "event" && eventIndex != null) {
+          const event = events[eventIndex];
+          addPersonIfNotExists(event, person);
+          await onEventEdit(event, "update");
+        }
       }
     } else {
       if (destination === "toolbar-person") return;
@@ -216,36 +309,6 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
     });
   }
 
-  const { calendarEvents, setEvents: setCalEvents } =
-    useOptimisticEvents(events);
-
-  const onReorderEvent = async (
-    itemId: string,
-    overId: number,
-    isStart: boolean,
-    isEnd: boolean,
-    delta: Delta,
-    action: string
-  ) => {
-    const { events, event } = reorderEvents(
-      calendarEvents,
-      itemId,
-      overId,
-      month,
-      year,
-      isStart,
-      isEnd,
-      delta,
-      action,
-      toolbarItems,
-      currentDay
-    );
-    startTransition(() => {
-      setCalEvents({ event, events, action: "move" });
-    });
-    await updateEventAction(calendarId, event, "/grids/");
-  };
-
   const calendarDays = daysInMonth + firstDayOfMonth - 1; // always show 7 days x 5 rows
   const offset = firstDayOfMonth - 1;
 
@@ -275,46 +338,6 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
   );
 
   const peopleMenuActive = content.length > 0 || events.length > 0;
-
-  const onDayEdit = async (
-    day: CalendarDay,
-    itemIndex: number,
-    action: "move" | "delete" | "update"
-  ) => {
-    startTransition(() => {
-      setCalendarDays({
-        sourceDay: day,
-        targetDay: day,
-        targetItemIndex: itemIndex,
-        action,
-      });
-    });
-    await updateDayAction(calendarId, day, "/grids/");
-  };
-
-  const onEventEdit = async (
-    event: EventItem,
-    action: "update" | "delete" | "move"
-  ) => {
-    startTransition(() => {
-      setCalEvents({
-        event,
-        events: calendarEvents,
-        action,
-      });
-    });
-
-    switch (action) {
-      case "update":
-        event.dirty = true;
-        await updateEventAction(calendarId, event, "/grids/");
-        break;
-      case "delete":
-        event.softDelete = true;
-        await updateEventAction(calendarId, event, "/grids/");
-        break;
-    }
-  };
 
   return (
     <DndContext
@@ -461,7 +484,6 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
                         zIndex: event.order + 2,
                         opacity: isDragging && dragId === event.id ? "0" : "1",
                       }}
-                      editable={event.editable}
                       locked={locked}
                       showPeople={showPeople}
                       people={event.people}

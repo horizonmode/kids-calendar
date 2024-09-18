@@ -5,7 +5,6 @@ import PersonAssignment from "@/components/PersonAssignment";
 import PostCard from "@/components/PostCard";
 import { CSSProperties } from "react";
 import Note from "@/components/Note";
-import { on } from "events";
 
 const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
   position: "absolute",

@@ -22,7 +22,7 @@ interface PeopleDialogProps {
 
 const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
   const [people, editPerson, setPeople] = usePersonContext(
-    (state) => [state.getActivePeople(), state.edit, state.setPeople],
+    (state) => [state.people, state.edit, state.setPeople],
     shallow
   );
 

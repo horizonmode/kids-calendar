@@ -1,6 +1,5 @@
 "use client";
-import React, { CSSProperties, useEffect, useState } from "react";
-import Droppable from "@/components/Droppable";
+import React, { startTransition, useState } from "react";
 import DraggableOverlay from "@/components/DraggableOverlay";
 import {
   rectIntersection,
@@ -12,69 +11,71 @@ import {
   DragMoveEvent,
 } from "@dnd-kit/core";
 import { MouseSensor, TouchSensor } from "@/utils/handlers";
-import Note from "./Note";
 import { shallow } from "zustand/shallow";
 import Toolbar from "./Toolbar";
-import PostCard from "./PostCard";
 import {
   GenericItem,
-  PostCardItem,
+  ItemType,
+  Person,
   ScheduleItem,
   ScheduleSection,
   Section,
 } from "@/types/Items";
 import { Delta } from "./Delta";
-import Draggable from "./Draggable";
 import { useTemplateContext } from "@/store/template";
-import Editable from "./Editable";
+import useOptimisticSchedules from "@/hooks/useOptimisticWeekSchedules";
+import useModalContext from "@/store/modals";
+import usePersonContext from "@/store/people";
+import PersonSelect from "./PersonSelect";
+import WeekCell from "./WeekCell";
+import scheduleService from "@/utils/scheduleService";
+import templateService from "@/utils/templateService";
+import { updateTemplateAction } from "@/serverActions/templates";
+const { addPersonIfNotExists, removePersonIfExists, toolbarItems } =
+  scheduleService;
+const { findItemInTemplate, reorderTemplate } = templateService;
 
 interface TemplateViewProps {
   templateId: string;
-  onSave: () => void;
+  calendarId: string;
   onShare: () => void;
-  saving: boolean;
 }
 
 const TemplateView = ({
+  calendarId,
   templateId,
-  onSave,
   onShare,
-  saving,
 }: TemplateViewProps) => {
-  const [
-    templates,
-    toolbarItems,
-    reorderTemplate,
-    editTemplateItem,
-    selectTemplateItem,
-    deselectTemplateItem,
-    deleteTemplateItem,
-  ] = useTemplateContext(
-    (state) => [
-      state.templates,
-      state.toolbarItems,
-      state.reorderTemplate,
-      state.editTemplateItem,
-      state.selectTemplateItem,
-      state.deselectTemplateItem,
-      state.deleteTemplateItem,
-    ],
+  const [templates] = useTemplateContext((state) => [state.templates], shallow);
+
+  const [people, showPeople, setShowPeople] = usePersonContext(
+    (state) => [state.people, state.showPeople, state.setShowPeople],
     shallow
   );
 
-  const onEdit = (id: string, item: GenericItem) => {
-    editTemplateItem(templateId, id, item);
+  const [setShowModal] = useModalContext(
+    (state) => [state.setShowModal],
+    shallow
+  );
+
+  const template = templates.find((t) => t.id === templateId) || {
+    id: templateId,
+    name: "new template",
+    schedule: [],
+    type: "template",
   };
 
-  const onItemSelect = (id: string) => {
-    selectTemplateItem(id, templateId);
+  const assignPerson = async (destination: GenericItem, person: Person) => {
+    addPersonIfNotExists(destination, person);
+    await updateTemplateAction(calendarId, template, "/grids/");
   };
 
-  const onItemDeslect = (id: string) => {
-    deselectTemplateItem(id, templateId);
+  const removePerson = async (source: GenericItem, person: Person) => {
+    removePersonIfExists(source, person);
+    await updateTemplateAction(calendarId, template, "/grids/");
   };
 
-  const onItemDrag = (over: Over, delta: Delta, activeItem: Active) => {
+  const onItemDrag = async (over: Over, delta: Delta, activeItem: Active) => {
     const [day, section] = over.id.toString().split("-");
     const sectionId = parseInt(section);
     const sectionName: Section =
@@ -83,23 +84,89 @@ const TemplateView = ({
     if (!over) {
       return;
     }
-    const itemId = activeItem.id;
 
-    reorderTemplate(
-      templateId,
-      itemId.toString(),
-      parseInt(day),
-      sectionName,
-      delta
-    );
+    const destination = over.id.toString();
+    const itemId = activeItem.id;
+    const type = activeItem.data.current?.type as ItemType;
+
+    switch (type) {
+      case "people": {
+        const { itemId: personId } = (activeItem.data.current as any).extra;
+        const person = people.find((p) => p.id === parseInt(personId));
+        if (!person) return;
+
+        if (destination === "toolbar-person") {
+          const { sourceId } = (activeItem.data.current as any).extra;
+          const sourceItem = findItemInTemplate(sourceId, template);
+          if (!sourceItem) throw new Error("Source not found");
+          await removePerson(sourceItem, person);
+        } else {
+          const targetItem = findItemInTemplate(destination, template);
+          if (!targetItem) throw new Error("No target found");
+          await assignPerson(targetItem, person);
+        }
+        break;
+      }
+
+      default: {
+        if (destination === "toolbar-person" || destination === "toolbar")
+          return;
+        const {
+          template: reorderedTemplate,
+          source,
+          target,
+        } = reorderTemplate(
+          itemId.toString(),
+          parseInt(day),
+          sectionName,
+          delta,
+          template,
+          toolbarItems
+        );
+
+        if (!reorderedTemplate || !target) throw new Error("Invalid");
+
+        startTransition(() => {
+          setSchedules({
+            source,
+            target,
+            targetSection: sectionName,
+            targetItemIndex: 0,
+            action: "move",
+          });
+        });
+
+        const newTemplate = source
+          ? {
+              ...template,
+              schedule: [
+                ...template.schedule.filter(
+                  (s) => s.day !== target.day && s.day !== source.day
+                ),
+                source,
+                target,
+              ],
+            }
+          : {
+              ...template,
+              schedule: [
+                ...template.schedule.filter((s) => s.day !== target.day),
+                target,
+              ],
+            };
+
+        await updateTemplateAction(calendarId, newTemplate, "/grids/");
+      }
+    }
   };
 
-  const [{ algorithm }, setCollisionDetectionAlgorithm] = useState({
+  const [{ algorithm }] = useState({
     algorithm: rectIntersection,
   });
 
   const [isDragging, setIsDragging] = useState(false);
   const [locked, setLocked] = useState<boolean>(false);
+  const [dragType, setDragType] = useState<string | null>(null);
 
   const activationConstraint = {
     delay: 0,
@@ -116,7 +183,7 @@ const TemplateView = ({
     })
   );
 
-  const labels = [
+  const days = [
     "Monday",
     "Tuesday",
     "Wednesday",
@@ -126,109 +193,7 @@ const TemplateView = ({
     "Sunday",
   ];
 
-  const sections = ["Morning", "Afternoon", "Evening"];
-
-  const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
-    position: "absolute",
-    zIndex: `${d.order + 2 * 10}`,
-    transform: d.x === 0 && d.y === 0 ? "translate(-50%,-50%)" : "none",
-  });
-
-  const deleteItem = (itemId: string) => {
-    deleteTemplateItem(itemId, templateId);
-  };
-
-  useEffect(() => {
-    if (locked) {
-      existingSchedule?.schedule.forEach((s) => {
-        s.morning?.items.forEach((m) => deleteTemplateItem(m.id, templateId));
-        s.afternoon?.items.forEach((m) => deleteTemplateItem(m.id, templateId));
-        s.evening?.items.forEach((m) => deleteTemplateItem(m.id, templateId));
-      });
-    }
-  }, [locked]);
-
-  const renderItems = (items: GenericItem[]) => {
-    return items.map((d, i) => {
-      switch (d.type) {
-        case "post-it":
-        case "text":
-          return (
-            <Draggable
-              id={d.id}
-              key={`drag-postit-${d}-${i}`}
-              left={`${d.x || 50 + i * 5}%`}
-              top={`${d.y || 50 + i * 5}%`}
-              element="post-it"
-              style={getStyle(d)}
-              data={{ content: d.content }}
-            >
-              <Editable
-                onDelete={() => deleteItem(d.id)}
-                onSelect={(selected: boolean) => {
-                  if (selected) {
-                    onItemSelect(d.id);
-                  } else onItemDeslect(d.id);
-                }}
-                color={d.color || "#0096FF"}
-                onChangeColor={(color: string) => {
-                  onEdit(d.id, { ...d, color });
-                }}
-                editable={d.editable || false}
-                position="right"
-                className={`${locked ? "hidden" : ""}`}
-              >
-                <Note
-                  content={d.content}
-                  onUpdateContent={(content) => onEdit(d.id, { ...d, content })}
-                  color={d.color}
-                  editable={d.editable || false}
-                />
-              </Editable>
-            </Draggable>
-          );
-
-        case "post-card":
-          const postCardItem = d as PostCardItem;
-          return (
-            <Draggable
-              id={d.id}
-              key={`drag-postcard-${d.id}-${i}`}
-              left={`${d.x || 50 + i * 5}%`}
-              top={`${d.y || 50 + i * 5}%`}
-              style={getStyle(d)}
-              element="post-card"
-              data={{ content: d.content, fileUrl: postCardItem.image?.url }}
-              disabled={d.editable}
-            >
-              <Editable
-                onDelete={() => deleteItem(d.id)}
-                onSelect={(selected: boolean) => {
-                  if (selected) {
-                    onItemSelect(d.id);
-                  } else onItemDeslect(d.id);
-                }}
-                color={d.color || "#0096FF"}
-                onChangeColor={(color: string) => {
-                  onEdit(d.id, { ...d, color });
-                }}
-                editable={d.editable || false}
-                position="right"
-              >
-                <PostCard
-                  key={`drag-postcard-${i}`}
-                  content={d.content || ""}
-                  editable={d.editable || false}
-                  onUpdateContent={(content) => onEdit(d.id, { ...d, content })}
-                  fileUrl={postCardItem.image?.url}
-                  color={d.color}
-                ></PostCard>
-              </Editable>
-            </Draggable>
-          );
-      }
-    });
-  };
+  const sections: Section[] = ["morning", "afternoon", "evening"];
 
   const updateDragState = (e: DragMoveEvent) => {
     const { activatorEvent, delta, over, collisions } = e;
@@ -237,9 +202,59 @@ const TemplateView = ({
     var rect = el.getBoundingClientRect();
     const x = (rect.x + delta.x - over.rect.left) / over.rect.width;
     const y = (rect.y + delta.y - over.rect.top) / over.rect.height;
+    setDragType(e?.active?.data?.current?.type);
   };
 
-  const existingSchedule = templates.find((t) => t.id === templateId);
+  const { schedules: optimisticSchedules, setSchedules } =
+    useOptimisticSchedules(template.schedule);
+
+  if (!template) return null;
+
+  const peopleMenuActive = template?.schedule.some(
+    (s) =>
+      s.morning?.items?.length > 0 ||
+      s.afternoon.items?.length > 0 ||
+      s.evening.items?.length > 0
+  );
+
+  const onEditCell = async (
+    day: number,
+    section: Section,
+    item: GenericItem,
+    itemIndex: number,
+    action: "move" | "update" | "delete"
+  ) => {
+    const scheduleIndex = template.schedule.findIndex((s) => s.day === day);
+    if (scheduleIndex === -1) return;
+    const scheduleItem = { ...optimisticSchedules[scheduleIndex] };
+
+    switch (action) {
+      case "update":
+        scheduleItem[section].items[itemIndex] = item;
+        break;
+      case "delete":
+        scheduleItem[section].items.splice(itemIndex, 1);
+    }
+
+    startTransition(() => {
+      setSchedules({
+        source: scheduleItem,
+        target: scheduleItem,
+        targetSection: section,
+        targetItemIndex: itemIndex,
+        action,
+      });
+    });
+
+    const newTemplate = {
+      ...template,
+      schedule: template.schedule.map((s) =>
+        s.day === day ? scheduleItem : s
+      ),
+    };
+
+    await updateTemplateAction(calendarId, newTemplate, "/grids/");
+  };
 
   return (
     <DndContext
@@ -266,7 +281,7 @@ const TemplateView = ({
     >
       <div className="w-full h-full relative flex flex-col md:grid md:grid-cols-7 p-3">
         {[...Array(7)].map((_, dayIndex) => {
-          const dayItems = existingSchedule?.schedule.find(
+          const dayItems = optimisticSchedules?.find(
             (s) => s.day === dayIndex + 1
           );
           return (
@@ -274,39 +289,37 @@ const TemplateView = ({
               className="flex flex-col items-stretch justify-stretch mb-5 md:mb-0"
               key={`day-${dayIndex}}`}
             >
-              <h2 className="text-center mb-3">{labels[dayIndex]}</h2>
+              <h3 className="text-center mb-3">{days[dayIndex]}</h3>
               {[...Array(3)].map((_, sectionIndex) => {
-                const section = sections[sectionIndex].toLowerCase();
+                const section = sections[sectionIndex];
                 const sectionKey = section as keyof ScheduleItem;
 
                 return (
                   <div key={`section-${dayIndex}-${sectionIndex}`}>
-                    <Droppable
-                      id={`${dayIndex}-${sectionIndex}`}
-                      dragging={isDragging}
-                      isPast={false}
-                      isToday={false}
-                      onClick={() => {}}
-                    >
-                      {dayItems &&
-                        dayItems[sectionKey] &&
-                        renderItems(
-                          (dayItems[sectionKey] as ScheduleSection).items
-                        )}
-                      <div
-                        className={
-                          "absolute left-0 w-10 h-full bg-slate-400 flex flex-row justify-center items-center"
-                        }
-                        style={{
-                          textAlign: "center",
-                          writingMode: "vertical-rl",
-                          textOrientation: "mixed",
-                          transform: "rotate(180deg)",
-                        }}
-                      >
-                        <span>{sections[sectionIndex]}</span>
-                      </div>
-                    </Droppable>
+                    <WeekCell
+                      data={
+                        (dayItems && dayItems[sectionKey]
+                          ? dayItems[sectionKey]
+                          : []) as ScheduleSection
+                      }
+                      day={dayIndex}
+                      section={section}
+                      sectionIndex={sectionIndex}
+                      isDragging={isDragging}
+                      locked={locked}
+                      showPeople={showPeople}
+                      disableDrag={dragType === "people"}
+                      disablePeopleDrag={dragType !== "people"}
+                      onEditCell={(item, itemIndex, action) =>
+                        onEditCell(
+                          dayIndex + 1,
+                          section,
+                          item,
+                          itemIndex,
+                          action
+                        )
+                      }
+                    />
                   </div>
                 );
               })}
@@ -314,12 +327,19 @@ const TemplateView = ({
           );
         })}
       </div>
+      <PersonSelect
+        people={people}
+        showUsers={showPeople}
+        onToggleShowPeople={() => setShowPeople(!showPeople)}
+        addPerson={() => setShowModal("people")}
+        disabled={!peopleMenuActive}
+      ></PersonSelect>
       <Toolbar
         toolbarItems={toolbarItems}
-        showNav={!templateId}
+        showNav={false}
         onShare={onShare}
-        onToggleLock={() => setLocked(!locked)}
         locked={locked}
+        onToggleLock={() => setLocked(!locked)}
       />
       <DraggableOverlay />
     </DndContext>

@@ -10,12 +10,13 @@ export type UpdateTemplateAction = (
   path?: string
 ) => Promise<Template>;
 
-export const UpdateTemplateAction: UpdateTemplateAction = async (
+export const updateTemplateAction: UpdateTemplateAction = async (
   calendarId: string,
   template: Template,
   path?: string
 ) => {
+  console.log("UpdateTemplateAction", calendarId, template, path);
   const updatedTemplate = await UpdateTemplate(template, calendarId);
   if (path) revalidatePath(path);
-  return updatedTemplate;
+  return updatedTemplate as Template;
 };
