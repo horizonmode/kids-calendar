@@ -10,7 +10,7 @@ import { useStoreWithEqualityFn } from "zustand/traditional";
 import scheduleService from "@/utils/scheduleService";
 import { reOrderAll } from "@/utils/layers";
 
-const { findDay, toolbarItems } = scheduleService;
+const { findDay } = scheduleService;
 
 export interface TemplateProps {
   templates: Template[];
