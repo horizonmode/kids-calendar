@@ -14,13 +14,10 @@ export default function TemplateProvider({
   children,
   ...props
 }: TemplateProviderProps) {
-  const storeRef = useRef<TemplateStore>();
-  if (!storeRef.current) {
-    storeRef.current = createTemplateStore(props);
-  }
+  const store = createTemplateStore(props);
 
   return (
-    <TemplateContext.Provider value={storeRef.current}>
+    <TemplateContext.Provider value={store}>
       {children}
     </TemplateContext.Provider>
   );

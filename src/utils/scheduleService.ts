@@ -42,9 +42,14 @@ export interface ScheduleService {
     section: string | null;
     sectionIndex: number | null;
   };
-
   addPersonIfNotExists: (item: GenericItem, person: Person) => void;
   removePersonIfExists: (item: GenericItem, person: Person) => void;
+  applyTemplate: (
+    template: ScheduleItem[],
+    schedules: Schedule[],
+    week: number,
+    year: number
+  ) => Schedule;
 }
 
 const toolbarItems: GenericItem[] = [
@@ -173,7 +178,7 @@ const reorderSchedule: reorderScheduleFunc = (
     // look in toolbar items
     const toolbarIndex = toolbarItems.findIndex((d) => d.id === itemId);
     if (toolbarIndex > -1) {
-      item = toolbarItems[toolbarIndex];
+      item = { ...toolbarItems[toolbarIndex] };
       item.id = uuidv4();
     }
   } else {
@@ -214,6 +219,51 @@ const reorderSchedule: reorderScheduleFunc = (
   };
 };
 
+const applyTemplate = (
+  template: ScheduleItem[],
+  schedules: Schedule[],
+  week: number,
+  year: number
+) => {
+  const schedule = schedules.find((s) => s.year === year && s.week === week);
+  let mergedSchedule: Schedule;
+
+  if (!schedule) {
+    mergedSchedule = {
+      week,
+      year,
+      schedule: [],
+      type: "schedule",
+    };
+    schedules.push(mergedSchedule);
+  } else {
+    mergedSchedule = { ...schedule };
+  }
+  // Add template items to schedule
+  for (var i = 0; i < template.length; i++) {
+    var daySchedule = template[i];
+    let existingDay = mergedSchedule.schedule.find(
+      (m: ScheduleItem) => m.day === daySchedule.day
+    );
+
+    if (!existingDay) {
+      existingDay = {
+        day: daySchedule.day,
+        morning: { items: [], status: "saved" },
+        afternoon: { items: [], status: "saved" },
+        evening: { items: [], status: "saved" },
+      };
+      mergedSchedule.schedule.push(existingDay);
+    }
+
+    cloneItems(daySchedule.morning, existingDay.morning);
+    cloneItems(daySchedule.afternoon, existingDay.afternoon);
+    cloneItems(daySchedule.evening, existingDay.evening);
+  }
+
+  return mergedSchedule;
+};
+
 const scheduleService: ScheduleService = {
   toolbarItems,
   reorderSchedule,
@@ -223,6 +273,7 @@ const scheduleService: ScheduleService = {
   findDay,
   addPersonIfNotExists,
   removePersonIfExists,
+  applyTemplate,
 };
 
 export default scheduleService;

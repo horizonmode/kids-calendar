@@ -385,9 +385,11 @@ export const UpdateTemplate = async (
     type: "template",
   };
 
-  const { resource } = await container.items.upsert<CosmosItem<Template>>(
-    templateObject
-  );
+  if (template.action === "delete") {
+    await container.item(template.id, calendarId).delete();
+  } else {
+    await container.items.upsert<CosmosItem<Template>>(templateObject);
+  }
 
-  return resource;
+  return template;
 };

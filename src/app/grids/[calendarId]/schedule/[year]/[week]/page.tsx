@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { startTransition, useEffect, useState } from "react";
 
 import { Days } from "@/utils/days";
 import { shallow } from "zustand/shallow";
@@ -14,6 +14,9 @@ import CalendarHeader from "@/components/CalendarHeader";
 import PeopleDialog from "@/components/dialogs/PeopleDialog";
 import { useRoutes } from "@/components/providers/RoutesProvider";
 import { Button, Dialog, DialogPanel, TextInput } from "@tremor/react";
+import scheduleService from "@/utils/scheduleService";
+import { updateScheduleAction } from "@/serverActions/schedules";
+const { applyTemplate } = scheduleService;
 
 const getMonthFromWeek = (week: number) => {
   return new Date(1000 * 60 * 60 * 24 * 7 * week).getMonth();
@@ -24,10 +27,7 @@ const SchedulePage = ({
 }: {
   params: { calendarId: string; week: number; year: number };
 }) => {
-  const [applyTemplate, week, year] = useScheduleContext(
-    (state) => [state.applyTemplate, state.week, state.year],
-    shallow
-  );
+  const { year, week, schedules, setSchedule } = useScheduleContext();
 
   const [templates] = useTemplateContext((state) => [state.templates], shallow);
   const [showModal, setShowModal] = useModalContext(
@@ -77,10 +77,22 @@ const SchedulePage = ({
     label: t.name,
   }));
 
-  const onApplyTemplateClicked = () => {
+  const onApplyTemplateClicked = async () => {
     const selectedTemplate = templates.find((t) => t.id === templateId);
     if (!selectedTemplate) return;
-    applyTemplate(selectedTemplate.schedule, week, year);
+
+    const mergedSchedule = applyTemplate(
+      selectedTemplate.schedule,
+      schedules,
+      week,
+      year
+    );
+
+    startTransition(() => {
+      setSchedule(mergedSchedule);
+    });
+
+    await updateScheduleAction(calendarId, mergedSchedule, "/grids/");
   };
 
   const onEditTemplateClicked = () => {

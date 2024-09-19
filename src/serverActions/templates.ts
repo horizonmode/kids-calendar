@@ -15,7 +15,6 @@ export const updateTemplateAction: UpdateTemplateAction = async (
   template: Template,
   path?: string
 ) => {
-  console.log("UpdateTemplateAction", calendarId, template, path);
   const updatedTemplate = await UpdateTemplate(template, calendarId);
   if (path) revalidatePath(path);
   return updatedTemplate as Template;

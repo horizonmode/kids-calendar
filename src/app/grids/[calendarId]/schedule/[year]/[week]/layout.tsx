@@ -16,7 +16,11 @@ export default async function ScheduleLayout({
 
   return (
     <TemplateProvider templates={initialTemplateData}>
-      <ScheduleProvider schedules={initialScheduleData} year={year} week={week}>
+      <ScheduleProvider
+        _schedules={initialScheduleData}
+        year={year}
+        week={week}
+      >
         {children}
       </ScheduleProvider>
     </TemplateProvider>

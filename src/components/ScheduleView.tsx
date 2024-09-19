@@ -55,7 +55,7 @@ const ScheduleView = ({
   onShare,
   calendarId,
 }: ScheduleViewProps) => {
-  const [schedules] = useScheduleContext((state) => [state.schedules], shallow);
+  const { schedules } = useScheduleContext();
 
   const [people, showPeople, setShowPeople] = usePersonContext(
     (state) => [state.people, state.showPeople, state.setShowPeople],
@@ -101,7 +101,7 @@ const ScheduleView = ({
         const { sourceId } = (activeItem.data.current as any).extra;
         removePerson(sourceId, person);
       } else {
-        const item = findItemInSchedules(itemId, [existingSchedule]);
+        const item = findItemInSchedules(destination, [existingSchedule]);
         if (!item) throw new Error("Invalid Item");
         assignPerson(item, person);
       }

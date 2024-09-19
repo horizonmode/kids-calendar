@@ -116,7 +116,6 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
       if (reorder.sourceDay && reorder.sourceDay.day !== reorder.targetDay.day)
         updates.push(reorder.sourceDay);
 
-      console.log(updates);
       await updateDaysAction(calendarId, updates, "/grids/");
     }
   };

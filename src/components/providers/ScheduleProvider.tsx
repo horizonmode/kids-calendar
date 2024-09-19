@@ -1,26 +1,37 @@
 "use client";
-import { useRef } from "react";
-
-import {
-  ScheduleContext,
-  ScheduleProps,
-  ScheduleStore,
-  createScheduleStore,
-} from "@/store/schedule";
-
-type ScheduleProviderProps = React.PropsWithChildren<ScheduleProps>;
+import { ScheduleContext } from "@/store/schedule";
+import { Schedule } from "@/types/Items";
+import { useOptimistic } from "react";
 
 export default function ScheduleProvider({
   children,
-  ...props
-}: ScheduleProviderProps) {
-  const storeRef = useRef<ScheduleStore>();
-  if (!storeRef.current) {
-    storeRef.current = createScheduleStore(props);
-  }
+  _schedules,
+  year,
+  week,
+}: {
+  children: React.ReactNode;
+  _schedules: Schedule[];
+  year: number;
+  week: number;
+}) {
+  const [schedules, setSchedule] = useOptimistic<Schedule[], Schedule>(
+    _schedules,
+    (state: Schedule[], schedule) => {
+      schedule.status = "pending";
+      const index = state.findIndex(
+        (s) => s.year === schedule.year && s.week === schedule.week
+      );
+      if (index === -1) {
+        return [...state, schedule];
+      }
+      const newState = [...state];
+      newState[index] = schedule;
+      return newState;
+    }
+  );
 
   return (
-    <ScheduleContext.Provider value={storeRef.current}>
+    <ScheduleContext.Provider value={{ year, week, schedules, setSchedule }}>
       {children}
     </ScheduleContext.Provider>
   );
