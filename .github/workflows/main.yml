@@ -25,7 +25,7 @@ jobs:
           username: ${{ vars.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
       - run: |
-          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/calendar:${{ github.sha }} --build-arg PROD_ENV="NEXT_PUBLIC_STORAGE_ACCOUNT=${{ vars.STORAGE_ACCOUNT}}\nNEXT_PUBLIC_STORAGE_TOKEN=${{ secrets.STORAGE_TOKEN}}"
+          docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/calendar:${{ github.sha }} --build-arg PROD_ENV="NEXT_PUBLIC_STORAGE_ACCOUNT=${{ vars.AZURE_STORAGE_ACCOUNT_NAME}}\nNEXT_PUBLIC_STORAGE_TOKEN=${{ secrets.STORAGE_TOKEN}}"
           docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/calendar:${{ github.sha }}
 
       - name: Deploy Container App
