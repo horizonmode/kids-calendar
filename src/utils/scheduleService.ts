@@ -240,7 +240,6 @@ const applyTemplate = (
     mergedSchedule = { ...schedule };
   }
 
-  e.log("Applying template", template);
   // Add template items to schedule
   for (var i = 0; i < template.length; i++) {
     var daySchedule = template[i];
