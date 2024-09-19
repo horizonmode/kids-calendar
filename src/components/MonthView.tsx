@@ -156,6 +156,7 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
         await updateEventAction(calendarId, event, "/grids/");
         break;
       case "delete":
+        event.action = "delete";
         await updateEventAction(calendarId, event, "/grids/");
         break;
     }
