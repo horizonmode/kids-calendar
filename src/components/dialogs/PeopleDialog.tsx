@@ -55,7 +55,7 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
 
   const openImagePicker = async () => {
     if (selectedPersonIndex === null) return;
-    const person = people[selectedPersonIndex];
+    const person = editingPeople[selectedPersonIndex];
     if (person) setEditingPerson(person);
 
     setPendingModal("people");
