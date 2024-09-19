@@ -65,7 +65,8 @@ function PersonCard({
           />
         ) : (
           <Image
-            className="bg-black rounded-full object-cover"
+            className="bg-black rounded-full object-contain"
+            priority
             src={person.photo.url}
             alt=""
             layout="fill"

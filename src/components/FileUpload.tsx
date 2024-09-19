@@ -2,7 +2,7 @@ import useUpload from "@/hooks/useImageUpload";
 import { Button } from "@tremor/react";
 import { on } from "events";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import Resizer from "react-image-file-resizer";
 
 interface FileUploadProps {
@@ -14,20 +14,30 @@ interface FileUploadProps {
 const FileUpload = ({ file, onCompleted, calendarId }: FileUploadProps) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { uploadFile, submitStatus, uploadProgress } = useUpload();
+  const [resizedFile, setResizedFile] = useState<File | null>(null);
 
   useEffect(() => {
     const reader = new FileReader();
     reader.onload = async () => {
-      setPreviewUrl(reader.result as string);
-      await resizeFile(file);
+      const result = await resizeFile(file);
+      setResizedFile(result as File);
     };
 
     reader.readAsDataURL(file);
   }, [file]);
 
+  useEffect(() => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      setPreviewUrl(reader.result as string);
+    };
+
+    reader.readAsDataURL(file);
+  }, [resizedFile]);
+
   const handleUpload = async () => {
-    if (file) {
-      const url = await uploadFile(file, calendarId);
+    if (resizedFile) {
+      const url = await uploadFile(resizedFile, calendarId);
       onCompleted && url && onCompleted(url);
     }
   };
@@ -41,10 +51,10 @@ const FileUpload = ({ file, onCompleted, calendarId }: FileUploadProps) => {
         "JPEG",
         100,
         0,
-        (uri) => {
-          resolve(uri);
+        (file) => {
+          resolve(file);
         },
-        "base64"
+        "file"
       );
     });
 
