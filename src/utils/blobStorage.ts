@@ -17,6 +17,16 @@ export async function list(prefix: string) {
   return blobs;
 }
 
+const stripDomain = (url: string) => {
+  const domain = `https://${accountName}.blob.core.windows.net/`;
+  return url.replace(domain, "");
+};
+
+export async function deleteBlob(blobName: string) {
+  const containerClient = new ContainerClient(sasUrl);
+  await containerClient.deleteBlob(stripDomain(blobName));
+}
+
 async function listBlobsFlatWithPageMarker(
   containerClient: typeof ContainerClient,
   prefix: string

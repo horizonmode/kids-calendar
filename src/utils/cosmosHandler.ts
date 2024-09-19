@@ -171,26 +171,39 @@ export async function DeletePerson(calendarId: string, personId: number) {
   const getEventsWithPerson = `SELECT * FROM c where c.type = 'event' and c.calendarId = '${calendarId}' and ARRAY_CONTAINS(c.people, ${personId})`;
 
   const days = await get<CosmosItem<CalendarDay>>(getDaysWithPerson);
-  const events = await get<CosmosItem<CalendarDay>>(getEventsWithPerson);
+  const events = await get<CosmosItem<EventItem>>(getEventsWithPerson);
 
   const dayOperations: OperationInput[] = days.map((day) => {
+    const newDay = {
+      ...day,
+      items: day.items.map((item) => {
+        if (!item.people) return item;
+        const newPeople = item.people.filter((p) => p !== personId);
+        return { ...item, people: newPeople };
+      }),
+    };
     return {
       operationType: BulkOperationType.Replace,
       partitionKey: day.calendarId,
       id: day.id,
-      resourceBody: day,
+      resourceBody: newDay,
     };
   });
 
   const eventOperations: OperationInput[] = events.map((event) => {
+    const newEvent = {
+      ...event,
+      people: !event.people ? [] : event.people.filter((p) => p !== personId),
+    };
     return {
       operationType: BulkOperationType.Replace,
       partitionKey: event.calendarId,
       id: event.id,
-      resourceBody: event,
+      resourceBody: newEvent,
     };
   });
 
+  console.log(dayOperations);
   await container.items.bulk(dayOperations);
   await container.items.bulk(eventOperations);
 }

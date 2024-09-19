@@ -1,14 +1,5 @@
 import { Person } from "@/types/Items";
-import {
-  RiEdit2Line,
-  RiUpload2Line,
-  RiUploadCloudLine,
-  RiUser2Fill,
-  RiUser3Fill,
-  RiUser3Line,
-  RiUserAddLine,
-  RiUserLine,
-} from "@remixicon/react";
+import { RiEdit2Line, RiUser3Fill, RiUserLine } from "@remixicon/react";
 import { Button, Icon } from "@tremor/react";
 import Image from "next/image";
 import ContentEditable, { ContentEditableEvent } from "react-contenteditable";
@@ -49,7 +40,7 @@ function PersonCard({
             : highlight
             ? "border-2 border-green-500 border-dashed"
             : "border-hidden"
-        } ${editable ? "w-32 h-32" : ""}`}
+        } ${editable && "w-44 h-44"}`}
       >
         {placeholder ? (
           <Icon
@@ -65,7 +56,7 @@ function PersonCard({
           />
         ) : (
           <Image
-            className="bg-black rounded-full object-contain"
+            className="bg-black rounded-full object-cover"
             priority
             src={person.photo.url}
             alt=""

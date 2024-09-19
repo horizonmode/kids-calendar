@@ -16,6 +16,7 @@ import useImageContext from "@/store/images";
 import { shallow } from "zustand/shallow";
 import { GalleryImage } from "@/types/Items";
 import useModalContext from "@/store/modals";
+import { deleteImageAction } from "@/serverActions/images";
 
 interface GalleryDialogProps {
   calendarId: string;
@@ -49,6 +50,12 @@ const GalleryDialog = ({ calendarId }: GalleryDialogProps) => {
     setShowModal(null);
   };
 
+  const onDeleteClicked = async () => {
+    if (selectedImage) {
+      await deleteImageAction(selectedImage.url);
+    }
+  };
+
   return (
     <div className="flex justify-center">
       <Dialog open={showModal === "gallery"}>
@@ -65,6 +72,13 @@ const GalleryDialog = ({ calendarId }: GalleryDialogProps) => {
             onImageSelected={onImageSelected}
           />
           <DialogFooter className="mt-6">
+            <Button
+              variant="secondary"
+              onClick={onDeleteClicked}
+              className="w-full sm:w-fit"
+            >
+              Delete
+            </Button>
             <DialogClose asChild>
               <Button onClick={onCloseClicked} className="w-full sm:w-fit">
                 OK

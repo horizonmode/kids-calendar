@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 
 import { Person } from "@/types/Items";
 import { shallow } from "zustand/shallow";
@@ -27,6 +27,7 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
   );
 
   const originalPeople = useRef<Person[]>([]);
+  const [editingPeople, setEditingPeople] = useState<Person[]>([]);
 
   const [setPendingModal, setShowModal, showModal] = useModalContext(
     (state) => [state.setPendingModal, state.setShowModal, state.showModal],
@@ -34,12 +35,17 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
   );
 
   useEffect(() => {
-    if (showModal) originalPeople.current = people;
-    else originalPeople.current = [];
+    if (showModal) {
+      originalPeople.current = people;
+      setEditingPeople([...people]);
+    } else {
+      originalPeople.current = [];
+      setEditingPeople([]);
+    }
   }, [people, showModal]);
 
   const [selectedPersonIndex, setSelectedPersonIndex] = useState<number | null>(
-    people.length > 0 ? 0 : null
+    editingPeople.length > 0 ? 0 : null
   );
 
   const [setEditingPerson] = useImageContext(
@@ -57,28 +63,29 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
   };
 
   useEffect(() => {
-    if (people.length > 0) {
-      setSelectedPersonIndex(people.length - 1);
+    if (editingPeople.length > 0) {
+      setSelectedPersonIndex(editingPeople.length - 1);
     }
-  }, [people.length]);
+  }, [editingPeople.length]);
 
   const onEdit = (person: Person) => {
-    editPerson(person);
+    const index = editingPeople.findIndex((p) => p.id === person.id);
+    if (index > -1) {
+      const newPeople = [...editingPeople];
+      newPeople[index] = person;
+      setEditingPeople(newPeople);
+    }
   };
 
-  const selectedPerson = people[selectedPersonIndex || 0];
+  const selectedPerson = editingPeople[selectedPersonIndex || 0];
 
   const onNextPerson = () => {
     if (selectedPersonIndex === null) {
       return;
     }
-    if (selectedPersonIndex === -1) {
-      return;
-    }
-    const nextIndex = selectedPersonIndex + 1;
-    if (nextIndex >= people.length) {
-      return;
-    }
+    const currentIndex = selectedPersonIndex;
+    const nextIndex =
+      currentIndex === editingPeople.length - 1 ? 0 : currentIndex + 1;
     setSelectedPersonIndex(nextIndex);
   };
 
@@ -87,13 +94,9 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
       return;
     }
     const currentIndex = selectedPersonIndex;
-    if (currentIndex === -1) {
-      return;
-    }
-    const prevIndex = currentIndex - 1;
-    if (prevIndex < 0) {
-      return;
-    }
+    const prevIndex =
+      currentIndex === 0 ? editingPeople.length - 1 : currentIndex - 1;
+
     setSelectedPersonIndex(prevIndex);
   };
 
@@ -104,50 +107,42 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
   };
 
   const onDialogSave = async () => {
-    setPeople(await updatePeopleAction(calendarId, people));
+    await updatePeopleAction(calendarId, editingPeople, "/grids");
     onDialogClose();
   };
 
   const onDialogCancel = () => {
-    const people = setPeople(originalPeople.current);
     onDialogClose();
   };
 
   const onAddPerson = async () => {
-    setPeople([
-      ...people,
-      { id: people.length + 1, name: "New Person", photo: null },
+    setEditingPeople([
+      ...editingPeople,
+      { id: editingPeople.length + 1, name: "New Person", photo: null },
     ]);
   };
 
   const onDeletePerson = async (personId: number) => {
-    setPeople(people.filter((p) => p.id !== personId));
+    setEditingPeople(editingPeople.filter((p) => p.id !== personId));
   };
 
-  const canGoBack =
-    people.length > 1 &&
-    selectedPersonIndex !== null &&
-    selectedPersonIndex > people.length - 1;
-
-  const canGoForward =
-    people.length > 1 &&
-    selectedPersonIndex !== null &&
-    people.length > selectedPersonIndex + 1;
+  const canNavigate = editingPeople.length > 1;
 
   return (
     <Dialog open={showModal === "people"} onClose={onDialogClose} static={true}>
       <DialogPanel className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Edit People</h3>
         <div className="flex flex-row items-center justify-center">
-          <div
-            className={`flex justify-center align-middle items-center w-12 h-12 cursor-pointer hover:bg-slate-200 ${
-              !canGoBack && "opacity-50 hover:bg-none"
-            }`}
-            onClick={onPrevPerson}
-          >
-            <Icon size="lg" icon={RiArrowLeftLine} />
-          </div>
-
+          {editingPeople.length > 0 && (
+            <div
+              className={`flex justify-center align-middle items-center w-12 h-12 cursor-pointer hover:bg-slate-200 ${
+                !canNavigate && "opacity-50 hover:bg-none pointer-events-none"
+              }`}
+              onClick={onPrevPerson}
+            >
+              <Icon size="lg" icon={RiArrowLeftLine} />
+            </div>
+          )}
           {selectedPerson && (
             <div className="flex-1">
               <PersonCard
@@ -158,22 +153,26 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
               />
             </div>
           )}
-          <div
-            className={`flex justify-center align-middle items-center overflow-visible w-12 h-12 cursor-pointer hover:bg-slate-200  ${
-              !canGoForward && "opacity-50 hover:bg-none"
-            }`}
-            onClick={onNextPerson}
-          >
-            <Icon size="lg" icon={RiArrowRightLine} />
-          </div>
+          {editingPeople.length > 0 && (
+            <div
+              className={`flex justify-center align-middle items-center overflow-visible w-12 h-12 cursor-pointer hover:bg-slate-200  ${
+                !canNavigate && "opacity-50 hover:bg-none pointer-events-none"
+              }`}
+              onClick={onNextPerson}
+            >
+              <Icon size="lg" icon={RiArrowRightLine} />
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-2">
-          <div className="flex flex-col md:flex-row gap-1">
+          <div className="flex flex-row gap-1">
             {selectedPersonIndex != null && (
               <Button
                 variant="secondary"
                 icon={RiUserAddLine}
-                onClick={() => onDeletePerson(people[selectedPersonIndex].id)}
+                onClick={() =>
+                  onDeletePerson(editingPeople[selectedPersonIndex].id)
+                }
               >
                 Remove Person
               </Button>
@@ -186,7 +185,7 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
               Add Person
             </Button>
           </div>
-          <div className="flex flex-col-reverse justify-center md:flex-row-reverse gap-1">
+          <div className="flex justify-center flex-row-reverse gap-1">
             <Button variant="primary" className="flex-1" onClick={onDialogSave}>
               Save
             </Button>
