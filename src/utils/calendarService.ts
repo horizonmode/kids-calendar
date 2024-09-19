@@ -110,15 +110,13 @@ const findItemType = (
     (d) => d.items.findIndex((i) => i.id == itemId) > -1
   );
   if (dayIndex > -1) {
-    const itemIndex = days[dayIndex].items.findIndex((i) => i.id === itemId);
+    const itemIndex = days[dayIndex].items.findIndex((i) => i.id == itemId);
     return { type: "day", dayIndex, itemIndex };
   }
-
   const eventIndex = events.findIndex((d) => d.id === itemId);
   if (eventIndex > -1) {
     return { type: "event", eventIndex };
   }
-
   return {
     type: "toolbar",
     toolbarIndex: toolbarItems.findIndex((d) => d.id === itemId),

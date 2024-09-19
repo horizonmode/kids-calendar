@@ -241,12 +241,23 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
           calDays,
           events
         );
-        if (type === "day" && dayIndex != null && itemIndex != null) {
+
+        if (type === "day") {
+          if (
+            !type ||
+            dayIndex === undefined ||
+            dayIndex === -1 ||
+            itemIndex === undefined ||
+            itemIndex === -1
+          )
+            throw new Error("Invalid destination");
           const day = content[dayIndex];
           const item = day.items[itemIndex];
           addPersonIfNotExists(item, person);
           await onDayEdit(day, itemIndex, "update");
-        } else if (type === "event" && eventIndex != null) {
+        } else if (type === "event") {
+          if (!type || eventIndex === undefined || eventIndex === -1)
+            throw new Error("Invalid destination");
           const event = events[eventIndex];
           addPersonIfNotExists(event, person);
           await onEventEdit(event, "update");
