@@ -26,8 +26,6 @@ export default function Admin({ calendarId }: AdminProps) {
     shallow
   );
 
-  console.log("storeTemplates", storeTemplates);
-
   const { templates, setTemplates } = useOptimisticTemplates(storeTemplates);
 
   const params = useSearchParams();

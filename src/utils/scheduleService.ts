@@ -239,6 +239,8 @@ const applyTemplate = (
   } else {
     mergedSchedule = { ...schedule };
   }
+
+  e.log("Applying template", template);
   // Add template items to schedule
   for (var i = 0; i < template.length; i++) {
     var daySchedule = template[i];
@@ -256,9 +258,9 @@ const applyTemplate = (
       mergedSchedule.schedule.push(existingDay);
     }
 
-    cloneItems(daySchedule.morning, existingDay.morning);
-    cloneItems(daySchedule.afternoon, existingDay.afternoon);
-    cloneItems(daySchedule.evening, existingDay.evening);
+    cloneItems(daySchedule.morning.items, existingDay.morning.items);
+    cloneItems(daySchedule.afternoon.items, existingDay.afternoon.items);
+    cloneItems(daySchedule.evening.items, existingDay.evening.items);
   }
 
   return mergedSchedule;

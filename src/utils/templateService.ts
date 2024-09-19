@@ -66,7 +66,7 @@ const reorderTemplate: reorderTemplateFunc = (
   if (dayIndex === null) {
     const toolbarIndex = toolbarItems.findIndex((d) => d.id === itemId);
     if (toolbarIndex > -1) {
-      source = toolbarItems[toolbarIndex];
+      source = { ...toolbarItems[toolbarIndex] };
       source.id = uuidv4();
     }
   } else {
