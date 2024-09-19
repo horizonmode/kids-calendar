@@ -1,10 +1,6 @@
-import { blob } from "stream/consumers";
-
 const { ContainerClient, Blob } = require("@azure/storage-blob");
 
 const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME;
-if (!accountName) throw Error("Azure Storage accountName not found");
-
 const containerName = `images`;
 const sasToken = process.env.AZURE_STORAGE_SAS_TOKEN;
 const sasReadOnlyToken = process.env.AZURE_STORAGE_SAS_READ_ONLY_TOKEN;
@@ -55,13 +51,4 @@ async function listBlobsFlatWithPageMarker(
   );
 
   return blobs;
-  // Gets next marker
-  marker = response.continuationToken;
-
-  // Passing next marker as continuationToken
-  iterator = containerClient.listBlobsFlat().byPage({
-    continuationToken: marker,
-    maxPageSize: maxPageSize * 2,
-  });
-  response = (await iterator.next()).value;
 }
