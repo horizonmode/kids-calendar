@@ -1,3 +1,6 @@
+"use server";
+"server-only";
+
 const { ContainerClient, Blob } = require("@azure/storage-blob");
 
 const accountName = process.env.AZURE_STORAGE_ACCOUNT_NAME;
@@ -22,9 +25,25 @@ const stripDomain = (url: string) => {
   return url.replace(domain, "");
 };
 
+const stripQueryParams = (url: string) => {
+  return url.split("?")[0];
+};
+
 export async function deleteBlob(blobName: string) {
+  // include: Delete the base blob and all of its snapshots.
+  // only: Delete only the blob's snapshots and not the blob itself.
+  const options = {
+    deleteSnapshots: "include", // or 'only'
+  };
+
   const containerClient = new ContainerClient(sasUrl);
-  await containerClient.deleteBlob(stripDomain(blobName));
+
+  let name = stripDomain(blobName);
+  name = stripQueryParams(name);
+  name = name.replace(`images/`, "");
+
+  const blockBlobClient = await containerClient.getBlockBlobClient(name);
+  await blockBlobClient.deleteIfExists(options);
 }
 
 async function listBlobsFlatWithPageMarker(

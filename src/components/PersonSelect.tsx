@@ -89,7 +89,7 @@ const PersonSelect = ({
             key={`person-${i}`}
             element="people"
             style={{ position: "relative" }}
-            id={person.id.toString()}
+            id={""}
             data={{ person: person }}
           >
             <PersonCard person={person} />

@@ -343,8 +343,8 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
     setDelta({ x, y });
   };
 
-  const [setShowModal] = useModalContext(
-    (state) => [state.setShowModal],
+  const [setActiveModals] = useModalContext(
+    (state) => [state.setActiveModals],
     shallow
   );
 
@@ -379,7 +379,7 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
         people={people}
         showUsers={showPeople}
         onToggleShowPeople={() => setShowPeople(!showPeople)}
-        addPerson={() => setShowModal("people")}
+        addPerson={() => setActiveModals("people", true)}
         disabled={!peopleMenuActive || (isDragging && dragType !== "people")}
       ></PersonSelect>
       <div className="flex-1 w-full h-full grid grid-cols-1 md:grid-cols-7 relative overflow:hidden select-none p-3">

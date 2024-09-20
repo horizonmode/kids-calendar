@@ -11,6 +11,9 @@ import {
   DialogClose,
   DialogContent,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  VisuallyHidden,
 } from "@/components/Dialog";
 import useModalContext from "@/store/modals";
 
@@ -20,8 +23,8 @@ const PhotoDialog = () => {
     shallow
   );
 
-  const [showModal, setShowModal] = useModalContext(
-    (state) => [state.showModal, state.setShowModal],
+  const [activeModals, setActiveModals] = useModalContext(
+    (state) => [state.activeModals, state.setActiveModals],
     shallow
   );
 
@@ -35,12 +38,19 @@ const PhotoDialog = () => {
   }, [image]);
 
   const onClose = () => {
-    setShowModal(null);
+    setActiveModals("photo", false);
   };
+
+  const show = activeModals.includes("photo");
 
   return (
     <div className="flex justify-center">
-      <Dialog open={showModal === "photo"}>
+      <Dialog open={show}>
+        <DialogHeader>
+          <VisuallyHidden.Root>
+            <DialogTitle>View Photo</DialogTitle>
+          </VisuallyHidden.Root>
+        </DialogHeader>
         <DialogContent className="w-full h-full md:w-1/2 md:h-1/2 max-w-2xl flex flex-col gap-3 p-0 bg-none">
           {selectedImage && (
             <div className="relative flex-1 p-2">

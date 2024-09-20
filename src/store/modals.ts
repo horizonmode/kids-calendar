@@ -11,25 +11,21 @@ export type ModalType =
   | "photo";
 
 export interface ModalState {
-  showModal: ModalType | null;
-  setShowModal: (showModal: ModalType | null) => void;
-  pendingModal: ModalType | null;
-  setPendingModal: (pendingModal: ModalType | null) => void;
+  activeModals: ModalType[];
+  setActiveModals: (modal: ModalType, show: boolean) => void;
 }
 
 export const createModalStore = () => {
   return createStore<ModalState>()((set, get) => ({
-    showModal: null,
-    setShowModal: (showModal: ModalType | null) => {
-      const pendingModal = get().pendingModal;
-      if (showModal === null && pendingModal) {
-        set({ showModal: pendingModal, pendingModal: null });
-        return;
+    activeModals: [],
+    setActiveModals: (modal: ModalType, show: boolean) => {
+      const { activeModals } = get();
+      if (show) {
+        set({ activeModals: [...activeModals, modal] });
+      } else {
+        set({ activeModals: activeModals.filter((m) => m !== modal) });
       }
-      set({ showModal });
     },
-    pendingModal: null,
-    setPendingModal: (pendingModal: ModalType | null) => set({ pendingModal }),
   }));
 };
 

@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 
 import Gallery from "@/components/Gallery";
 import { Button } from "@tremor/react";
@@ -17,25 +17,30 @@ import { shallow } from "zustand/shallow";
 import { GalleryImage } from "@/types/Items";
 import useModalContext from "@/store/modals";
 import { deleteImageAction } from "@/serverActions/images";
+import { list } from "@/utils/blobStorage";
 
 interface GalleryDialogProps {
   calendarId: string;
 }
 
 const GalleryDialog = ({ calendarId }: GalleryDialogProps) => {
-  const [selectedImage, setSelectedImage, setEditingItem] = useImageContext(
-    (state) => [
-      state.selectedImage,
-      state.setSelectedImage,
-      state.setEditingItem,
-    ],
+  const [selectedImage, setSelectedImage, setEditingItem, setImages] =
+    useImageContext(
+      (state) => [
+        state.selectedImage,
+        state.setSelectedImage,
+        state.setEditingItem,
+        state.setImages,
+      ],
+      shallow
+    );
+
+  const [activeModals, setActiveModals] = useModalContext(
+    (state) => [state.activeModals, state.setActiveModals],
     shallow
   );
 
-  const [showModal, setShowModal] = useModalContext(
-    (state) => [state.showModal, state.setShowModal],
-    shallow
-  );
+  const [loading, setLoading] = useState(false);
 
   const onImageSelected = (image: GalleryImage) => {
     if (selectedImage?.id === image.id) {
@@ -47,18 +52,23 @@ const GalleryDialog = ({ calendarId }: GalleryDialogProps) => {
 
   const onCloseClicked = () => {
     setEditingItem(null);
-    setShowModal(null);
+    setActiveModals("gallery", false);
   };
 
-  const onDeleteClicked = async () => {
-    if (selectedImage) {
-      await deleteImageAction(selectedImage.url);
-    }
+  const onDeleteClicked = async (imageId: string) => {
+    const image = images.find((i) => i.id === imageId);
+    setLoading(true);
+    await deleteImageAction(calendarId, selectedImage.url, "/grids/");
+    const images = await list(calendarId);
+    setImages(images.map((i) => ({ ...i, url: i.url })));
+    setLoading(false);
   };
+
+  const showModal = activeModals.includes("gallery");
 
   return (
     <div className="flex justify-center">
-      <Dialog open={showModal === "gallery"}>
+      <Dialog open={showModal}>
         <DialogContent className="w-full md:w-1/2 max-w-2xl">
           <DialogHeader>
             <DialogTitle>Gallery</DialogTitle>
@@ -70,15 +80,9 @@ const GalleryDialog = ({ calendarId }: GalleryDialogProps) => {
             calendarId={calendarId}
             selectedImage={selectedImage}
             onImageSelected={onImageSelected}
+            onImageDeleted={onDeleteClicked}
           />
           <DialogFooter className="mt-6">
-            <Button
-              variant="secondary"
-              onClick={onDeleteClicked}
-              className="w-full sm:w-fit"
-            >
-              Delete
-            </Button>
             <DialogClose asChild>
               <Button onClick={onCloseClicked} className="w-full sm:w-fit">
                 OK

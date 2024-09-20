@@ -93,19 +93,19 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
     }
   };
 
-  const [setShowModal] = useModalContext((state) => [state.setShowModal]);
+  const [setActiveModals] = useModalContext((state) => [state.setActiveModals]);
   const [setImageContextItem] = useImageContext((state) => [
     state.setEditingItem,
   ]);
 
   const onAddImageClicked = (item: PostCardItem) => {
     setImageContextItem(item);
-    setShowModal("gallery");
+    setActiveModals("gallery", true);
   };
 
   const onImageClicked = (item: PostCardItem) => {
     setImageContextItem(item);
-    setShowModal("photo");
+    setActiveModals("photo", true);
   };
 
   const renderItem = (item: GenericItem, key: string) => {

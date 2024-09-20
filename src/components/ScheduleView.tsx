@@ -62,8 +62,8 @@ const ScheduleView = ({
     shallow
   );
 
-  const [setShowModal] = useModalContext(
-    (state) => [state.setShowModal],
+  const [setActiveModals] = useModalContext(
+    (state) => [state.setActiveModals],
     shallow
   );
 
@@ -343,7 +343,7 @@ const ScheduleView = ({
         people={people}
         showUsers={showPeople}
         onToggleShowPeople={() => setShowPeople(!showPeople)}
-        addPerson={() => setShowModal("people")}
+        addPerson={() => setActiveModals("people", true)}
         disabled={!peopleMenuActive}
       ></PersonSelect>
       <Toolbar

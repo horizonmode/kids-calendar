@@ -9,6 +9,7 @@ export interface ImageProps {
 
 export interface ImageState {
   images: GalleryImage[];
+  setImages: (images: GalleryImage[]) => void;
   addImage: (image: GalleryImage) => void;
   removeImage: (id: number) => void;
   fetchImages: (calendarId: string) => Promise<void>;
@@ -23,6 +24,7 @@ export interface ImageState {
 export const createImageStore = (initProps?: ImageProps) => {
   return createStore<ImageState>((set) => ({
     images: initProps?.images || [],
+    setImages: (images) => set({ images }),
     addImage: (image) => set((state) => ({ images: [...state.images, image] })),
     removeImage: (id) =>
       set((state) => ({

@@ -7,6 +7,7 @@ import {
   Schedule,
   Template,
   SaveStatus,
+  PostCardItem,
 } from "@/types/Items";
 import cosmosSingleton from "./cosmos";
 import { BulkOperationType, OperationInput } from "@azure/cosmos";
@@ -405,4 +406,38 @@ export const UpdateTemplate = async (
   }
 
   return template;
+};
+
+export const RemoveImageFromPeople = async (
+  calendarId: string,
+  imageUrl: string
+) => {
+  const people = await GetPeople(calendarId);
+  const newPeople = people.people
+    .filter((p) => p.photo?.url === imageUrl)
+    .map((p) => {
+      return { ...p, photo: null };
+    });
+  return await UpdatePeople(calendarId, newPeople);
+};
+
+export const RemoveImageFromItems = async (
+  calendarId: string,
+  imageUrl: string
+) => {
+  const dayResult = await GetDays(calendarId);
+  const matchingDays = dayResult.days.filter((d) =>
+    d.items.find(
+      (i) =>
+        i.type === "post-card" && (i as PostCardItem).image?.url === imageUrl
+    )
+  );
+  const newDays = matchingDays.map((d) => {
+    const newItems = d.items.map((i) => {
+      const postIt = i as PostCardItem;
+      return { ...postIt, image: null };
+    });
+    return { ...d, items: newItems };
+  });
+  return UpdateDays(newDays, calendarId);
 };

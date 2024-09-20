@@ -2,6 +2,7 @@
 
 import React from "react";
 import * as DialogPrimitives from "@radix-ui/react-dialog";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
 import { cx, focusRing } from "@/utils/tremor";
 
@@ -147,4 +148,5 @@ export {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  VisuallyHidden,
 };

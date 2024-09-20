@@ -8,11 +8,13 @@ import {
   RiArrowLeftLine,
   RiArrowRightLine,
   RiCheckFill,
+  RiDeleteBin2Line,
   RiLoader2Fill,
 } from "@remixicon/react";
 import { Button } from "@tremor/react";
 import FileUpload from "./FileUpload";
 import { GalleryImage } from "@/types/Items";
+import { deleteImageAction } from "@/serverActions/images";
 
 export interface GalleryProps {
   onImageSelected: (id: GalleryImage) => void;
@@ -31,6 +33,7 @@ const Gallery = ({
   );
   const [file, setFile] = useState<File | null>(null);
   const [mode, setMode] = useState<"view" | "edit">("view");
+  const [loadingImageId, setLoadingImageId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const imagesPerPage = 8;
 
@@ -42,6 +45,14 @@ const Gallery = ({
     addImage(image);
     setFile(null);
     setMode("view");
+  };
+
+  const onDeleteClicked = async (imageId: number) => {
+    const image = images.find((i) => i.id === imageId);
+    if (!image) return;
+    setLoadingImageId(image.id);
+    await deleteImageAction(calendarId, image.url, "/grids/");
+    setLoadingImageId(null);
   };
 
   const totalPages = Math.ceil(images.length / imagesPerPage);
@@ -83,18 +94,27 @@ const Gallery = ({
             {currentImages.map((image) => (
               <div
                 key={image.id}
-                className="aspect-square relative cursor-pointer"
+                className="flex flex-col items-center justify-end"
               >
-                <Image
-                  onClick={() => onImageSelected(image)}
-                  src={image.url}
-                  alt="Gallery Image"
-                  fill
-                  style={{ objectFit: "contain" }}
-                />
-                {selectedImage?.id === image.id && (
-                  <RiCheckFill className="absolute w-full h-full left-0 right-0 pointer-events-none bg-white bg-opacity-40" />
-                )}
+                <div className="aspect-square relative cursor-pointer flex-1">
+                  <Image
+                    onClick={() => onImageSelected(image)}
+                    src={image.url}
+                    alt="Gallery Image"
+                    fill
+                    style={{ objectFit: "contain" }}
+                  />
+                  {selectedImage?.id === image.id && (
+                    <RiCheckFill className="absolute w-full h-full left-0 right-0 pointer-events-none bg-white bg-opacity-40" />
+                  )}
+                </div>
+                <Button
+                  variant="light"
+                  loading={loadingImageId === image.id}
+                  onClick={() => onDeleteClicked(image.id)}
+                >
+                  Delete
+                </Button>
               </div>
             ))}
             <div className="aspect-square bg-gray-200 flex justify-center items-center">

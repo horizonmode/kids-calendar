@@ -1,11 +1,5 @@
 "use client";
-import {
-  createImageStore,
-  ImageContext,
-  ImageProps,
-  ImageStore,
-} from "@/store/images";
-import { useRef } from "react";
+import { createImageStore, ImageContext, ImageProps } from "@/store/images";
 
 type ImageProviderProps = React.PropsWithChildren<ImageProps>;
 
@@ -13,13 +7,9 @@ export const ImageStoreProvider = ({
   children,
   ...props
 }: ImageProviderProps) => {
-  const storeRef = useRef<ImageStore>();
-  if (!storeRef.current) {
-    storeRef.current = createImageStore(props);
-  }
+  const store = createImageStore(props);
+
   return (
-    <ImageContext.Provider value={storeRef.current}>
-      {children}
-    </ImageContext.Provider>
+    <ImageContext.Provider value={store}>{children}</ImageContext.Provider>
   );
 };

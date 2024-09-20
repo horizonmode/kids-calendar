@@ -72,19 +72,19 @@ const WeekCell: React.FC<WeekCellProps> = ({
     setEditingItem(null);
   };
 
-  const [setShowModal] = useModalContext((state) => [state.setShowModal]);
+  const [setActiveModals] = useModalContext((state) => [state.setActiveModals]);
   const [setImageContextItem] = useImageContext((state) => [
     state.setEditingItem,
   ]);
 
   const onAddImageClicked = useCallback((item: PostCardItem) => {
     setImageContextItem(item);
-    setShowModal("gallery");
+    setActiveModals("gallery", true);
   }, []);
 
   const onImageClicked = useCallback((item: PostCardItem) => {
     setImageContextItem(item);
-    setShowModal("photo");
+    setActiveModals("photo", true);
   }, []);
 
   const renderItem = (item: GenericItem, key: string) => {
