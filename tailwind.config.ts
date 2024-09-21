@@ -23,10 +23,9 @@ const config: Config = {
         sans: ["var(--font-poppins)", ...fontFamily.sans],
       },
       colors: {
-        primary: colors.yellow,
-        gray: colors.gray,
+        primary: "#f45f7b",
+        gray: "#a29a9b",
         offsetGray: "#3B454E",
-        red: "#E2434F",
         // light mode
         tremor: {
           brand: {

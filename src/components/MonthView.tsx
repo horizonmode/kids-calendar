@@ -450,9 +450,33 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
               (e) => offsetDay >= e.day && offsetDay < e.day + e.days
             );
             if (!todayEvents) return null;
+
             const draggedItem = isDragging
               ? events.find((te) => te.id === dragId)
               : null;
+
+            const isDraggedItemEnd = draggedItem
+              ? offsetDay === draggedItem.day + draggedItem.days - 1
+              : false;
+
+            const isDraggedItemStart = draggedItem
+              ? offsetDay === draggedItem.day
+              : false;
+
+            const draggedItemOffset = draggedItem
+              ? draggedItem.day - offsetDay + 1
+              : 0;
+
+            if (draggedItem) {
+              console.log(
+                draggedItem,
+                over,
+                offsetDay,
+                draggedItemOffset,
+                isDraggedItemStart,
+                isDraggedItemEnd
+              );
+            }
 
             const isDraggedHighlight =
               dragAction === "move"
