@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  RiArrowDownLine,
-  RiDeleteBin3Line,
-  RiEditLine,
-  RiEye2Line,
-  RiUser4Line,
-} from "@remixicon/react";
+import { RiArrowDownLine, RiEditLine, RiEye2Line } from "@remixicon/react";
 import { Icon } from "@tremor/react";
 import { useDroppable } from "@dnd-kit/core";
 import PersonCard from "./PersonCard";

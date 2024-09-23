@@ -59,11 +59,10 @@ interface MonthViewProps {
   onNext: () => void;
   onPrev: () => void;
   onRevert: () => void;
-  onShare: () => void;
   calendarId: string;
 }
 
-const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
+const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
   const [currentDay, setSelectedDay, content, events, locked, setLocked] =
     useCalendarContext(
       (state) => [
@@ -572,7 +571,7 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
         toolbarItems={toolbarItems}
         onNext={onNext}
         onPrev={onPrev}
-        onShare={onShare}
+        onShare={() => setActiveModals("share", true)}
         onToggleLock={() => setLocked(!locked)}
         showNav={true}
         locked={locked}

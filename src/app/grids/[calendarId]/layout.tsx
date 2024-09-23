@@ -1,6 +1,7 @@
 import GalleryDialog from "@/components/dialogs/GalleryDialog";
 import PeopleDialog from "@/components/dialogs/PeopleDialog";
 import PhotoDialog from "@/components/dialogs/PhotoDialog";
+import ShareDialog from "@/components/dialogs/ShareDialog";
 import { ImageStoreProvider } from "@/components/providers/ImageProvider";
 import ModalProvider from "@/components/providers/ModalProvider";
 import PersonProvider from "@/components/providers/PersonProvider";
@@ -28,6 +29,7 @@ export default async function GridLayout({
               <PeopleDialog calendarId={calendarId} />
               <GalleryDialog calendarId={calendarId} />
               <PhotoDialog />
+              <ShareDialog calendarId={calendarId} />
               {children}
             </section>
           </ModalProvider>

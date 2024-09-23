@@ -42,7 +42,6 @@ interface ScheduleViewProps {
   templateId?: string;
   onNext: () => void;
   onPrev: () => void;
-  onShare: () => void;
   calendarId: string;
 }
 
@@ -52,7 +51,6 @@ const ScheduleView = ({
   templateId,
   onNext,
   onPrev,
-  onShare,
   calendarId,
 }: ScheduleViewProps) => {
   const { schedules } = useScheduleContext();
@@ -352,7 +350,7 @@ const ScheduleView = ({
         onToggleLock={() => setLocked(!locked)}
         toolbarItems={toolbarItems}
         showNav={!templateId}
-        onShare={onShare}
+        onShare={() => setActiveModals("share", true)}
         locked={locked}
       />
       <DraggableOverlay />
