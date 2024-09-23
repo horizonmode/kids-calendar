@@ -55,14 +55,7 @@ const GalleryDialog = ({ calendarId }: GalleryDialogProps) => {
     setActiveModals("gallery", false);
   };
 
-  const onDeleteClicked = async (imageId: string) => {
-    const image = images.find((i) => i.id === imageId);
-    setLoading(true);
-    await deleteImageAction(calendarId, selectedImage.url, "/grids/");
-    const images = await list(calendarId);
-    setImages(images.map((i) => ({ ...i, url: i.url })));
-    setLoading(false);
-  };
+  
 
   const showModal = activeModals.includes("gallery");
 
@@ -80,7 +73,6 @@ const GalleryDialog = ({ calendarId }: GalleryDialogProps) => {
             calendarId={calendarId}
             selectedImage={selectedImage}
             onImageSelected={onImageSelected}
-            onImageDeleted={onDeleteClicked}
           />
           <DialogFooter className="mt-6">
             <DialogClose asChild>
