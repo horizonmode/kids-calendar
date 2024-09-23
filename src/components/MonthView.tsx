@@ -337,7 +337,7 @@ const MonthView = ({ onNext, onPrev, onShare, calendarId }: MonthViewProps) => {
     const y = (rect.y + deltaChange.y - over.rect.top) / over.rect.height;
     const overAsInt = over ? parseInt(over.id.toString()) : null;
     setOver(overAsInt);
-    setDragId(e?.active?.data?.current?.extra.itemId);
+    setDragId(e?.active?.data?.current?.extra?.itemId);
     setDragType(e?.active?.data?.current?.type);
     setDragAction(e?.active?.data?.current?.action);
     setDelta({ x, y });

@@ -41,6 +41,7 @@ const PersonSelect = ({
   }, [disabled]);
 
   const isValidOver = isOver && active?.data?.current?.type === "people";
+
   return (
     <div
       className="overflow-visible  top-1/2 -translate-y-1/2 z-50  fixed flex touch-none h-auto"
@@ -89,7 +90,7 @@ const PersonSelect = ({
             key={`person-${i}`}
             element="people"
             style={{ position: "relative" }}
-            id={""}
+            id={person.id.toString()}
             data={{ person: person }}
           >
             <PersonCard person={person} />
