@@ -53,8 +53,8 @@ const TemplateView = ({
     shallow
   );
 
-  const [setShowModal] = useModalContext(
-    (state) => [state.setShowModal],
+  const [setActiveModals] = useModalContext(
+    (state) => [state.setActiveModals],
     shallow
   );
 
@@ -331,7 +331,7 @@ const TemplateView = ({
         people={people}
         showUsers={showPeople}
         onToggleShowPeople={() => setShowPeople(!showPeople)}
-        addPerson={() => setShowModal("people")}
+        addPerson={() => setActiveModals("people", true)}
         disabled={!peopleMenuActive}
       ></PersonSelect>
       <Toolbar
