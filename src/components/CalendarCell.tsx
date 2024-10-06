@@ -199,7 +199,7 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
       }
       highlight={selected}
       onClick={() => onSelectDay(day)}
-      label={days.getWeekDay(day)}
+      label={days.getWeekDay(new Date(year, month, day))}
       disabled={disableDrag || selectedGroup !== null}
       loading={data?.status === "pending"}
     >

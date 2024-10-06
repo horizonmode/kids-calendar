@@ -77,7 +77,6 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
     const index = editingPeople.findIndex((p) => p.id === person.id);
     if (index > -1) {
       const newPeople = [...editingPeople];
-      console.log(index, newPeople);
       newPeople[index] = person;
       setEditingPeople(newPeople);
     }
@@ -129,7 +128,6 @@ const PeopleDialog: React.FC<PeopleDialogProps> = ({ calendarId }) => {
       editingPeople.length == 0
         ? 0
         : Math.max(...editingPeople.map((p) => p.id));
-    console.log(maxId);
     setEditingPeople([
       ...editingPeople,
       { id: maxId + 1, name: "New Person", photo: null },

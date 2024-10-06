@@ -204,7 +204,6 @@ export async function DeletePerson(calendarId: string, personId: number) {
     };
   });
 
-  console.log(dayOperations);
   await container.items.bulk(dayOperations);
   await container.items.bulk(eventOperations);
 }
