@@ -236,27 +236,28 @@ export default function Bucket({
       measuring={measuring}
       modifiers={modifiers}
     >
-      <div className="flex flex-col">
-        <div style={style} className="block">
-          <SortableContext items={items} strategy={strategy}>
-            <div className="grid grid-cols-3 gap-1">
-              {items.map((value, index) => (
-                <Sortable
-                  element="post-it"
-                  key={value.id}
-                  id={value.id}
-                  disabled={false}
-                  data={{ content: value.content, color: value.color }}
-                >
-                  <Note content={value.content} editable={false} />
-                </Sortable>
-              ))}
-            </div>
-          </SortableContext>
-        </div>
+      <div className="flex">
+        <SortableContext items={items} strategy={strategy}>
+          <div className="grid grid-cols-2 gap-1">
+            {items.map((value, index) => (
+              <Sortable
+                element="post-it"
+                key={value.id}
+                id={value.id}
+                disabled={false}
+                data={{ content: value.content, color: value.color }}
+              >
+                <Note content={value.content} editable={false} />
+              </Sortable>
+            ))}
+          </div>
+        </SortableContext>
       </div>
       {useDragOverlay && mounted
-        ? createPortal(<DraggableOverlay></DraggableOverlay>, document.body)
+        ? createPortal(
+            <DraggableOverlay adjustScale={true}></DraggableOverlay>,
+            document.body
+          )
         : null}
     </DndContext>
   );

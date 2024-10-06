@@ -12,9 +12,14 @@ import { Item } from "./Item";
 interface OverlayProps {
   axis?: string;
   dragging?: boolean;
+  adjustScale?: boolean;
 }
 
-function DraggableOverlay({ axis, dragging }: OverlayProps) {
+function DraggableOverlay({
+  axis,
+  dragging,
+  adjustScale = false,
+}: OverlayProps) {
   const { active } = useDndContext();
   const ref = useRef<HTMLElement>() as MutableRefObject<HTMLElement>;
   const [mounted, setMounted] = useState(false);
@@ -67,7 +72,7 @@ function DraggableOverlay({ axis, dragging }: OverlayProps) {
 
   return mounted
     ? createPortal(
-        <DragOverlay adjustScale={false} dropAnimation={null}>
+        <DragOverlay adjustScale={adjustScale} dropAnimation={null}>
           {active ? getElement() : null}
         </DragOverlay>,
         document.body
