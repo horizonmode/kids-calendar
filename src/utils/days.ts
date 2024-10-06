@@ -48,7 +48,8 @@ export class Days {
     return week;
   }
 
-  getWeekDay(dayIndex: number) {
+  getWeekDay(day: Date) {
+    const dayIndex = day.getDay();
     return this.daysOfWeek[dayIndex];
   }
 }

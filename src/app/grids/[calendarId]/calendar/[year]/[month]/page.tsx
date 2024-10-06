@@ -97,12 +97,14 @@ export default function CalendarPage({
               className="hover:text-blue-600 cursor-pointer"
             />
           </div>
-          <h1 className="text-black">
-            {selectedDay.toLocaleString("default", { month: "long" })}
-          </h1>
-          <h1 className="text-black font-extrabold">
-            {selectedDay.getFullYear()}
-          </h1>
+          <div className="flex flex-col md:flex-row md:gap-3">
+            <h1 className="text-black">
+              {selectedDay.toLocaleString("default", { month: "long" })}
+            </h1>
+            <h1 className="text-black font-extrabold">
+              {selectedDay.getFullYear()}
+            </h1>
+          </div>
         </div>
       </Header>
       <MonthView

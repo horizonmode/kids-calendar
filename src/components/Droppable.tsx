@@ -35,10 +35,6 @@ function Droppable({
     disabled,
   });
 
-  if (isToday) {
-    console.log("Today is", day);
-  }
-
   return (
     <div
       id={`droppable-${id}`}
