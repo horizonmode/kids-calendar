@@ -1,4 +1,4 @@
-export type ItemType = "event" | "note" | "post-it" | "people";
+export type ItemType = "event" | "note" | "post-it" | "people" | "group";
 
 export interface GalleryImage {
   id: number;
@@ -65,6 +65,10 @@ export type EventItem = GenericItem &
     days: number;
   };
 
+export type GroupItem = GenericItem & {
+  items: GenericItem[];
+};
+
 export type SaveStatus = "pending" | "saved" | "error";
 
 export type Action = "update" | "delete" | "move";
@@ -89,3 +93,5 @@ export type CosmosItem<T> = T & {
   id: string;
   type: "day" | "event" | "schedule" | "template" | "people";
 };
+
+export type ToolbarItem = PostCardItem | GroupItem | GenericItem;

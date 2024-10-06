@@ -33,11 +33,8 @@ function Droppable({
   const { isOver, setNodeRef } = useDroppable({
     id,
     disabled,
+    data: { type: "cell" },
   });
-
-  if (isToday) {
-    console.log("Today is", day);
-  }
 
   return (
     <div
@@ -61,9 +58,7 @@ function Droppable({
       {loading && (
         <RiRefreshLine className="absolute top-0 right-0 animate-spin" />
       )}
-      {isPast && (
-        <div className="w-full absolute text-gray-300 opacity-25"></div>
-      )}
+
       <div className="absolute box-content text-[7rem] leading-none -translate-x-2/4 -translate-y-2/4 left-2/4 top-2/4">
         {day}
         <span className="md:hidden text-lg absolute -bottom-5 left-1/2 -translate-x-1/2 text-center pt-2">

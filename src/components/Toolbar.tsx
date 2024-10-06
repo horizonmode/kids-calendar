@@ -20,10 +20,11 @@ import Note from "./Note";
 import PostCard from "./PostCard";
 import Draggable from "./Draggable";
 import DraggableTape from "./DraggableTape";
-import { EventItem, GenericItem } from "../types/Items";
+import { EventItem, GenericItem, ToolbarItem } from "../types/Items";
+import Group from "./Group";
 
 interface ToolbarProps {
-  toolbarItems: (GenericItem | EventItem)[];
+  toolbarItems: ToolbarItem[];
   onNext?: () => void;
   onPrev?: () => void;
   onShare: () => void;
@@ -55,7 +56,6 @@ const Toolbar = ({
           >
             <Draggable
               id={ti.id}
-              key={`toolbaritem-${i}`}
               element="post-it"
               style={{
                 zIndex: 200,
@@ -85,7 +85,6 @@ const Toolbar = ({
           >
             <Draggable
               id={ti.id}
-              key={`toolbaritem-${i}`}
               element="post-card"
               style={{
                 zIndex: 200,
@@ -112,7 +111,6 @@ const Toolbar = ({
             className="flex-1 flex flex-col items-center justify-around scale-75"
           >
             <DraggableTape
-              key={`toolbarItem-${i}`}
               id={ti.id}
               isStart={true}
               isEnd={false}
@@ -124,6 +122,35 @@ const Toolbar = ({
               }}
               event={ti as EventItem}
             />
+          </div>
+        );
+
+      case "group":
+        return (
+          <div
+            key={`group-item-${i}`}
+            className="flex-1 flex flex-col items-center justify-around scale-75"
+          >
+            <Draggable
+              id={ti.id}
+              element="group"
+              style={{
+                zIndex: 200,
+                width: "10em",
+                position: "relative",
+              }}
+              data={{ content: ti.content }}
+            >
+              <Group
+                selected={false}
+                id={ti.id}
+                disableDrop={true}
+                disableDrag={true}
+                style={{
+                  position: "relative",
+                }}
+              />
+            </Draggable>
           </div>
         );
     }

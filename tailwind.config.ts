@@ -13,6 +13,9 @@ const config: Config = {
     transparent: "transparent",
     current: "currentColor",
     extend: {
+      transitionProperty: {
+        size: "height width",
+      },
       lineHeight: {
         11: "2.75rem",
         12: "3rem",
@@ -134,6 +137,12 @@ const config: Config = {
         from: { opacity: "0", transform: "translateX(-6px)" },
         to: { opacity: "1", transform: "translateX(0)" },
       },
+      spin: {
+        from: { transform: "rotate(0deg)" },
+        to: {
+          transform: "rotate(360deg)",
+        },
+      },
     },
     animation: {
       hide: "hide 150ms cubic-bezier(0.16, 1, 0.3, 1)",
@@ -142,6 +151,7 @@ const config: Config = {
       slideUpAndFade: "slideUpAndFade 150ms cubic-bezier(0.16, 1, 0.3, 1)",
       slideRightAndFade:
         "slideRightAndFade 150ms cubic-bezier(0.16, 1, 0.3, 1)",
+      spin: "spin 1s linear infinite",
     },
   },
   safelist: [

@@ -1,5 +1,12 @@
 import { Delta } from "@/components/Delta";
-import { CalendarDay, EventItem, GenericItem, Person } from "@/types/Items";
+import {
+  CalendarDay,
+  EventItem,
+  GenericItem,
+  GroupItem,
+  Person,
+  ToolbarItem,
+} from "@/types/Items";
 import { Days } from "@/utils/days";
 import { reOrderAll, reOrderLayers } from "@/utils/layers";
 import { v4 as uuidv4 } from "uuid";
@@ -48,6 +55,18 @@ export interface CalendarService {
     toolbarItems: GenericItem[],
     selectedDay: Date
   ) => { events: EventItem[]; event: EventItem };
+  reorderGroups: (
+    itemId: string,
+    groupId: string,
+    delta: Delta,
+    days: CalendarDay[],
+    toolbarItems: (GenericItem | EventItem)[]
+  ) => {
+    days: CalendarDay[];
+    sourceDay: CalendarDay | null;
+    targetDay: CalendarDay;
+    targetItemIndex: number;
+  };
   addPersonIfNotExists: (item: GenericItem, person: Person) => void;
   removePersonIfExists: (item: GenericItem, person: Person) => void;
   findItemType: (
@@ -63,7 +82,7 @@ export interface CalendarService {
   };
 }
 
-const toolbarItems: GenericItem[] = [
+const toolbarItems: ToolbarItem[] = [
   {
     id: "toolbar-post-it",
     type: "post-it",
@@ -93,6 +112,17 @@ const toolbarItems: GenericItem[] = [
     order: 0,
     color: "#FF00FF",
     people: [],
+  },
+  {
+    id: "toolbar-group",
+    type: "group",
+    content: "new group",
+    x: 0,
+    y: 0,
+    order: 0,
+    color: "#FF00FF",
+    people: [],
+    items: [],
   },
 ];
 
@@ -224,6 +254,24 @@ const reorderDays = (
     days.push(targetDay);
   }
 
+  let sourceGroup: GroupItem | null = null;
+  // look in groups
+  days.forEach((d) => {
+    const groupIndex = d.items.findIndex(
+      (i) =>
+        i.type === "group" &&
+        (i as GroupItem).items.findIndex((i) => i.id === itemId) > -1
+    );
+    if (groupIndex > -1) {
+      sourceDay = d;
+      const group = d.items[groupIndex] as GroupItem;
+      const { item, index } = findItem(group.items, itemId);
+      sourceItem = item;
+      sourceItemIndex = index;
+      sourceGroup = group;
+    }
+  });
+
   if (!sourceItem) throw new Error("Item not found");
 
   // modify item
@@ -233,8 +281,17 @@ const reorderDays = (
   if (sourceDay && sourceItemIndex !== null) {
     // item has moved from one day to another
     // remove from source
-    sourceDay.items.splice(sourceItemIndex, 1);
-    reOrderAll(sourceDay.items);
+    if (!sourceGroup) {
+      console.log("splicing");
+      sourceDay.items.splice(sourceItemIndex, 1);
+      reOrderAll(sourceDay.items);
+    } else {
+      const group = sourceGroup as GroupItem;
+      console.log("splicing group");
+      const { index } = findItem(group.items, itemId);
+      group.items.splice(index, 1);
+      reOrderAll(group.items);
+    }
   }
 
   targetDay.items.push(sourceItem);
@@ -336,6 +393,97 @@ const reorderEvents = (
   };
 };
 
+const reorderGroups = (
+  itemId: string,
+  groupId: string,
+  delta: Delta,
+  days: CalendarDay[],
+  toolbarItems: (GenericItem | EventItem)[]
+) => {
+  let targetDay: CalendarDay | null = null;
+  let targetGroup: GroupItem | null = null;
+  let sourceDay: CalendarDay | null = null;
+  let sourceGroup: GroupItem | null = null;
+  let sourceItem: GenericItem | EventItem | null = null;
+  let sourceItemIndex: number | null = null;
+
+  // find source and destination group
+  days.forEach((d) => {
+    const targetGroupIndex = d.items.findIndex((i) => i.id === groupId);
+    if (targetGroupIndex > -1) {
+      targetDay = d;
+      targetGroup = d.items[targetGroupIndex] as GroupItem;
+    }
+
+    const sourceGroupIndex = d.items.findIndex(
+      (i) =>
+        i.type === "group" &&
+        (i as GroupItem).items.findIndex((i) => i.id === itemId) > -1
+    );
+    if (sourceGroupIndex > -1) {
+      sourceDay = d;
+      sourceGroup = d.items[sourceGroupIndex] as GroupItem;
+      const { item, index } = findItem(sourceGroup.items, itemId);
+      sourceItem = item;
+      sourceItemIndex = index;
+    }
+  });
+
+  if (!sourceDay) {
+    // try to find in non group items
+    const sourceDayIndex = days.findIndex(
+      (d) => d.items.findIndex((i) => i.id == itemId) > -1
+    );
+    if (sourceDayIndex > -1) {
+      sourceDay = days[sourceDayIndex];
+      const { item, index } = findItem(sourceDay.items, itemId);
+      sourceItem = item;
+      sourceItemIndex = index;
+    }
+  }
+
+  if (!sourceDay) {
+    // try to find in toolbar
+    const toolbarIndex = toolbarItems.findIndex((d) => d.id === itemId);
+    if (toolbarIndex > -1) {
+      sourceItem = { ...toolbarItems[toolbarIndex] };
+      sourceItem.id = uuidv4();
+    }
+  }
+
+  if (!sourceItem || !targetDay || !targetGroup)
+    throw new Error("Error in reorderGroups");
+
+  // modify item
+  sourceItem.x = delta.x * 100;
+  sourceItem.y = delta.y * 100;
+
+  // remove from source
+  if (sourceGroup && sourceItemIndex !== null) {
+    const group = sourceGroup as GroupItem;
+    group.items.splice(sourceItemIndex, 1);
+    reOrderAll(group.items);
+  } else if (sourceDay && sourceItemIndex !== null) {
+    // item has moved from one day to another
+    // remove from source
+    sourceDay.items.splice(sourceItemIndex, 1);
+    reOrderAll(sourceDay.items);
+  }
+
+  // add to target
+  if (targetGroup === null || targetDay === null)
+    throw new Error("Target not found");
+  (targetGroup as GroupItem).items.push(sourceItem);
+
+  const day = targetDay as CalendarDay;
+  return {
+    days,
+    sourceDay,
+    targetDay,
+    targetItemIndex: day?.items.findIndex((i) => i.id === itemId) ?? 0,
+  };
+};
+
 const service: CalendarService = {
   toolbarItems,
   findItem,
@@ -351,6 +499,7 @@ const service: CalendarService = {
   addPersonIfNotExists,
   removePersonIfExists,
   findItemType,
+  reorderGroups,
 };
 
 export default service;

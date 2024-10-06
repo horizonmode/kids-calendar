@@ -6,6 +6,8 @@ import Note from "./Note";
 import ResizeIcon from "./ResizeIcon";
 import PostCard from "./PostCard";
 import Person from "./PersonCard";
+import Group from "./Group";
+import { Item } from "./Item";
 
 interface OverlayProps {
   axis?: string;
@@ -50,6 +52,16 @@ function DraggableOverlay({ axis, dragging }: OverlayProps) {
         if (active.data.current.action === "resize") return <ResizeIcon />;
       case "people":
         return <Person {...active.data.current.extra} hideName={true} />;
+      case "group":
+        return (
+          <Group
+            style={{ ...active.data.current.style }}
+            disableDrop={true}
+            {...active.data.current.extra}
+          />
+        );
+      default:
+        return <Item value={"dragging"}></Item>;
     }
   };
 
