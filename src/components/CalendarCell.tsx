@@ -2,14 +2,17 @@ import {
   CalendarDay,
   EventItem,
   GenericItem,
+  GroupItem,
   PostCardItem,
 } from "@/types/Items";
 import Droppable from "./Droppable";
 import { Days } from "@/utils/days";
-import { renderNote, renderPostCard } from "@/utils/renderItems";
+import { renderGroup, renderNote, renderPostCard } from "@/utils/renderItems";
 import { useState } from "react";
 import useModalContext from "@/store/modals";
 import useImageContext from "@/store/images";
+import { useCalendarContext } from "@/store/calendar";
+import { shallow } from "zustand/shallow";
 
 interface CalendarCellProps {
   day: number;
@@ -22,6 +25,7 @@ interface CalendarCellProps {
   disableDrag?: boolean;
   showPeople?: boolean;
   disablePeopleDrag?: boolean;
+  disableGroupDrop: boolean;
   locked?: boolean;
   onEditDay?: (
     day: CalendarDay,
@@ -44,8 +48,14 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
   showPeople = false,
   locked = false,
   disablePeopleDrag = true,
+  disableGroupDrop,
   onEditDay,
 }) => {
+  const [selectedGroup, setSelectedGroup] = useCalendarContext(
+    (state) => [state.selectedGroup, state.setSelectedGroup],
+    shallow
+  );
+
   const [editingItem, setEditingItem] = useState<
     GenericItem | EventItem | null
   >(null);
@@ -108,7 +118,12 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
     setActiveModals("photo", true);
   };
 
-  const renderItem = (item: GenericItem, key: string) => {
+  const renderItem = (
+    item: GenericItem,
+    key: string,
+    style?: React.CSSProperties,
+    sortable: boolean = false
+  ) => {
     switch (item.type) {
       case "note":
       case "post-it":
@@ -122,7 +137,9 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
           showPeople,
           disablePeopleDrag,
           locked,
-          key
+          key,
+          style,
+          sortable
         );
       case "post-card":
         return renderPostCard(
@@ -139,7 +156,28 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
           locked,
           () => onAddImageClicked(item as PostCardItem),
           () => onImageClicked(item as PostCardItem),
-          key
+          key,
+          style,
+          sortable
+        );
+      case "group":
+        return renderGroup(
+          !!editingItem && editingItem.id === item.id
+            ? (editingItem as GroupItem)
+            : (item as GroupItem),
+          !!editingItem && editingItem.id === item.id,
+          onItemUpdateContent,
+          onItemDelete,
+          onItemSelect,
+          onItemDeselect,
+          () => setSelectedGroup(item.id as string),
+          () => setSelectedGroup(null),
+          selectedGroup === item.id,
+          showPeople,
+          disablePeopleDrag,
+          locked,
+          key,
+          disableGroupDrop
         );
     }
   };
@@ -162,7 +200,7 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
       highlight={selected}
       onClick={() => onSelectDay(day)}
       label={days.getWeekDay(day)}
-      disabled={disableDrag}
+      disabled={disableDrag || selectedGroup !== null}
       loading={data?.status === "pending"}
     >
       {data && data.items.map((item, i) => renderItem(item, `${item.id}-${i}`))}
