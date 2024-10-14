@@ -46,6 +46,8 @@ const Toolbar = ({
 }: ToolbarProps) => {
   const [open, setOpen] = useState(true);
 
+  console.log(toolbarItems);
+
   const renderItem = (ti: GenericItem, i: number) => {
     switch (ti.type) {
       case "post-it":
@@ -144,7 +146,6 @@ const Toolbar = ({
               <Group
                 selected={false}
                 id={ti.id}
-                disableDrop={true}
                 disableDrag={true}
                 style={{
                   position: "relative",

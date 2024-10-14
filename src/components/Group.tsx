@@ -1,10 +1,13 @@
 import { EventItem, GenericItem, GroupItem, PostCardItem } from "@/types/Items";
 import { renderNote, renderPostCard } from "@/utils/renderItems";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useModalContext from "@/store/modals";
 import useImageContext from "@/store/images";
-import { useDroppable } from "@dnd-kit/core";
-import SortableGrid from "./Bucket";
+import { useDndContext, useDroppable } from "@dnd-kit/core";
+import SortableGrid from "./SortableList";
+import Divider from "./Divider";
+import useGroupContext from "@/store/groups";
+import { shallow } from "zustand/shallow";
 
 interface GroupProps {
   onClick?: () => void;
@@ -15,12 +18,13 @@ interface GroupProps {
   data?: GroupItem;
   selected: boolean;
   disableDrag?: boolean;
-  disableDrop: boolean;
+  disableSort?: boolean;
   onEditGroup?: (
     group: GroupItem,
     index: number,
     action: "delete" | "update"
   ) => void;
+  isOver?: boolean;
 }
 
 const Group: React.FC<GroupProps> = ({
@@ -28,17 +32,17 @@ const Group: React.FC<GroupProps> = ({
   data,
   selected,
   disableDrag = false,
-  disableDrop,
+  disableSort = false,
   onEditGroup,
   style,
   onClick,
   onClose,
+  isOver,
 }) => {
-  const { isOver, setNodeRef } = useDroppable({
-    id: selected ? "group-selected" : `group-${id}`,
-    disabled: disableDrop,
-    data: { type: "group", itemId: id },
-  });
+  const [groupId, item, action] = useGroupContext(
+    (state) => [state.groupId, state.item, state.action],
+    shallow
+  );
 
   const [editingItem, setEditingItem] = useState<
     GenericItem | EventItem | null
@@ -141,23 +145,36 @@ const Group: React.FC<GroupProps> = ({
           style,
           true
         );
+      case "divider":
+        return <Divider key={key} />;
     }
   };
+
+  const renderItems = useMemo(() => {
+    let items = [...(data?.items || [])];
+    if (groupId === id && item) {
+      if (action === "add" && !items.find((i) => i.id === item.id)) {
+        items.push(item);
+      } else if (action === "remove" && items.find((i) => i.id === item.id)) {
+        items = items.filter((i) => i.id !== item.id);
+      }
+    }
+    return items;
+  }, [action, data?.items, groupId, id, item]);
 
   return (
     <div
       style={style}
-      ref={setNodeRef}
+      // ref={setNodeRef}
       onClick={() => !selected && onClick && onClick()}
-      className={`rounded-md bg-white z-20 shadow-xl pointer-events-auto overflow-auto p-2
-      ${selected ? "w-96 h-96" : "w-96 h-96"} ${
-        !disableDrop && isOver && "border-2 border-dashed border-gray-500"
-      } ${disableDrop && isOver && " border-2 border-solid border-red-500"}`}
+      className={`rounded-md  z-20 shadow-xl pointer-events-auto overflow-auto p-2 w-60 h-60 ${
+        isOver ? " bg-red-500 outline-2 outline-red-500" : "bg-slate-400"
+      }`}
     >
       <SortableGrid
         renderItem={renderItem}
-        items={data?.items}
-        disableAll={false}
+        items={renderItems}
+        disableSort={disableSort}
       />
     </div>
   );

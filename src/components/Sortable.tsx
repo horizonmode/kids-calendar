@@ -2,6 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import Note from "./Note";
 import { CSS } from "@dnd-kit/utilities";
 import { UniqueIdentifier } from "@dnd-kit/core";
+import opacity from "hex-color-opacity";
 
 export interface SortableItemProps {
   disabled?: boolean;
@@ -35,7 +36,7 @@ SortableItemProps) {
     id,
     disabled,
     data: {
-      type: "post-it",
+      type: element,
       action: "sort",
       extra: { itemId: id, ...data },
     },
@@ -45,11 +46,12 @@ SortableItemProps) {
   const styles = {
     transform: CSS.Translate.toString(transform),
     transition,
+    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
-    <div ref={setNodeRef} style={styles} {...listeners} {...attributes}>
+    <li ref={setNodeRef} style={styles} {...listeners} {...attributes}>
       {children}
-    </div>
+    </li>
   );
 }

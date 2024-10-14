@@ -1,13 +1,11 @@
 import Bucket from "@/components/Bucket";
+import { VariableHeights } from "@/components/Vertical";
 
 const BucketPage = () => {
   return (
     <div className="flex flex-col gap-4 items-center justify-center flex-1">
       <div className="relative flex justify-center">
-        <Bucket
-          disableAll={false}
-          items={["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]}
-        />
+        <VariableHeights />
       </div>
     </div>
   );

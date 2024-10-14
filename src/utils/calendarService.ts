@@ -58,7 +58,6 @@ export interface CalendarService {
   reorderGroups: (
     itemId: string,
     groupId: string,
-    delta: Delta,
     days: CalendarDay[],
     toolbarItems: (GenericItem | EventItem)[]
   ) => {
@@ -80,6 +79,12 @@ export interface CalendarService {
     eventIndex?: number;
     toolbarIndex?: number;
   };
+  rebuildCalendarDays: (
+    sourceDay: CalendarDay | null,
+    targetDay: CalendarDay,
+    previousState: CalendarDay[],
+    action: "update" | "move"
+  ) => CalendarDay[];
 }
 
 const toolbarItems: ToolbarItem[] = [
@@ -210,13 +215,14 @@ const reorderDays = (
   delta: Delta,
   month: number,
   year: number,
-  days: CalendarDay[],
+  prevDays: CalendarDay[],
   toolbarItems: (GenericItem | EventItem)[]
 ) => {
   let targetDay: CalendarDay;
   let sourceDay: CalendarDay | null = null;
   let sourceItem: GenericItem | EventItem | null = null;
   let sourceItemIndex: number | null = null;
+  const days = [...prevDays];
 
   // find source item
   const sourceDayIndex = days.findIndex(
@@ -396,8 +402,7 @@ const reorderEvents = (
 const reorderGroups = (
   itemId: string,
   groupId: string,
-  delta: Delta,
-  days: CalendarDay[],
+  prevDays: CalendarDay[],
   toolbarItems: (GenericItem | EventItem)[]
 ) => {
   let targetDay: CalendarDay | null = null;
@@ -406,13 +411,14 @@ const reorderGroups = (
   let sourceGroup: GroupItem | null = null;
   let sourceItem: GenericItem | EventItem | null = null;
   let sourceItemIndex: number | null = null;
+  const days = [...prevDays];
 
   // find source and destination group
   days.forEach((d) => {
     const targetGroupIndex = d.items.findIndex((i) => i.id === groupId);
     if (targetGroupIndex > -1) {
-      targetDay = d;
-      targetGroup = d.items[targetGroupIndex] as GroupItem;
+      targetDay = { ...d };
+      targetGroup = { ...(d.items[targetGroupIndex] as GroupItem) };
     }
 
     const sourceGroupIndex = d.items.findIndex(
@@ -421,10 +427,10 @@ const reorderGroups = (
         (i as GroupItem).items.findIndex((i) => i.id === itemId) > -1
     );
     if (sourceGroupIndex > -1) {
-      sourceDay = d;
-      sourceGroup = d.items[sourceGroupIndex] as GroupItem;
+      sourceDay = { ...d };
+      sourceGroup = { ...d.items[sourceGroupIndex] } as GroupItem;
       const { item, index } = findItem(sourceGroup.items, itemId);
-      sourceItem = item;
+      sourceItem = { ...item };
       sourceItemIndex = index;
     }
   });
@@ -435,9 +441,9 @@ const reorderGroups = (
       (d) => d.items.findIndex((i) => i.id == itemId) > -1
     );
     if (sourceDayIndex > -1) {
-      sourceDay = days[sourceDayIndex];
+      sourceDay = { ...days[sourceDayIndex] };
       const { item, index } = findItem(sourceDay.items, itemId);
-      sourceItem = item;
+      sourceItem = { ...item };
       sourceItemIndex = index;
     }
   }
@@ -455,8 +461,8 @@ const reorderGroups = (
     throw new Error("Error in reorderGroups");
 
   // modify item
-  sourceItem.x = delta.x * 100;
-  sourceItem.y = delta.y * 100;
+  // sourceItem.x = delta.x * 100;
+  // sourceItem.y = delta.y * 100;
 
   // remove from source
   if (sourceGroup && sourceItemIndex !== null) {
@@ -484,6 +490,33 @@ const reorderGroups = (
   };
 };
 
+const rebuildCalendarDays = (
+  sourceDay: CalendarDay | null,
+  targetDay: CalendarDay,
+  previousState: CalendarDay[],
+  action: "update" | "move"
+) => {
+  const newDays =
+    sourceDay == null || sourceDay.day === targetDay.day
+      ? [
+          ...previousState.filter((d) => d.day !== targetDay.day),
+          {
+            ...targetDay,
+          },
+        ]
+      : [
+          ...previousState.filter((d) => d.day !== targetDay.day),
+          {
+            ...sourceDay,
+          },
+          {
+            ...targetDay,
+          },
+        ];
+
+  return newDays;
+};
+
 const service: CalendarService = {
   toolbarItems,
   findItem,
@@ -500,6 +533,7 @@ const service: CalendarService = {
   removePersonIfExists,
   findItemType,
   reorderGroups,
+  rebuildCalendarDays,
 };
 
 export default service;

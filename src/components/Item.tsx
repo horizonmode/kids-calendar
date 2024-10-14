@@ -38,7 +38,7 @@ export interface Props {
   }): React.ReactElement;
 }
 
-export const Item = React.memo(
+const Item = React.memo(
   React.forwardRef<HTMLLIElement, Props>(
     (
       {
@@ -149,3 +149,5 @@ export const Item = React.memo(
     }
   )
 );
+
+export default Item;

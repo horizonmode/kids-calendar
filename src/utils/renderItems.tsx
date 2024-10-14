@@ -188,7 +188,8 @@ export const renderGroup = (
   disablePeople: boolean,
   locked: boolean,
   key: string,
-  disableDrop: boolean
+  disableSort: boolean,
+  isOver: boolean
 ) => {
   return (
     <Draggable
@@ -199,7 +200,7 @@ export const renderGroup = (
       style={getStyle(item)}
       element="group"
       data={{ content: item.content }}
-      disabled={editable}
+      disabled={editable || disableSort}
     >
       <Editable
         onDelete={() => onItemDelete(item)}
@@ -226,8 +227,9 @@ export const renderGroup = (
             onClick={() => onGroupClick(item)}
             onClose={() => onGroupClose()}
             id={item.id}
-            disableDrop={disableDrop}
+            disableSort={disableSort}
             data={item}
+            isOver={isOver}
           ></Group>
         ) : (
           <Group
@@ -236,7 +238,8 @@ export const renderGroup = (
             onClose={() => onGroupClose()}
             id={item.id}
             data={item}
-            disableDrop={disableDrop}
+            disableSort={disableSort}
+            isOver={isOver}
           ></Group>
         )}
       </Editable>

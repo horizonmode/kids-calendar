@@ -1,5 +1,6 @@
 import React, { CSSProperties, ReactNode } from "react";
 import { useDraggable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
 
 interface DraggableProps {
   element?: string;
@@ -24,7 +25,7 @@ function Draggable({
   action,
   disabled = false,
 }: DraggableProps) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useSortable({
     id: id,
     data: {
       type: element,

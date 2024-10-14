@@ -1,10 +1,16 @@
 "use client";
-import { startTransition, useRef } from "react";
+import { startTransition, useCallback, useRef } from "react";
 import React, { useState } from "react";
 import classNames from "classnames";
 import { Days } from "@/utils/days";
 import { shallow } from "zustand/shallow";
-import { CalendarDay, EventItem, ItemType } from "@/types/Items";
+import {
+  CalendarDay,
+  EventItem,
+  GenericItem,
+  GroupItem,
+  ItemType,
+} from "@/types/Items";
 import { RectMap } from "@dnd-kit/core/dist/store/types";
 import { MouseSensor, TouchSensor } from "@/utils/handlers";
 import DraggableOverlay from "@/components/DraggableOverlay";
@@ -18,9 +24,12 @@ import {
   Active,
   closestCenter,
   closestCorners,
+  CollisionDetection,
   DndContext,
   DroppableContainer,
+  getFirstCollision,
   Over,
+  pointerWithin,
   rectIntersection,
   useSensor,
   useSensors,
@@ -45,6 +54,8 @@ import { updateEventAction } from "@/serverActions/events";
 import CalendarCell from "./CalendarCell";
 import useOptimisticCalendarDays from "@/hooks/useOptimisticCalendarDays";
 import useOptimisticEvents from "@/hooks/useOptimisticEvents";
+import useGroupContext from "@/store/groups";
+import { v4 as uuidv4 } from "uuid";
 const {
   reorderDays,
   reorderEvents,
@@ -53,6 +64,8 @@ const {
   removePersonIfExists,
   findItemType,
   reorderGroups,
+  rebuildCalendarDays,
+  findItem,
 } = calendarService;
 
 const days = new Days();
@@ -74,6 +87,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
     setLocked,
     selectedGroup,
     setSelectedGroup,
+    setDays,
   ] = useCalendarContext(
     (state) => [
       state.selectedDay,
@@ -84,6 +98,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
       state.setLocked,
       state.selectedGroup,
       state.setSelectedGroup,
+      state.setDays,
     ],
     shallow
   );
@@ -93,6 +108,12 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
     state.showPeople,
     state.setShowPeople,
   ]);
+
+  const [setGroupEditing, resetGroups, editingGroupId, editingGroupItem] =
+    useGroupContext(
+      (state) => [state.setEditing, state.reset, state.groupId, state.item],
+      shallow
+    );
 
   const month = currentDay.getMonth();
   const year = currentDay.getFullYear();
@@ -116,8 +137,8 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
         action: "move",
       });
     });
-    const updates = [targetDay];
 
+    const updates = [targetDay];
     if (sourceDay && sourceDay.day !== targetDay.day) updates.push(sourceDay);
 
     await updateDaysAction(calendarId, updates, "/grids/");
@@ -135,23 +156,6 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
         toolbarItems
       );
 
-      await updateDays(
-        reorder.sourceDay,
-        reorder.targetDay,
-        reorder.targetItemIndex
-      );
-    }
-  };
-
-  const onDropGroup = async (groupId: string, itemId: string, delta: Delta) => {
-    if (itemId) {
-      const reorder = reorderGroups(
-        itemId,
-        groupId,
-        delta,
-        calDays,
-        toolbarItems
-      );
       await updateDays(
         reorder.sourceDay,
         reorder.targetDay,
@@ -305,8 +309,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
         }
       }
     } else if (destinationType === "group") {
-      const { itemId: groupId } = over.data.current as any;
-      await onDropGroup(groupId, itemId, delta);
+      await onDropGroup(over.id.toString(), itemId, delta);
     } else {
       if (destination === "toolbar-person") return;
       await onReorder(itemId, parseInt(destination), delta);
@@ -388,9 +391,115 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
   const [dragType, setDragType] = useState<ItemType | null>(null);
   const [dragAction, setDragAction] = useState<string | null>(null);
 
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const groups = calDays
+    .filter((d) => d.items.length > 0)
+    .map((d) => d.items)
+    .flat()
+    .filter((i) => i.type === "group") as GroupItem[];
+
+  const isMovingGroup = activeId
+    ? groups.find((g) => g.id === activeId)
+      ? true
+      : false
+    : false;
+
+  const isGroup = (id: string) => {
+    return groups.find((g) => g.id === id);
+  };
+
+  const findGroup = (id: string) => {
+    const group = groups.find((g) => g.id === id);
+    if (group) return group;
+
+    // look for the group that contains the item
+    const groupItem = groups.find((g) =>
+      (g as GroupItem).items.find((i) => i.id === id)
+    );
+
+    return groupItem;
+  };
+
+  const isGroupItem = (id: string) => {
+    return groups.find((g) => g.items.find((i) => i.id === id));
+  };
+
+  const lastOverId = useRef<string | null>(null);
+  const recentlyMovedToNewContainer = useRef(false);
+  const collisionDetectionStrategy: CollisionDetection = useCallback(
+    ({
+      droppableContainers,
+      ...args
+    }: {
+      droppableContainers: DroppableContainer[];
+      active: Active;
+      collisionRect: ClientRect;
+      droppableRects: RectMap;
+      pointerCoordinates: Coordinates | null;
+    }) => {
+      // Start by finding any intersecting droppable
+      const pointerIntersections = pointerWithin({
+        ...args,
+        droppableContainers,
+      });
+
+      const containers = droppableContainers.filter(
+        ({ id }) => id !== "toolbar"
+      );
+
+      const intersections =
+        pointerIntersections.length > 0
+          ? // If there are droppables intersecting with the pointer, return those
+            pointerIntersections
+          : rectIntersection({ ...args, droppableContainers: containers });
+
+      let overId = getFirstCollision(intersections, "id");
+
+      if (overId != null) {
+        if (overId === "toolbar" || "toolbar-person") {
+          // If the intersecting droppable is the trash, return early
+          // Remove this if you're not using trashable functionality in your app
+          return intersections;
+        }
+
+        if (isGroup(overId.toString())) {
+          const containerItems = groups.find((g) => g.id === overId)?.items;
+          // If a container is matched and it contains items (columns 'A', 'B', 'C')
+          if (containerItems && containerItems.length > 0) {
+            // Return the closest droppable within that container
+            overId = closestCenter({
+              ...args,
+              droppableContainers: droppableContainers.filter(
+                (container) =>
+                  container.id !== overId &&
+                  containerItems.find((item) => item.id === container.id)
+              ),
+            })[0]?.id;
+          }
+        }
+
+        lastOverId.current = overId.toString();
+        return [{ id: overId }];
+      }
+
+      // When a draggable item moves to a new container, the layout may shift
+      // and the `overId` may become `null`. We manually set the cached `lastOverId`
+      // to the id of the draggable item that was moved to the new container, otherwise
+      // the previous `overId` will be returned which can cause items to incorrectly shift positions
+      if (recentlyMovedToNewContainer.current) {
+        lastOverId.current = activeId;
+      }
+
+      // If no droppable is matched, return the last match
+      return lastOverId.current ? [{ id: lastOverId.current }] : [];
+    },
+    [activeId, groups]
+  );
+
   const updateDragState = (e: DragMoveEvent) => {
     const { activatorEvent, delta: deltaChange, over, active } = e;
-    if (!over) return;
+    if (!over || !active) return;
 
     const el = activatorEvent.target as HTMLElement;
     var rect = el.getBoundingClientRect();
@@ -398,10 +507,73 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
     const y = (rect.y + deltaChange.y - over.rect.top) / over.rect.height;
     const overAsInt = over ? parseInt(over.id.toString()) : null;
     setOver(overAsInt);
+    setActiveId(active.id.toString());
     setDragId(e?.active?.data?.current?.extra?.itemId);
     setDragType(e?.active?.data?.current?.type);
     setDragAction(e?.active?.data?.current?.action);
     setDelta({ x, y });
+    handleGroupDrag(over, active, { x, y });
+  };
+
+  const handleGroupDrag = (over: Over, active: Active, delta: Delta) => {
+    if (isGroup(active.id.toString())) return;
+
+    const overGroup = findGroup(over.id.toString());
+    const activeGroup = findGroup(active.id.toString());
+
+    if (overGroup?.id !== activeGroup?.id) {
+      // If we're moving to a group
+      if (overGroup) {
+        const itemId = active.id.toString();
+        const sourceDayIndex = content.findIndex(
+          (d) => d.items.findIndex((i) => i.id == itemId) > -1
+        );
+        let item = null;
+        if (sourceDayIndex === -1) {
+          // look in toolbarItems
+          item = {
+            ...toolbarItems.find((i) => i.id == itemId),
+            id: uuidv4().toString(),
+          } as GenericItem;
+        } else {
+          item = content[sourceDayIndex].items.find((i) => i.id == itemId);
+        }
+        if (!item) throw new Error("Item not found");
+        if (editingGroupId !== overGroup.id.toString()) {
+          setGroupEditing(overGroup.id.toString(), item, "add");
+        }
+        return;
+      } else if (activeGroup) {
+        // If we're moving out of a group
+        const itemId = active.id.toString();
+        const item = activeGroup.items.find((i) => i.id == itemId);
+        if (!item) throw new Error("Item not found");
+        if (editingGroupId !== activeGroup.id.toString()) {
+          setGroupEditing(activeGroup.id.toString(), item, "remove");
+        }
+      }
+    }
+  };
+
+  const onDropGroup = async (groupId: string, itemId: string, delta: Delta) => {
+    if (itemId) {
+      const reorder = reorderGroups(itemId, groupId, calDays, toolbarItems);
+
+      startTransition(() => {
+        setCalendarDays({
+          sourceDay: reorder.sourceDay,
+          targetDay: reorder.targetDay,
+          targetItemIndex: reorder.targetItemIndex,
+          action: "move",
+        });
+      });
+
+      const updates = [reorder.targetDay];
+      if (reorder.sourceDay && reorder.sourceDay.day !== reorder.targetDay.day)
+        updates.push(reorder.sourceDay);
+
+      await updateDaysAction(calendarId, updates, "/grids/");
+    }
   };
 
   const [setActiveModals] = useModalContext(
@@ -411,22 +583,27 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
 
   const peopleMenuActive = content.length > 0 || events.length > 0;
 
+  console.log(over, activeId, isMovingGroup);
+
   return (
     <DndContext
       id="month-view"
       autoScroll={false}
       sensors={sensors}
-      collisionDetection={customCollisionDetectionAlgorithm}
-      modifiers={[restrictToFirstScrollableAncestor]}
+      collisionDetection={collisionDetectionStrategy}
+      modifiers={[]}
       onDragOver={updateDragState}
       onDragMove={updateDragState}
       onDragStart={(e) => {
         setIsDragging(true);
+        resetGroups();
       }}
       onDragCancel={() => {
         setIsDragging(false);
+        resetGroups();
       }}
       onDragEnd={({ over, active }) => {
+        resetGroups();
         const translated = active.rect.current.translated;
         if (!translated) return;
         setIsDragging(false);
@@ -456,6 +633,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
           if (offsetDay >= 1 && offsetDay <= daysInMonth) {
             const day = calDays.find((d) => d.day === offsetDay);
             const dateOfOffset = new Date(year, month, offsetDay);
+
             return (
               <CalendarCell
                 key={`day-${i}`}
@@ -479,13 +657,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
                 disablePeopleDrag={
                   !isDragging || (isDragging && dragType !== "people")
                 }
-                disableGroupDrop={
-                  isDragging &&
-                  (dragType === "group" ||
-                    dragType === "people" ||
-                    dragType === "event" ||
-                    dragAction === "sort")
-                }
+                disableGroupSort={isDragging && isMovingGroup}
               />
             );
           } else return <NonDay key={`non-${i}`}></NonDay>;

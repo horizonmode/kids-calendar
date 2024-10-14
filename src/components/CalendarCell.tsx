@@ -13,6 +13,8 @@ import useModalContext from "@/store/modals";
 import useImageContext from "@/store/images";
 import { useCalendarContext } from "@/store/calendar";
 import { shallow } from "zustand/shallow";
+import { useDndContext } from "@dnd-kit/core";
+import useGroupContext from "@/store/groups";
 
 interface CalendarCellProps {
   day: number;
@@ -25,7 +27,7 @@ interface CalendarCellProps {
   disableDrag?: boolean;
   showPeople?: boolean;
   disablePeopleDrag?: boolean;
-  disableGroupDrop: boolean;
+  disableGroupSort: boolean;
   locked?: boolean;
   onEditDay?: (
     day: CalendarDay,
@@ -48,13 +50,20 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
   showPeople = false,
   locked = false,
   disablePeopleDrag = true,
-  disableGroupDrop,
+  disableGroupSort,
   onEditDay,
 }) => {
   const [selectedGroup, setSelectedGroup] = useCalendarContext(
     (state) => [state.selectedGroup, state.setSelectedGroup],
     shallow
   );
+
+  const [groupId, item, action] = useGroupContext(
+    (state) => [state.groupId, state.item, state.action],
+    shallow
+  );
+
+  const { over } = useDndContext();
 
   const [editingItem, setEditingItem] = useState<
     GenericItem | EventItem | null
@@ -124,6 +133,7 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
     style?: React.CSSProperties,
     sortable: boolean = false
   ) => {
+    const isOver = over ? over.id.toString() === item.id : false;
     switch (item.type) {
       case "note":
       case "post-it":
@@ -177,7 +187,8 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
           disablePeopleDrag,
           locked,
           key,
-          disableGroupDrop
+          disableGroupSort,
+          isOver
         );
     }
   };

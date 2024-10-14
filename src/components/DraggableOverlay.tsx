@@ -7,18 +7,24 @@ import ResizeIcon from "./ResizeIcon";
 import PostCard from "./PostCard";
 import Person from "./PersonCard";
 import Group from "./Group";
-import { Item } from "./Item";
+import Item from "./Item";
+import Divider from "./Divider";
+import { GenericItem } from "@/types/Items";
 
 interface OverlayProps {
   axis?: string;
   dragging?: boolean;
   adjustScale?: boolean;
+  style?: React.CSSProperties;
+  item?: GenericItem;
 }
 
 function DraggableOverlay({
   axis,
   dragging,
   adjustScale = false,
+  style,
+  item,
 }: OverlayProps) {
   const { active } = useDndContext();
   const ref = useRef<HTMLElement>() as MutableRefObject<HTMLElement>;
@@ -65,8 +71,16 @@ function DraggableOverlay({
             {...active.data.current.extra}
           />
         );
+      case "divider":
+        return <Divider />;
       default:
-        return <Item value={"dragging"}></Item>;
+        return (
+          <Item
+            dragOverlay={true}
+            wrapperStyle={style}
+            value={item?.content}
+          ></Item>
+        );
     }
   };
 
