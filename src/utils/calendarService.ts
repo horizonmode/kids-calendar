@@ -9,6 +9,7 @@ import {
 } from "@/types/Items";
 import { Days } from "@/utils/days";
 import { reOrderAll, reOrderLayers } from "@/utils/layers";
+import { arrayMove } from "@dnd-kit/sortable";
 import { v4 as uuidv4 } from "uuid";
 
 export interface CalendarService {
@@ -58,6 +59,7 @@ export interface CalendarService {
   reorderGroups: (
     itemId: string,
     groupId: string,
+    overId: string,
     days: CalendarDay[],
     toolbarItems: (GenericItem | EventItem)[]
   ) => {
@@ -218,6 +220,7 @@ const reorderDays = (
   prevDays: CalendarDay[],
   toolbarItems: (GenericItem | EventItem)[]
 ) => {
+  console.log("reorderDays");
   let targetDay: CalendarDay;
   let sourceDay: CalendarDay | null = null;
   let sourceItem: GenericItem | EventItem | null = null;
@@ -269,6 +272,7 @@ const reorderDays = (
         (i as GroupItem).items.findIndex((i) => i.id === itemId) > -1
     );
     if (groupIndex > -1) {
+      console.log("found group");
       sourceDay = d;
       const group = d.items[groupIndex] as GroupItem;
       const { item, index } = findItem(group.items, itemId);
@@ -402,6 +406,7 @@ const reorderEvents = (
 const reorderGroups = (
   itemId: string,
   groupId: string,
+  overId: string,
   prevDays: CalendarDay[],
   toolbarItems: (GenericItem | EventItem)[]
 ) => {
@@ -413,27 +418,39 @@ const reorderGroups = (
   let sourceItemIndex: number | null = null;
   const days = [...prevDays];
 
-  // find source and destination group
-  days.forEach((d) => {
-    const targetGroupIndex = d.items.findIndex((i) => i.id === groupId);
-    if (targetGroupIndex > -1) {
-      targetDay = { ...d };
-      targetGroup = { ...(d.items[targetGroupIndex] as GroupItem) };
-    }
+  // find target group
+  const targetGroupIndex = days.findIndex(
+    (d) => d.items.findIndex((i) => i.type === "group" && i.id === groupId) > -1
+  );
+  if (targetGroupIndex > -1) {
+    const groupIndex = days[targetGroupIndex].items.findIndex(
+      (i) => i.id === groupId
+    );
+    targetDay = days[targetGroupIndex];
+    targetGroup = days[targetGroupIndex].items[groupIndex] as GroupItem;
+  }
 
-    const sourceGroupIndex = d.items.findIndex(
+  // find source group
+  const sourceGroupIndex = days.findIndex(
+    (d) =>
+      d.items.findIndex(
+        (i) =>
+          i.type === "group" &&
+          (i as GroupItem).items.findIndex((i) => i.id === itemId) > -1
+      ) > -1
+  );
+  if (sourceGroupIndex > -1) {
+    const groupIndex = days[sourceGroupIndex].items.findIndex(
       (i) =>
         i.type === "group" &&
         (i as GroupItem).items.findIndex((i) => i.id === itemId) > -1
     );
-    if (sourceGroupIndex > -1) {
-      sourceDay = { ...d };
-      sourceGroup = { ...d.items[sourceGroupIndex] } as GroupItem;
-      const { item, index } = findItem(sourceGroup.items, itemId);
-      sourceItem = { ...item };
-      sourceItemIndex = index;
-    }
-  });
+    sourceDay = days[sourceGroupIndex];
+    sourceGroup = days[sourceGroupIndex].items[groupIndex] as GroupItem;
+    const { item, index } = findItem(sourceGroup.items, itemId);
+    sourceItem = item;
+    sourceItemIndex = index;
+  }
 
   if (!sourceDay) {
     // try to find in non group items
@@ -460,9 +477,24 @@ const reorderGroups = (
   if (!sourceItem || !targetDay || !targetGroup)
     throw new Error("Error in reorderGroups");
 
-  // modify item
-  // sourceItem.x = delta.x * 100;
-  // sourceItem.y = delta.y * 100;
+  // If source and target groups the same, just reorder items in the group
+  if (sourceGroup && targetGroup && sourceGroup.id === targetGroup.id) {
+    const group = targetGroup as GroupItem;
+    const overIndex = group.items.findIndex((i) => i.id === overId);
+    const activeIndex = group.items.findIndex((i) => i.id === itemId);
+    if (activeIndex === -1) {
+      group.items.push(sourceItem as GenericItem);
+    } else {
+      group.items = arrayMove(group.items, activeIndex, overIndex);
+    }
+
+    return {
+      days,
+      sourceDay,
+      targetDay,
+      targetItemIndex: group.items.findIndex((i) => i.id === itemId) ?? 0,
+    };
+  }
 
   // remove from source
   if (sourceGroup && sourceItemIndex !== null) {
@@ -479,7 +511,16 @@ const reorderGroups = (
   // add to target
   if (targetGroup === null || targetDay === null)
     throw new Error("Target not found");
-  (targetGroup as GroupItem).items.push(sourceItem);
+  const targetGroupbj = targetGroup as GroupItem;
+  const index =
+    targetGroupbj.items.length > 0
+      ? targetGroupbj.items.findIndex((i) => i.id === overId)
+      : 1;
+  targetGroupbj.items = [
+    ...targetGroupbj.items.slice(0, index),
+    sourceItem,
+    ...targetGroupbj.items.slice(index),
+  ];
 
   const day = targetDay as CalendarDay;
   return {

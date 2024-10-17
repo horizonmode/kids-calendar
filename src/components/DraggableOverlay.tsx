@@ -7,7 +7,7 @@ import ResizeIcon from "./ResizeIcon";
 import PostCard from "./PostCard";
 import Person from "./PersonCard";
 import Group from "./Group";
-import Item from "./Item";
+import { Item } from "./Item";
 import Divider from "./Divider";
 import { GenericItem } from "@/types/Items";
 

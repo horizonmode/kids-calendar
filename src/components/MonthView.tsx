@@ -1,5 +1,5 @@
 "use client";
-import { startTransition, useCallback, useRef } from "react";
+import { startTransition, useCallback, useEffect, useRef } from "react";
 import React, { useState } from "react";
 import classNames from "classnames";
 import { Days } from "@/utils/days";
@@ -238,7 +238,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
       type: ItemType;
       action: string;
     };
-    if (!over) {
+    if (!over || !activeItem) {
       return;
     }
 
@@ -247,6 +247,15 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
     const itemId = activeItem.id.toString();
 
     if (destination === "toolbar") return;
+
+    if (action === "sort" && findGroup(over.id.toString())) {
+      if (!activeItem.id) return;
+      const targetGroup = findGroup(over.id.toString())?.id || editingGroupId;
+      if (targetGroup)
+        await onDropGroup(targetGroup, itemId, over.id.toString(), delta);
+      resetGroups();
+      return;
+    }
 
     if (type === "event") {
       if (destination === "toolbar-person") return;
@@ -308,8 +317,6 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
           await onEventEdit(event, "update");
         }
       }
-    } else if (destinationType === "group") {
-      await onDropGroup(over.id.toString(), itemId, delta);
     } else {
       if (destination === "toolbar-person") return;
       await onReorder(itemId, parseInt(destination), delta);
@@ -334,64 +341,15 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
     })
   );
 
-  function customCollisionDetectionAlgorithm({
-    droppableContainers,
-    ...args
-  }: {
-    droppableContainers: DroppableContainer[];
-    active: Active;
-    collisionRect: ClientRect;
-    droppableRects: RectMap;
-    pointerCoordinates: Coordinates | null;
-  }) {
-    // First, let's see if the `toolbar` or 'group' droppable rect is intersecting
-    const rectIntersectionCollisions = rectIntersection({
-      ...args,
-      droppableContainers: droppableContainers.filter(
-        ({ id }) => id === "toolbar" || id === "group-selected"
-      ),
-    });
-
-    // Collision detection algorithms return an array of collisions
-    if (rectIntersectionCollisions.length > 0) {
-      // The toolbar is intersecting, return early
-      const toolbarCollision = rectIntersectionCollisions.find(
-        ({ id }) => id === "toolbar"
-      );
-      if (toolbarCollision) {
-        return [toolbarCollision];
-      }
-
-      // A selected group is intersecting, return early
-      const groupCollision = rectIntersectionCollisions.find(
-        ({ id }) => id === "group-selected"
-      );
-
-      if (groupCollision) {
-        return [groupCollision];
-      }
-
-      return rectIntersectionCollisions;
-    }
-
-    // Compute other collisions
-    return closestCenter({
-      ...args,
-      droppableContainers: droppableContainers.filter(
-        ({ id }) => id !== "toolbar" && id !== "group-selected"
-      ),
-    });
-  }
-
   const calendarDays = daysInMonth + firstDayOfMonth - 1; // always show 7 days x 5 rows
   const offset = firstDayOfMonth - 1;
 
   const [delta, setDelta] = useState<Delta | null>(null);
-  const [over, setOver] = useState<number | null>(null);
+  const [over, setOver] = useState<Over | null>(null);
   const [dragType, setDragType] = useState<ItemType | null>(null);
   const [dragAction, setDragAction] = useState<string | null>(null);
-
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [test, setTest] = useState<string | null>(null);
 
   const groups = calDays
     .filter((d) => d.items.length > 0)
@@ -421,10 +379,6 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
     return groupItem;
   };
 
-  const isGroupItem = (id: string) => {
-    return groups.find((g) => g.items.find((i) => i.id === id));
-  };
-
   const lastOverId = useRef<string | null>(null);
   const recentlyMovedToNewContainer = useRef(false);
   const collisionDetectionStrategy: CollisionDetection = useCallback(
@@ -438,47 +392,78 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
       droppableRects: RectMap;
       pointerCoordinates: Coordinates | null;
     }) => {
-      // Start by finding any intersecting droppable
-      const pointerIntersections = pointerWithin({
-        ...args,
-        droppableContainers,
-      });
-
-      const containers = droppableContainers.filter(
-        ({ id }) => id !== "toolbar"
+      const activeId = args.active.id.toString();
+      const cellDroppables = droppableContainers.filter(
+        ({ id, data }) =>
+          !isGroup(data.current?.groupId) &&
+          id.toString() !== "toolbar" &&
+          id.toString() !== "toolbar-person"
+      );
+      const groupDroppables = droppableContainers.filter(({ data }) =>
+        isGroup(data.current?.groupId)
       );
 
-      const intersections =
-        pointerIntersections.length > 0
-          ? // If there are droppables intersecting with the pointer, return those
-            pointerIntersections
-          : rectIntersection({ ...args, droppableContainers: containers });
+      const toolbarDroppables = droppableContainers.filter(
+        ({ id }) =>
+          id.toString() === "toolbar" || id.toString() === "toolbar-person"
+      );
 
-      let overId = getFirstCollision(intersections, "id");
+      let overId = null;
 
-      if (overId != null) {
-        if (overId === "toolbar" || "toolbar-person") {
-          // If the intersecting droppable is the trash, return early
-          // Remove this if you're not using trashable functionality in your app
-          return intersections;
-        }
+      // If the active item is a group, return nearest item which isn't a group
+      if (!isGroup(activeId)) {
+        // If over a group, return that group droppable or nearest sortable inside
+        const intersections = pointerWithin({
+          ...args,
+          droppableContainers: groupDroppables,
+        });
 
-        if (isGroup(overId.toString())) {
-          const containerItems = groups.find((g) => g.id === overId)?.items;
-          // If a container is matched and it contains items (columns 'A', 'B', 'C')
-          if (containerItems && containerItems.length > 0) {
+        let overData = getFirstCollision(intersections, "data");
+        const groupId = overData?.droppableContainer?.data?.current?.groupId;
+        const groupDroppableId = overData?.droppableContainer?.id.toString();
+
+        if (groupId) {
+          let groupItems =
+            groups.find((g) => g.id === groupId)?.items ||
+            ([] as GenericItem[]);
+
+          if (editingGroupId === groupId && editingGroupItem) {
+            groupItems = [...groupItems, editingGroupItem];
+          }
+          if (groupItems && groupItems.length > 0) {
             // Return the closest droppable within that container
-            overId = closestCenter({
+            const res = closestCenter({
               ...args,
               droppableContainers: droppableContainers.filter(
                 (container) =>
-                  container.id !== overId &&
-                  containerItems.find((item) => item.id === container.id)
+                  container.id !== groupId &&
+                  groupItems.find((item) => item.id === container.id)
               ),
             })[0]?.id;
+            overId = res || groupDroppableId;
+          } else {
+            overId = groupDroppableId;
           }
         }
+      }
 
+      if (!overId) {
+        // otherwise return a toolbar based on rect, or failing that
+        // the closest cell
+        overId = rectIntersection({
+          ...args,
+          droppableContainers: toolbarDroppables,
+        })[0]?.id;
+
+        if (!overId) {
+          overId = closestCenter({
+            ...args,
+            droppableContainers: cellDroppables,
+          })[0]?.id;
+        }
+      }
+
+      if (overId) {
         lastOverId.current = overId.toString();
         return [{ id: overId }];
       }
@@ -494,7 +479,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
       // If no droppable is matched, return the last match
       return lastOverId.current ? [{ id: lastOverId.current }] : [];
     },
-    [activeId, groups]
+    [groups, editingGroupId, editingGroupItem]
   );
 
   const updateDragState = (e: DragMoveEvent) => {
@@ -505,8 +490,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
     var rect = el.getBoundingClientRect();
     const x = (rect.x + deltaChange.x - over.rect.left) / over.rect.width;
     const y = (rect.y + deltaChange.y - over.rect.top) / over.rect.height;
-    const overAsInt = over ? parseInt(over.id.toString()) : null;
-    setOver(overAsInt);
+    setOver(over);
     setActiveId(active.id.toString());
     setDragId(e?.active?.data?.current?.extra?.itemId);
     setDragType(e?.active?.data?.current?.type);
@@ -515,15 +499,40 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
     handleGroupDrag(over, active, { x, y });
   };
 
+  const isGroupItem = (id: string) => {
+    return groups.find((g) => g.items.find((i) => i.id === id));
+  };
+
+  useEffect(() => {
+    if (editingGroupItem && over) {
+      if (
+        !isGroup(over.data?.current?.groupId) &&
+        !isGroupItem(over?.id.toString()) &&
+        editingGroupItem.id !== over?.id
+      ) {
+        resetGroups();
+      }
+    }
+  }, [over, editingGroupItem]);
+
   const handleGroupDrag = (over: Over, active: Active, delta: Delta) => {
     if (isGroup(active.id.toString())) return;
 
-    const overGroup = findGroup(over.id.toString());
+    const groupId = over.data.current?.groupId;
+    const overGroup = findGroup(groupId) || findGroup(over.id.toString());
     const activeGroup = findGroup(active.id.toString());
 
+    if (!overGroup && !activeGroup) {
+      return;
+    }
+
+    if (activeGroup && activeGroup.id === overGroup?.id) return;
+
+    if (editingGroupItem) return;
+
     if (overGroup?.id !== activeGroup?.id) {
-      // If we're moving to a group
       if (overGroup) {
+        // If we're moving to a group
         const itemId = active.id.toString();
         const sourceDayIndex = content.findIndex(
           (d) => d.items.findIndex((i) => i.id == itemId) > -1
@@ -543,7 +552,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
           setGroupEditing(overGroup.id.toString(), item, "add");
         }
         return;
-      } else if (activeGroup) {
+      } else if (activeGroup && !overGroup) {
         // If we're moving out of a group
         const itemId = active.id.toString();
         const item = activeGroup.items.find((i) => i.id == itemId);
@@ -555,10 +564,20 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
     }
   };
 
-  const onDropGroup = async (groupId: string, itemId: string, delta: Delta) => {
+  const onDropGroup = async (
+    groupId: string,
+    itemId: string,
+    overId: string,
+    delta: Delta
+  ) => {
     if (itemId) {
-      const reorder = reorderGroups(itemId, groupId, calDays, toolbarItems);
-
+      const reorder = reorderGroups(
+        itemId,
+        groupId,
+        overId,
+        calDays,
+        toolbarItems
+      );
       startTransition(() => {
         setCalendarDays({
           sourceDay: reorder.sourceDay,
@@ -583,8 +602,6 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
 
   const peopleMenuActive = content.length > 0 || events.length > 0;
 
-  console.log(over, activeId, isMovingGroup);
-
   return (
     <DndContext
       id="month-view"
@@ -593,7 +610,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
       collisionDetection={collisionDetectionStrategy}
       modifiers={[]}
       onDragOver={updateDragState}
-      onDragMove={updateDragState}
+      // onDragMove={updateDragState}
       onDragStart={(e) => {
         setIsDragging(true);
         resetGroups();
@@ -603,7 +620,6 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
         resetGroups();
       }}
       onDragEnd={({ over, active }) => {
-        resetGroups();
         const translated = active.rect.current.translated;
         if (!translated) return;
         setIsDragging(false);
@@ -696,18 +712,21 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
               ? events.find((te) => te.id === dragId)
               : null;
 
+            const overId = over?.id.toString();
+            const overIdAsInt = parseInt(overId || "");
+
             const isDraggedHighlight =
               dragAction === "move"
                 ? isDragging &&
                   draggedItem &&
                   over &&
-                  offsetDay >= over &&
-                  offsetDay < over + draggedItem.days
+                  offsetDay >= overIdAsInt &&
+                  offsetDay < overIdAsInt + draggedItem.days
                 : isDragging &&
                   draggedItem &&
                   offsetDay >= draggedItem?.day &&
                   over &&
-                  offsetDay <= over;
+                  offsetDay <= overIdAsInt;
 
             return (
               <div

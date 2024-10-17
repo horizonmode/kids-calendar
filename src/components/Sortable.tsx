@@ -50,8 +50,8 @@ SortableItemProps) {
   };
 
   return (
-    <li ref={setNodeRef} style={styles} {...listeners} {...attributes}>
+    <div ref={setNodeRef} style={styles} {...listeners} {...attributes}>
       {children}
-    </li>
+    </div>
   );
 }

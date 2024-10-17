@@ -199,7 +199,7 @@ export const renderGroup = (
       top={`${item.y || 50}%`}
       style={getStyle(item)}
       element="group"
-      data={{ content: item.content }}
+      data={{ content: item.content, itemId: item.id }}
       disabled={editable || disableSort}
     >
       <Editable

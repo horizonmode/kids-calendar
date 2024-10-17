@@ -1,13 +1,14 @@
 import { EventItem, GenericItem, GroupItem, PostCardItem } from "@/types/Items";
 import { renderNote, renderPostCard } from "@/utils/renderItems";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import useModalContext from "@/store/modals";
 import useImageContext from "@/store/images";
-import { useDndContext, useDroppable } from "@dnd-kit/core";
 import SortableGrid from "./SortableList";
 import Divider from "./Divider";
 import useGroupContext from "@/store/groups";
 import { shallow } from "zustand/shallow";
+import { useSortable } from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
 
 interface GroupProps {
   onClick?: () => void;
@@ -37,9 +38,14 @@ const Group: React.FC<GroupProps> = ({
   style,
   onClick,
   onClose,
-  isOver,
 }) => {
-  const [groupId, item, action] = useGroupContext(
+  const { setNodeRef, isOver } = useDroppable({
+    id: `${id}-droppable`,
+    disabled: false,
+    data: { type: "group", groupId: id },
+  });
+
+  const [groupId, groupItem, action] = useGroupContext(
     (state) => [state.groupId, state.item, state.action],
     shallow
   );
@@ -48,29 +54,35 @@ const Group: React.FC<GroupProps> = ({
     GenericItem | EventItem | null
   >(null);
 
-  const onItemUpdateContent = (item: Partial<GenericItem>) => {
-    if (editingItem) {
-      setEditingItem({ ...editingItem, ...item });
-    }
-  };
+  const onItemUpdateContent = useCallback(
+    (item: Partial<GenericItem>) => {
+      if (editingItem) {
+        setEditingItem({ ...editingItem, ...item });
+      }
+    },
+    [editingItem]
+  );
 
-  const onItemDelete = async (item: GenericItem) => {
-    if (data) {
-      const newData = {
-        ...data,
-        items: data.items.filter((i) => i.id !== item.id),
-      };
+  const onItemDelete = useCallback(
+    async (item: GenericItem) => {
+      if (data) {
+        const newData = {
+          ...data,
+          items: data.items.filter((i) => i.id !== item.id),
+        };
 
-      onEditGroup && onEditGroup(newData, data.items.indexOf(item), "delete");
-      setEditingItem(null);
-    }
-  };
+        onEditGroup && onEditGroup(newData, data.items.indexOf(item), "delete");
+        setEditingItem(null);
+      }
+    },
+    [data, onEditGroup]
+  );
 
-  const onItemSelect = (item: GenericItem) => {
+  const onItemSelect = useCallback((item: GenericItem) => {
     setEditingItem(item);
-  };
+  }, []);
 
-  const onItemDeselect = async (item: GenericItem) => {
+  const onItemDeselect = useCallback(async (item: GenericItem) => {
     if (data) {
       const newData = {
         ...data,
@@ -87,7 +99,7 @@ const Group: React.FC<GroupProps> = ({
         );
       setEditingItem(null);
     }
-  };
+  }, []);
 
   const [setActiveModals] = useModalContext((state) => [state.setActiveModals]);
   const [setImageContextItem] = useImageContext((state) => [
@@ -150,22 +162,22 @@ const Group: React.FC<GroupProps> = ({
     }
   };
 
-  const renderItems = useMemo(() => {
-    let items = [...(data?.items || [])];
-    if (groupId === id && item) {
-      if (action === "add" && !items.find((i) => i.id === item.id)) {
-        items.push(item);
-      } else if (action === "remove" && items.find((i) => i.id === item.id)) {
-        items = items.filter((i) => i.id !== item.id);
-      }
+  let items = [...(data?.items || [])];
+  if (groupId === id && groupItem) {
+    if (action === "add" && !items.find((i) => i.id === groupItem.id)) {
+      items.push(groupItem);
+    } else if (
+      action === "remove" &&
+      items.find((i) => i.id === groupItem.id)
+    ) {
+      items = items.filter((i) => i.id !== groupItem.id);
     }
-    return items;
-  }, [action, data?.items, groupId, id, item]);
+  }
 
   return (
     <div
       style={style}
-      // ref={setNodeRef}
+      ref={setNodeRef}
       onClick={() => !selected && onClick && onClick()}
       className={`rounded-md  z-20 shadow-xl pointer-events-auto overflow-auto p-2 w-60 h-60 ${
         isOver ? " bg-red-500 outline-2 outline-red-500" : "bg-slate-400"
@@ -173,7 +185,7 @@ const Group: React.FC<GroupProps> = ({
     >
       <SortableGrid
         renderItem={renderItem}
-        items={renderItems}
+        items={items}
         disableSort={disableSort}
       />
     </div>

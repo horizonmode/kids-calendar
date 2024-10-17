@@ -46,8 +46,6 @@ const Toolbar = ({
 }: ToolbarProps) => {
   const [open, setOpen] = useState(true);
 
-  console.log(toolbarItems);
-
   const renderItem = (ti: GenericItem, i: number) => {
     switch (ti.type) {
       case "post-it":

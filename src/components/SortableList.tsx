@@ -46,7 +46,7 @@ import DraggableOverlay from "./DraggableOverlay";
 import { GenericItem, PostCardItem } from "@/types/Items";
 import PostCard from "./PostCard";
 import Divider from "./Divider";
-import Item from "./Item";
+import { Item } from "./Item";
 
 const defaultInitializer = (index: number) => index;
 

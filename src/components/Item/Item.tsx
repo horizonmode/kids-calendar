@@ -3,6 +3,8 @@ import classNames from "classnames";
 import type { DraggableSyntheticListeners } from "@dnd-kit/core";
 import type { Transform } from "@dnd-kit/utilities";
 
+import { Handle, Remove } from "./components";
+
 import styles from "./Item.module.scss";
 
 export interface Props {
@@ -38,7 +40,7 @@ export interface Props {
   }): React.ReactElement;
 }
 
-const Item = React.memo(
+export const Item = React.memo(
   React.forwardRef<HTMLLIElement, Props>(
     (
       {
@@ -116,6 +118,7 @@ const Item = React.memo(
               "--scale-y": transform?.scaleY
                 ? `${transform.scaleY}`
                 : undefined,
+              "--index": index,
               "--color": color,
             } as React.CSSProperties
           }
@@ -133,21 +136,19 @@ const Item = React.memo(
             style={style}
             data-cypress="draggable-item"
             {...(!handle ? listeners : undefined)}
-            // {...props}
-            // tabIndex={!handle ? 0 : undefined}
+            {...props}
+            tabIndex={!handle ? 0 : undefined}
           >
             {value}
-            {/* <span className={styles.Actions}>
+            <span className={styles.Actions}>
               {onRemove ? (
                 <Remove className={styles.Remove} onClick={onRemove} />
               ) : null}
               {handle ? <Handle {...handleProps} {...listeners} /> : null}
-            </span> */}
+            </span>
           </div>
         </li>
       );
     }
   )
 );
-
-export default Item;

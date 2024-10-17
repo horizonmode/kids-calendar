@@ -8,7 +8,7 @@ import {
 import Droppable from "./Droppable";
 import { Days } from "@/utils/days";
 import { renderGroup, renderNote, renderPostCard } from "@/utils/renderItems";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useModalContext from "@/store/modals";
 import useImageContext from "@/store/images";
 import { useCalendarContext } from "@/store/calendar";
@@ -58,10 +58,7 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
     shallow
   );
 
-  const [groupId, item, action] = useGroupContext(
-    (state) => [state.groupId, state.item, state.action],
-    shallow
-  );
+  const [editingGroupItem] = useGroupContext((state) => [state.item], shallow);
 
   const { over } = useDndContext();
 
@@ -214,7 +211,10 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
       disabled={disableDrag || selectedGroup !== null}
       loading={data?.status === "pending"}
     >
-      {data && data.items.map((item, i) => renderItem(item, `${item.id}-${i}`))}
+      {data &&
+        data.items
+          .filter((item) => item.id !== editingGroupItem?.id)
+          .map((item, i) => renderItem(item, `${item.id}-${i}`))}
     </Droppable>
   );
 };

@@ -25,7 +25,7 @@ function Draggable({
   action,
   disabled = false,
 }: DraggableProps) {
-  const { attributes, listeners, setNodeRef, isDragging } = useSortable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: id,
     data: {
       type: element,
