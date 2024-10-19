@@ -247,12 +247,10 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
     const itemId = activeItem.id.toString();
 
     if (destination === "toolbar") return;
+    const targetGroup = findGroup(destination)?.id || editingGroupId;
 
-    if (action === "sort" && findGroup(over.id.toString())) {
-      if (!activeItem.id) return;
-      const targetGroup = findGroup(over.id.toString())?.id || editingGroupId;
-      if (targetGroup)
-        await onDropGroup(targetGroup, itemId, over.id.toString(), delta);
+    if (targetGroup) {
+      await onDropGroup(targetGroup, itemId, over.id.toString(), delta);
       resetGroups();
       return;
     }
@@ -396,6 +394,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
       const cellDroppables = droppableContainers.filter(
         ({ id, data }) =>
           !isGroup(data.current?.groupId) &&
+          !isGroupItem(id.toString()) &&
           id.toString() !== "toolbar" &&
           id.toString() !== "toolbar-person"
       );
@@ -542,7 +541,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
           // look in toolbarItems
           item = {
             ...toolbarItems.find((i) => i.id == itemId),
-            id: uuidv4().toString(),
+            // id: uuidv4().toString(),
           } as GenericItem;
         } else {
           item = content[sourceDayIndex].items.find((i) => i.id == itemId);
@@ -605,7 +604,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
   return (
     <DndContext
       id="month-view"
-      autoScroll={false}
+      autoScroll={true}
       sensors={sensors}
       collisionDetection={collisionDetectionStrategy}
       modifiers={[]}

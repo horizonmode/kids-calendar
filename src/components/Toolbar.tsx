@@ -22,6 +22,7 @@ import Draggable from "./Draggable";
 import DraggableTape from "./DraggableTape";
 import { EventItem, GenericItem, ToolbarItem } from "../types/Items";
 import Group from "./Group";
+import useGroupContext from "@/store/groups";
 
 interface ToolbarProps {
   toolbarItems: ToolbarItem[];
@@ -46,7 +47,10 @@ const Toolbar = ({
 }: ToolbarProps) => {
   const [open, setOpen] = useState(true);
 
+  const [groupItem] = useGroupContext((state) => [state.item]);
+
   const renderItem = (ti: GenericItem, i: number) => {
+    const id = groupItem?.id === ti.id ? "group" : ti.id;
     switch (ti.type) {
       case "post-it":
         return (
@@ -55,7 +59,7 @@ const Toolbar = ({
             className="flex-1 flex flex-col items-center justify-around scale-75"
           >
             <Draggable
-              id={ti.id}
+              id={id}
               element="post-it"
               style={{
                 zIndex: 200,
@@ -84,7 +88,7 @@ const Toolbar = ({
             className="flex-1 flex flex-col items-center justify-center scale-75"
           >
             <Draggable
-              id={ti.id}
+              id={id}
               element="post-card"
               style={{
                 zIndex: 200,
