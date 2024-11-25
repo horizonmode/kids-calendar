@@ -39,7 +39,7 @@ const DropdownMenuSubMenuTrigger = React.forwardRef<
       // base
       "relative flex cursor-default select-none items-center rounded py-1.5 pl-2 pr-1 outline-none transition-colors data-[state=checked]:font-semibold sm:text-sm",
       // text color
-      "text-gray-900 dark:text-gray-50",
+      "text-gray-900",
       // disabled
       "data-[disabled]:pointer-events-none data-[disabled]:text-gray-400 data-[disabled]:hover:bg-none dark:data-[disabled]:text-gray-600",
       // focus

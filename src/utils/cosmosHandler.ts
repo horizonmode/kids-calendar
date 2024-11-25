@@ -10,7 +10,11 @@ import {
   PostCardItem,
 } from "@/types/Items";
 import cosmosSingleton from "./cosmos";
-import { BulkOperationType, OperationInput } from "@azure/cosmos";
+import {
+  BulkOperationType,
+  OperationInput,
+  ReplaceOperation,
+} from "@azure/cosmos";
 
 interface DayResponse {
   days: CalendarDay[];
@@ -166,23 +170,24 @@ export async function DeletePerson(calendarId: string, personId: number) {
     throw new Error("NoContainer");
   }
 
+  type IndexSignature<T extends {}> = { [key in keyof T]: T[key] };
+
+  function addIndexSignature<T extends {}>(obj: T): IndexSignature<T> {
+    return obj;
+  }
+
   const getDaysWithPerson = `SELECT * FROM c where c.type = 'day' and c.calendarId = '${calendarId}' and EXISTS 
   (SELECT VALUE z FROM z in c.items WHERE ARRAY_CONTAINS(z.people, ${personId}))`;
 
   const getEventsWithPerson = `SELECT * FROM c where c.type = 'event' and c.calendarId = '${calendarId}' and ARRAY_CONTAINS(c.people, ${personId})`;
 
-  const days = await get<CosmosItem<CalendarDay>>(getDaysWithPerson);
-  const events = await get<CosmosItem<EventItem>>(getEventsWithPerson);
+  const days = await get<CalendarDay>(getDaysWithPerson);
+  const events = await get<EventItem>(getEventsWithPerson);
 
-  const dayOperations: OperationInput[] = days.map((day) => {
-    const newDay = {
-      ...day,
-      items: day.items.map((item) => {
-        if (!item.people) return item;
-        const newPeople = item.people.filter((p) => p !== personId);
-        return { ...item, people: newPeople };
-      }),
-    };
+  const dayOperations: ReplaceOperation[] = days.map((day) => {
+    const newDay = day;
+    newDay.items = day.items.map((item) => ({ ...item }));
+
     return {
       operationType: BulkOperationType.Replace,
       partitionKey: day.calendarId,
@@ -229,7 +234,7 @@ export const UpdateDays = async (days: CalendarDay[], calendarId: string) => {
     const dayObject: CosmosItem<CalendarDay> = {
       ...stripProhibitedKeys(day),
       calendarId,
-      id: day.id || `${day.day}-${day.month}-${day.year}`,
+      id: `${day.day}-${day.month}-${day.year}`,
       type: "day",
     };
     return day.items.length === 0
@@ -261,7 +266,7 @@ export const UpdateDay = async (day: CalendarDay, calendarId: string) => {
   const cosmosDay: CosmosItem<CalendarDay> = {
     ...stripProhibitedKeys(day),
     calendarId,
-    id: day.id || `${day.day}-${day.month}-${day.year}`,
+    id: `${day.day}-${day.month}-${day.year}`,
     type: "day",
   };
   const { resource } = await container.items.upsert<CosmosItem<CalendarDay>>(

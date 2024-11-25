@@ -1,11 +1,10 @@
 "use client";
 import { ReactNode } from "react";
-import { RiEdit2Line } from "@remixicon/react";
-import { RiDeleteBin6Line } from "@remixicon/react";
-import { RiCloseCircleLine } from "@remixicon/react";
+import { RiDeleteBin6Line, RiCloseCircleLine } from "@remixicon/react";
 
 export interface EditableProps {
   editable: boolean;
+  content?: string;
   onDelete?: () => void;
   onSelect: (selected: boolean) => void;
   onChangeColor?: (val: string) => void;
@@ -13,6 +12,7 @@ export interface EditableProps {
   children?: ReactNode;
   className?: string;
   position?: "top" | "bottom" | "left" | "right";
+  onUpdateContent?: (val: string) => void;
 }
 
 const Editable = ({
@@ -24,6 +24,8 @@ const Editable = ({
   children,
   className,
   position = "top",
+  content = "initialContent",
+  onUpdateContent,
 }: EditableProps) => {
   const positionClass =
     position === "top"
@@ -34,12 +36,13 @@ const Editable = ({
       ? "-left-12 -top-0 flex-col items-center justify-center"
       : "-bottom-12 -right-12 flex-row";
   const sizeClass = "w-8 h-8";
+
   return (
     <>
       <div
         className={`flex absolute z-10 gap-2 bg-white p-1 ${positionClass} ${className}`}
       >
-        {editable ? (
+        {editable && (
           <>
             <RiCloseCircleLine
               className={sizeClass}
@@ -68,21 +71,6 @@ const Editable = ({
               value={color}
             />
           </>
-        ) : (
-          <RiEdit2Line
-            className={sizeClass}
-            data-no-dnd="true"
-            onFocus={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              onSelect(true);
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              onSelect(true);
-            }}
-          />
         )}
       </div>
       {children}

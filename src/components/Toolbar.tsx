@@ -20,10 +20,10 @@ import Note from "./Note";
 import PostCard from "./PostCard";
 import Draggable from "./Draggable";
 import DraggableTape from "./DraggableTape";
-import { EventItem, GenericItem } from "../types/Items";
+import { CalendarItem, EventItem, GenericItem } from "../types/Items";
 
 interface ToolbarProps {
-  toolbarItems: (GenericItem | EventItem)[];
+  toolbarItems: (CalendarItem | EventItem)[];
   onNext?: () => void;
   onPrev?: () => void;
   onShare: () => void;
@@ -45,7 +45,7 @@ const Toolbar = ({
 }: ToolbarProps) => {
   const [open, setOpen] = useState(true);
 
-  const renderItem = (ti: GenericItem, i: number) => {
+  const renderItem = (ti: CalendarItem | EventItem, i: number) => {
     switch (ti.type) {
       case "post-it":
         return (
@@ -59,10 +59,16 @@ const Toolbar = ({
               element="post-it"
               style={{
                 zIndex: 200,
-                width: "10em",
                 position: "relative",
               }}
-              data={{ content: ti.content }}
+              data={{
+                content: ti.content,
+                expanded: false,
+                title: "new note",
+                editable: false,
+                width: ti.width,
+                height: ti.height,
+              }}
             >
               <Note
                 key={`toolbaritem-${i}`}
@@ -72,6 +78,8 @@ const Toolbar = ({
                   zIndex: 200,
                 }}
                 editable={false}
+                width={ti.width}
+                height={ti.height}
               ></Note>
             </Draggable>
           </div>
@@ -238,9 +246,9 @@ const Toolbar = ({
         ref={scrollRef}
         className={`flex flex-row bg-white bg-opacity-90 p-auto overflow-y-hidden overflox-x-scroll rounded-tl-xl flex-1 items-stretch justify-start md:justify-around gap-12 touch-none pt-1`}
       >
-        {toolbarItems
-          .filter((t) => t.type != "text")
-          .map((ti: GenericItem, i: number) => renderItem(ti, i))}
+        {toolbarItems.map((ti: CalendarItem | EventItem, i: number) =>
+          renderItem(ti, i)
+        )}
         {showLeftScroll && (
           <div
             className="md:hidden absolute left-0 bottom-0 flex-1 flex justify-center items-center overflow-visible w-12 h-12  hover:bg-slate-200"

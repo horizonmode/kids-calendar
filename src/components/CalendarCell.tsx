@@ -1,8 +1,10 @@
 import {
   CalendarDay,
+  CalendarItem,
   EventItem,
   GenericItem,
   PostCardItem,
+  PostItItem,
 } from "@/types/Items";
 import Droppable from "./Droppable";
 import { Days } from "@/utils/days";
@@ -28,6 +30,8 @@ interface CalendarCellProps {
     itemIndex: number,
     action: "move" | "update" | "delete"
   ) => void;
+  expandedItems: string[];
+  setExpandedItem: (item: string) => void;
 }
 
 const days = new Days();
@@ -45,20 +49,14 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
   locked = false,
   disablePeopleDrag = true,
   onEditDay,
+  expandedItems = [],
+  setExpandedItem,
 }) => {
-  const [editingItem, setEditingItem] = useState<
-    GenericItem | EventItem | null
-  >(null);
+  const [editingItem, setEditingItem] = useState<CalendarItem | null>(null);
 
   const today = new Date();
 
-  const onItemUpdateContent = (item: Partial<GenericItem>) => {
-    if (editingItem) {
-      setEditingItem({ ...editingItem, ...item });
-    }
-  };
-
-  const onItemDelete = async (item: GenericItem) => {
+  const onItemDelete = async (item: CalendarItem) => {
     if (data) {
       const newData = {
         ...data,
@@ -70,11 +68,11 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
     }
   };
 
-  const onItemSelect = (item: GenericItem) => {
+  const onItemSelect = (item: CalendarItem) => {
     setEditingItem(item);
   };
 
-  const onItemDeselect = async (item: GenericItem) => {
+  const onItemDeselect = async (item: CalendarItem) => {
     if (data) {
       const newData = {
         ...data,
@@ -108,14 +106,31 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
     setActiveModals("photo", true);
   };
 
-  const renderItem = (item: GenericItem, key: string) => {
-    switch (item.type) {
-      case "note":
+  const onUpdatePostCard = (item: Partial<PostCardItem>) => {
+    if (editingItem && editingItem.type === "post-card") {
+      setEditingItem({ ...editingItem, ...item });
+    }
+  };
+
+  const onUpdatePostIt = (item: Partial<PostItItem>) => {
+    if (editingItem && editingItem.type === "post-it") {
+      setEditingItem({ ...editingItem, ...item });
+    }
+  };
+
+  const renderItem = (item: CalendarItem, key: string) => {
+    const itemWithType =
+      !!editingItem &&
+      editingItem.id === item.id &&
+      item.type === editingItem.type
+        ? editingItem
+        : item;
+    switch (itemWithType.type) {
       case "post-it":
         return renderNote(
-          !!editingItem && editingItem.id === item.id ? editingItem : item,
+          itemWithType,
           !!editingItem && editingItem.id === item.id,
-          onItemUpdateContent,
+          onUpdatePostIt,
           onItemDelete,
           onItemSelect,
           onItemDeselect,
@@ -126,19 +141,17 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
         );
       case "post-card":
         return renderPostCard(
-          !!editingItem && editingItem.id === item.id
-            ? (editingItem as PostCardItem)
-            : (item as PostCardItem),
+          itemWithType,
           !!editingItem && editingItem.id === item.id,
-          onItemUpdateContent,
+          onUpdatePostCard,
           onItemDelete,
           onItemSelect,
           onItemDeselect,
           showPeople,
           disablePeopleDrag,
           locked,
-          () => onAddImageClicked(item as PostCardItem),
-          () => onImageClicked(item as PostCardItem),
+          () => onAddImageClicked(itemWithType),
+          () => onImageClicked(itemWithType),
           key
         );
     }
@@ -159,7 +172,7 @@ const CalendarCell: React.FC<CalendarCellProps> = ({
         month === today.getMonth() &&
         year === today.getFullYear()
       }
-      highlight={selected}
+      highlight={false}
       onClick={() => onSelectDay(day)}
       label={days.getWeekDay(new Date(year, month, day))}
       disabled={disableDrag}

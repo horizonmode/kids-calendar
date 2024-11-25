@@ -1,75 +1,92 @@
 "use client";
-import {
-  useEffect,
-  useRef,
-  RefObject,
-  CSSProperties,
-  useLayoutEffect,
-} from "react";
-import ContentEditable, { ContentEditableEvent } from "react-contenteditable";
+import { CSSProperties } from "react";
 import hexConvert from "hex-color-opacity";
+import { Resizable } from "re-resizable";
+import { EditorProvider } from "@tiptap/react";
+import ExtensionKit from "@/extensions/extension-kit";
+import { TextMenuProvider } from "./editor/TextMenu";
 
 export interface NoteProps {
   content?: string;
   onUpdateContent?: (val: string) => void;
+  onUpdateSize?: (width: number, height: number) => void;
+  onClick?: () => void;
   onBlur?: () => void;
   color?: string;
   style?: CSSProperties;
   editable: boolean;
+  width: number;
+  height: number;
 }
 
 const Note = ({
   content,
   onUpdateContent,
+  onClick,
   color = "#0096FF",
   style,
   editable,
   onBlur,
+  width,
+  height,
+  onUpdateSize,
 }: NoteProps) => {
-  const editRef: RefObject<HTMLElement> =
-    useRef<HTMLElement>() as RefObject<HTMLElement>;
-
-  const onChange = (e: ContentEditableEvent) => {
-    if (e.target.value !== content) {
-      onUpdateContent && onUpdateContent(e.target.value);
-    }
-  };
-
-  useEffect(() => {
-    const editor = editRef.current;
-    if (!editor) return;
-    if (!editable) {
-      editor.scrollTop = 0;
-    } else {
-      editor.focus();
-    }
-  }, [editable]);
-
   const isHex = /^#[0-9A-F]{6}$/i.test(color);
   if (isHex) {
-    color = hexConvert(color, 0.8);
+    color = hexConvert(color, !editable ? 0.8 : 1);
   }
 
   const text = color === "black" ? "white" : "black";
 
-  return (
-    <div
-      className={`relative text-xl md:text-2xl touch-none flex flex-col text-gray-800 p-3 flex-shrink-0 w-44 max-w-48 max-h-48 h-auto rounded shadow-lg group overflow-hidden select-none`}
+  const wrapperClass =
+    "relative text-sm md:text-md touch-none text-gray-800 p-3 rounded shadow-lg group overflow-y-auto select-none outline-none flex flex-col";
+
+  const wrapperStyle = {
+    backgroundColor: color,
+    color: text,
+    width,
+    height,
+    ...style,
+  };
+
+  const onWrapperClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    !editable && onClick && onClick();
+  };
+
+  const editableNote = (
+    <EditorProvider
+      editable={editable}
+      slotBefore={editable && <TextMenuProvider />}
+      extensions={ExtensionKit}
+      content={content}
+      onUpdate={(e) => onUpdateContent && onUpdateContent(e.editor.getHTML())}
+      immediatelyRender={false}
+    />
+  );
+  return editable ? (
+    <Resizable
+      defaultSize={{
+        width,
+        height,
+      }}
+      className={wrapperClass}
       style={{
-        backgroundColor: color,
-        color: text,
-        ...style,
+        ...wrapperStyle,
+        outlineColor: "#000",
+        outlineStyle: "solid",
+        outlineWidth: "1px",
+      }}
+      onResizeStop={(e, direction, ref, d) => {
+        onUpdateSize && onUpdateSize(ref.offsetWidth, ref.offsetHeight);
       }}
     >
-      <ContentEditable
-        innerRef={editRef}
-        className="resize-none bg-transparent border-none outline-none overflow-y-hidden select-none hover:overflow-y-auto"
-        tagName="div"
-        html={content || ""} // innerHTML of the editable div
-        disabled={!editable} // use true to disable edition
-        onChange={onChange} // handle innerHTML change
-        onBlur={onBlur}
-      />
+      {editableNote}
+    </Resizable>
+  ) : (
+    <div onClick={onWrapperClick} className={wrapperClass} style={wrapperStyle}>
+      {editableNote}
     </div>
   );
 };

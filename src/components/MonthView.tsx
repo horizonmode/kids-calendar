@@ -82,6 +82,8 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
     state.setShowPeople,
   ]);
 
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
   const month = currentDay.getMonth();
   const year = currentDay.getFullYear();
   const daysInMonth = days.getDays(year, month);
@@ -100,7 +102,9 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
         month,
         year,
         calDays,
-        toolbarItems
+        toolbarItems.filter(
+          (ti) => ti.type === "post-it" || ti.type === "post-card"
+        )
       );
       startTransition(() => {
         setCalendarDays({
@@ -179,7 +183,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
       isEnd,
       delta,
       action,
-      toolbarItems,
+      toolbarItems.filter((ti) => ti.type === "event"),
       currentDay
     );
     startTransition(() => {
@@ -271,18 +275,16 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [dragId, setDragId] = useState<string | null>(null);
 
-  const activationConstraint = {
-    delay: 0,
-    tolerance: 2,
-    distance: 4,
+  const mouseActivationConstraint = {
+    distance: 5,
   };
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
-      activationConstraint,
+      activationConstraint: mouseActivationConstraint,
     }),
     useSensor(TouchSensor, {
-      activationConstraint,
+      activationConstraint: mouseActivationConstraint,
     })
   );
 
@@ -417,6 +419,14 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
                 disablePeopleDrag={
                   !isDragging || (isDragging && dragType !== "people")
                 }
+                expandedItems={expandedItems}
+                setExpandedItem={(item) => {
+                  setExpandedItems((prev) =>
+                    prev.includes(item)
+                      ? prev.filter((i) => i !== item)
+                      : [...prev, item]
+                  );
+                }}
               />
             );
           } else return <NonDay key={`non-${i}`}></NonDay>;
@@ -465,17 +475,6 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
             const draggedItemOffset = draggedItem
               ? draggedItem.day - offsetDay + 1
               : 0;
-
-            if (draggedItem) {
-              console.log(
-                draggedItem,
-                over,
-                offsetDay,
-                draggedItemOffset,
-                isDraggedItemStart,
-                isDraggedItemEnd
-              );
-            }
 
             const isDraggedHighlight =
               dragAction === "move"

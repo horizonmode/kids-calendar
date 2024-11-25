@@ -1,4 +1,9 @@
-import { GenericItem, PostCardItem } from "@/types/Items";
+import {
+  CalendarItem,
+  GenericItem,
+  PostCardItem,
+  PostItItem,
+} from "@/types/Items";
 import Draggable from "@/components/Draggable";
 import Editable from "@/components/Editable";
 import PersonAssignment from "@/components/PersonAssignment";
@@ -13,12 +18,12 @@ const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
 });
 
 export const renderNote = (
-  item: GenericItem,
+  item: PostItItem,
   editable: boolean,
-  onItemUpdate: (item: Partial<GenericItem>) => void,
-  onItemDelete: (item: GenericItem) => void,
-  onItemSelect: (item: GenericItem) => void,
-  onItemDeselect: (item: GenericItem) => void,
+  onItemUpdate: (item: Partial<PostItItem>) => void,
+  onItemDelete: (item: CalendarItem) => void,
+  onItemSelect: (item: CalendarItem) => void,
+  onItemDeselect: (item: CalendarItem) => void,
   showPeople: boolean,
   disablePeople: boolean,
   locked: boolean,
@@ -31,7 +36,12 @@ export const renderNote = (
     top={`${item.y || 50}%`}
     element="post-it"
     style={getStyle(item)}
-    data={{ content: item.content, color: item.color }}
+    data={{
+      content: item.content,
+      color: item.color,
+      width: item.width,
+      height: item.height,
+    }}
     disabled={editable}
   >
     <Editable
@@ -56,8 +66,14 @@ export const renderNote = (
         onUpdateContent={(content: string) => {
           onItemUpdate({ content });
         }}
+        onUpdateSize={(width: number, height: number) => {
+          onItemUpdate({ width, height });
+        }}
         color={item.color}
-      />
+        width={item.width}
+        height={item.height}
+        onClick={() => onItemSelect(item)}
+      ></Note>
     </Editable>
     {showPeople && (
       <PersonAssignment
@@ -73,10 +89,10 @@ export const renderNote = (
 export const renderPostCard = (
   item: PostCardItem,
   editable: boolean,
-  onItemUpdate: (item: Partial<GenericItem>) => void,
-  onItemDelete: (item: GenericItem) => void,
-  onItemSelect: (item: GenericItem) => void,
-  onItemDeselect: (item: GenericItem) => void,
+  onItemUpdate: (item: Partial<PostCardItem>) => void,
+  onItemDelete: (item: CalendarItem) => void,
+  onItemSelect: (item: CalendarItem) => void,
+  onItemDeselect: (item: CalendarItem) => void,
   showPeople: boolean,
   disablePeople: boolean,
   locked: boolean,
@@ -119,6 +135,7 @@ export const renderPostCard = (
           color={item.color}
           onAddImageClicked={onAddImageClicked}
           onImageClicked={onImageClicked}
+          onClick={() => onItemSelect(item)}
         ></PostCard>
       </Editable>
       {showPeople && (

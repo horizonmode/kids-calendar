@@ -1,5 +1,6 @@
 import { Delta } from "@/components/Delta";
 import {
+  CalendarItem,
   GenericItem,
   Person,
   ScheduleItem,
@@ -16,7 +17,7 @@ type reorderTemplateFunc = (
   targetSection: string,
   delta: Delta,
   template: Template,
-  toolbarItems: GenericItem[]
+  toolbarItems: CalendarItem[]
 ) => {
   template: Template;
   source: ScheduleItem | null;
@@ -61,7 +62,7 @@ const reorderTemplate: reorderTemplateFunc = (
     template.schedule
   );
 
-  let source: GenericItem | null = null;
+  let source: CalendarItem | null = null;
 
   if (dayIndex === null) {
     const toolbarIndex = toolbarItems.findIndex((d) => d.id === itemId);
@@ -79,7 +80,7 @@ const reorderTemplate: reorderTemplateFunc = (
 
   if (!source) throw new Error("Item not found");
 
-  const templateItem = source as GenericItem;
+  const templateItem = source;
   templateItem.x = delta.x * 100;
   templateItem.y = delta.y * 100;
 

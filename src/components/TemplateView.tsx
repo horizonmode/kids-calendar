@@ -14,6 +14,7 @@ import { MouseSensor, TouchSensor } from "@/utils/handlers";
 import { shallow } from "zustand/shallow";
 import Toolbar from "./Toolbar";
 import {
+  CalendarItem,
   GenericItem,
   ItemType,
   Person,
@@ -220,7 +221,7 @@ const TemplateView = ({
   const onEditCell = async (
     day: number,
     section: Section,
-    item: GenericItem,
+    item: CalendarItem,
     itemIndex: number,
     action: "move" | "update" | "delete"
   ) => {

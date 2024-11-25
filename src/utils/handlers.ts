@@ -7,6 +7,7 @@ import { MouseEvent, TouchEvent } from "react";
 // Block DnD event propagation if element have "data-no-dnd" attribute
 const handler = ({ nativeEvent: event }: MouseEvent | TouchEvent) => {
   let cur = event.target as HTMLElement;
+  console.log(cur, event);
 
   while (cur) {
     if (cur.dataset && cur.dataset.noDnd) {

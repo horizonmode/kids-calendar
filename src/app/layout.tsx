@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import "./editor.scss";
 import siteMetadata from "@/data/siteMetadata";
-import RoutesProvider from "@/components/providers/RoutesProvider";
 
 const poppins = Poppins({
   weight: ["300", "600", "700"],

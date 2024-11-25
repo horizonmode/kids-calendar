@@ -1,8 +1,7 @@
 import useUpload from "@/hooks/useImageUpload";
 import { Button } from "@tremor/react";
-import { on } from "events";
 import Image from "next/image";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Resizer from "react-image-file-resizer";
 
 interface FileUploadProps {

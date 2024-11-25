@@ -1,11 +1,17 @@
 import { Delta } from "@/components/Delta";
-import { CalendarDay, EventItem, GenericItem, Person } from "@/types/Items";
+import {
+  CalendarDay,
+  CalendarItem,
+  EventItem,
+  GenericItem,
+  Person,
+} from "@/types/Items";
 import { Days } from "@/utils/days";
 import { reOrderAll, reOrderLayers } from "@/utils/layers";
 import { v4 as uuidv4 } from "uuid";
 
 export interface CalendarService {
-  toolbarItems: GenericItem[];
+  toolbarItems: (CalendarItem | EventItem)[];
   findItem: (
     items: GenericItem[],
     itemId: string
@@ -28,7 +34,7 @@ export interface CalendarService {
     month: number,
     year: number,
     days: CalendarDay[],
-    toolbarItems: (GenericItem | EventItem)[]
+    toolbarItems: CalendarItem[]
   ) => {
     days: CalendarDay[];
     sourceDay: CalendarDay | null;
@@ -45,7 +51,7 @@ export interface CalendarService {
     isEnd: boolean,
     delta: Delta,
     action: string,
-    toolbarItems: GenericItem[],
+    toolbarItems: EventItem[],
     selectedDay: Date
   ) => { events: EventItem[]; event: EventItem };
   addPersonIfNotExists: (item: GenericItem, person: Person) => void;
@@ -63,16 +69,18 @@ export interface CalendarService {
   };
 }
 
-const toolbarItems: GenericItem[] = [
+const toolbarItems: (CalendarItem | EventItem)[] = [
   {
     id: "toolbar-post-it",
     type: "post-it",
-    content: "new post-it",
+    content: "rich content",
     x: 0,
     y: 0,
     order: 0,
     color: "#0096FF",
     people: [],
+    width: 150,
+    height: 150,
   },
   {
     id: "toolbar-event",
@@ -83,6 +91,10 @@ const toolbarItems: GenericItem[] = [
     order: 0,
     color: "#0000FF",
     people: [],
+    day: 1,
+    days: 1,
+    month: 1,
+    year: 2021,
   },
   {
     id: "toolbar-postcard",
@@ -93,10 +105,24 @@ const toolbarItems: GenericItem[] = [
     order: 0,
     color: "#FF00FF",
     people: [],
+    image: {
+      url: "",
+      id: 0,
+    },
   },
 ];
 
 const findItem = (items: GenericItem[], itemId: string) => {
+  const itemIndex = items.findIndex((i) => i.id == itemId);
+  return { item: items[itemIndex], index: itemIndex };
+};
+
+const findCalendarItemItem = (items: CalendarItem[], itemId: string) => {
+  const itemIndex = items.findIndex((i) => i.id == itemId);
+  return { item: items[itemIndex], index: itemIndex };
+};
+
+const findEventItem = (items: EventItem[], itemId: string) => {
   const itemIndex = items.findIndex((i) => i.id == itemId);
   return { item: items[itemIndex], index: itemIndex };
 };
@@ -181,11 +207,11 @@ const reorderDays = (
   month: number,
   year: number,
   days: CalendarDay[],
-  toolbarItems: (GenericItem | EventItem)[]
+  toolbarItems: CalendarItem[]
 ) => {
   let targetDay: CalendarDay;
   let sourceDay: CalendarDay | null = null;
-  let sourceItem: GenericItem | EventItem | null = null;
+  let sourceItem: CalendarItem | null = null;
   let sourceItemIndex: number | null = null;
 
   // find source item
@@ -202,7 +228,7 @@ const reorderDays = (
     }
   } else {
     sourceDay = days[sourceDayIndex];
-    const { item, index } = findItem(sourceDay.items, itemId);
+    const { item, index } = findCalendarItemItem(sourceDay.items, itemId);
     sourceItem = item;
     sourceItemIndex = index;
   }

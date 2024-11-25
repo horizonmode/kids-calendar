@@ -1,5 +1,6 @@
 import { Delta } from "@/components/Delta";
 import {
+  CalendarItem,
   GenericItem,
   Person,
   Schedule,
@@ -23,7 +24,7 @@ type reorderScheduleFunc = (
 };
 
 export interface ScheduleService {
-  toolbarItems: GenericItem[];
+  toolbarItems: CalendarItem[];
   reorderSchedule: reorderScheduleFunc;
   cloneItems: (source: any, destination: any) => any;
   findItemInSchedules: (
@@ -52,24 +53,32 @@ export interface ScheduleService {
   ) => Schedule;
 }
 
-const toolbarItems: GenericItem[] = [
+const toolbarItems: CalendarItem[] = [
   {
-    id: `${Date.now()}-post-it`,
+    id: "toolbar-post-it",
     type: "post-it",
-    content: "new post-it",
+    content: "rich content",
     x: 0,
     y: 0,
     order: 0,
     color: "#0096FF",
+    people: [],
+    width: 150,
+    height: 150,
   },
   {
-    id: `${Date.now()}-card`,
+    id: "toolbar-postcard",
     type: "post-card",
     content: "new post-card",
     x: 0,
     y: 0,
     order: 0,
     color: "#FF00FF",
+    people: [],
+    image: {
+      url: "",
+      id: 0,
+    },
   },
 ];
 
@@ -210,7 +219,7 @@ const reorderSchedule: reorderScheduleFunc = (
     targetSection as "morning" | "afternoon" | "evening",
     targetDayObj
   );
-  targetSectionProperty.items.push(item as GenericItem);
+  targetSectionProperty.items.push(item);
 
   return {
     schedules,

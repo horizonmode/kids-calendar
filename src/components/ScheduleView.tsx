@@ -14,6 +14,7 @@ import { shallow } from "zustand/shallow";
 import Toolbar from "./Toolbar";
 import { useScheduleContext } from "@/store/schedule";
 import {
+  CalendarItem,
   GenericItem,
   Person,
   ScheduleItem,
@@ -227,7 +228,7 @@ const ScheduleView = ({
   const onEditCell = async (
     day: number,
     section: Section,
-    item: GenericItem,
+    item: CalendarItem,
     itemIndex: number,
     action: "move" | "update" | "delete"
   ) => {

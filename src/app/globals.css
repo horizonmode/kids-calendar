@@ -18,6 +18,16 @@
 
 html {
   font-size: 10px;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  
+}
+
+[contenteditable] {
+  outline: 0px solid transparent;
+}
+
+::-webkit-scrollbar {
+  display: none; /* for Chrome, Safari and Opera */
 }
 
 html,

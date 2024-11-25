@@ -20,6 +20,7 @@ export interface PostCardProps {
   editable?: boolean;
   onAddImageClicked?: () => void;
   onImageClicked?: () => void;
+  onClick?: () => void;
 }
 
 const PostCard = ({
@@ -32,6 +33,7 @@ const PostCard = ({
   onAddImageClicked,
   onImageClicked,
   color = "#FF00FF",
+  onClick,
 }: PostCardProps) => {
   const editRef: RefObject<HTMLElement> =
     useRef<HTMLElement>() as RefObject<HTMLElement>;
@@ -47,10 +49,19 @@ const PostCard = ({
 
   const hasFile = !!fileUrl;
 
+  const onWrapperClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    !editable && onClick && onClick();
+  };
+
   return (
     <div style={{ ...style }}>
       <div
-        className={`bg-gradient-to-b  rounded-l-lg shadow-lg w-[10rem] flex flex-col align-top bg-white`}
+        onClick={onWrapperClick}
+        className={`bg-gradient-to-b  rounded-l-lg shadow-lg w-[10rem] flex flex-col align-top bg-white ${
+          editable && "outline-1 outline-black outline"
+        }`}
       >
         {!hasFile ? (
           <div className="flex items-center w-full h-full p-6 justify-center pointer-events-auto">
@@ -100,7 +111,7 @@ const PostCard = ({
           }}
         >
           <ContentEditable
-            className=" whitespace-normal outline-none p-2"
+            className=" whitespace-normal outline-none p-2 bg-transparent"
             innerRef={editRef}
             tagName="pre"
             disabled={!editable} // use true to disable edition

@@ -1,7 +1,7 @@
 const siteMetadata = {
-  title: "Kids Calendar",
+  title: "Plan It",
   author: "Sebastian Smith",
-  headerTitle: "Kids Calendar",
+  headerTitle: "Plan It",
   description: "An app to manage Kids Schedules and Timetables.",
   language: "en-us",
   theme: "system",

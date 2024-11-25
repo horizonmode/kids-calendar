@@ -122,6 +122,13 @@ function DraggableTape({
         left: left,
         ...style,
       }}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (!editable) {
+          onSelect(event);
+        }
+      }}
     >
       {isStart && onSelect && (
         <Editable

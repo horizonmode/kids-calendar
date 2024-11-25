@@ -1,9 +1,9 @@
 export type ItemType = "event" | "note" | "post-it" | "people";
 
-export interface GalleryImage {
+export type GalleryImage = {
   id: number;
   url: string;
-}
+};
 
 export type ScheduleItem = {
   day: number;
@@ -14,7 +14,7 @@ export type ScheduleItem = {
 
 export type ScheduleSection = {
   status: SaveStatus;
-  items: GenericItem[];
+  items: CalendarItem[];
 };
 
 export type Template = ActionStatus & {
@@ -31,11 +31,11 @@ export type Schedule = ActionStatus & {
   schedule: ScheduleItem[];
 };
 
-export interface Person {
+export type Person = {
   id: number;
   name: string;
   photo: GalleryImage | null;
-}
+};
 
 export type ActionStatus = {
   status?: SaveStatus;
@@ -45,25 +45,35 @@ export type ActionStatus = {
 export type GenericItem = {
   id: string;
   color: string;
-  type: string;
   content: string;
   x: number;
   y: number;
   order: number;
-  people?: number[];
+  people: number[];
+  type: "event" | "post-it" | "post-card";
+};
+
+export type PostItItem = GenericItem & {
+  type: "post-it";
+  width: number;
+  height: number;
 };
 
 export type PostCardItem = GenericItem & {
+  type: "post-card";
   image: GalleryImage | null;
 };
 
 export type EventItem = GenericItem &
   ActionStatus & {
+    type: "event";
     day: number;
     month: number;
     year: number;
     days: number;
   };
+
+export type CalendarItem = PostItItem | PostCardItem;
 
 export type SaveStatus = "pending" | "saved" | "error";
 
@@ -76,8 +86,7 @@ export type CalendarDay = ActionStatus & {
   month: number;
   year: number;
   type: "day" | "week";
-  items: GenericItem[];
-  id?: string;
+  items: CalendarItem[];
 };
 
 export type People = ActionStatus & {

@@ -15,6 +15,8 @@ export interface CalendarState extends CalendarProps {
   events: EventItem[];
   selectedDay: Date;
   locked: boolean;
+  expandedItems: string[];
+  setExpandedItems: (expandedItems: string[]) => void;
   setLocked: (locked: boolean) => void;
   nextMonth: () => void;
   prevMonth: () => void;
@@ -37,6 +39,11 @@ export const createCalendarStore = (initProps?: CalendarProps) => {
     ...DEFAULT,
     ...initProps,
     locked: false,
+    expandedItems: [],
+    setExpandedItems: (expandedItems: string[]) =>
+      set(() => {
+        return { expandedItems };
+      }),
     setLocked: (locked: boolean) =>
       set(() => {
         return { locked };

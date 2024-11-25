@@ -1,6 +1,8 @@
 import {
+  CalendarItem,
   GenericItem,
   PostCardItem,
+  PostItItem,
   ScheduleSection,
   Section,
 } from "@/types/Items";
@@ -21,7 +23,7 @@ interface WeekCellProps {
   disablePeopleDrag?: boolean;
   locked?: boolean;
   onEditCell?: (
-    data: GenericItem,
+    data: CalendarItem,
     itemIndex: number,
     action: "move" | "update" | "delete"
   ) => void;
@@ -39,15 +41,21 @@ const WeekCell: React.FC<WeekCellProps> = ({
   disablePeopleDrag = true,
   onEditCell,
 }) => {
-  const [editingItem, setEditingItem] = useState<GenericItem | null>(null);
+  const [editingItem, setEditingItem] = useState<CalendarItem | null>(null);
 
-  const onItemUpdateContent = (item: Partial<GenericItem>) => {
-    if (editingItem) {
+  const onUpdatePostCard = (item: Partial<PostCardItem>) => {
+    if (editingItem && editingItem.type === "post-card") {
       setEditingItem({ ...editingItem, ...item });
     }
   };
 
-  const onItemDelete = async (item: GenericItem) => {
+  const onUpdatePostIt = (item: Partial<PostItItem>) => {
+    if (editingItem && editingItem.type === "post-it") {
+      setEditingItem({ ...editingItem, ...item });
+    }
+  };
+
+  const onItemDelete = async (item: CalendarItem) => {
     if (data) {
       onEditCell && onEditCell(item, data.items.indexOf(item), "delete");
     }
@@ -55,7 +63,7 @@ const WeekCell: React.FC<WeekCellProps> = ({
     setEditingItem(null);
   };
 
-  const onItemSelect = (item: GenericItem) => {
+  const onItemSelect = (item: CalendarItem) => {
     setEditingItem(item);
   };
 
@@ -87,14 +95,19 @@ const WeekCell: React.FC<WeekCellProps> = ({
     setActiveModals("photo", true);
   }, []);
 
-  const renderItem = (item: GenericItem, key: string) => {
-    switch (item.type) {
-      case "note":
+  const renderItem = (item: CalendarItem, key: string) => {
+    const itemWithType =
+      !!editingItem &&
+      editingItem.id === item.id &&
+      item.type === editingItem.type
+        ? editingItem
+        : item;
+    switch (itemWithType.type) {
       case "post-it":
         return renderNote(
-          !!editingItem && editingItem.id === item.id ? editingItem : item,
+          itemWithType,
           !!editingItem && editingItem.id === item.id,
-          onItemUpdateContent,
+          onUpdatePostIt,
           onItemDelete,
           onItemSelect,
           onItemDeselect,
@@ -105,19 +118,17 @@ const WeekCell: React.FC<WeekCellProps> = ({
         );
       case "post-card":
         return renderPostCard(
-          !!editingItem && editingItem.id === item.id
-            ? (editingItem as PostCardItem)
-            : (item as PostCardItem),
+          itemWithType,
           !!editingItem && editingItem.id === item.id,
-          onItemUpdateContent,
+          onUpdatePostCard,
           onItemDelete,
           onItemSelect,
           onItemDeselect,
           showPeople,
           disablePeopleDrag,
           locked,
-          () => onAddImageClicked(item as PostCardItem),
-          () => onImageClicked(item as PostCardItem),
+          () => onAddImageClicked(itemWithType),
+          () => onImageClicked(itemWithType),
           key
         );
     }

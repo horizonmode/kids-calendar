@@ -1,5 +1,6 @@
 import { createStore } from "zustand";
 import {
+  CalendarItem,
   GenericItem,
   ScheduleItem,
   ScheduleSection,
@@ -24,7 +25,7 @@ export interface TemplateState {
   editTemplateItem: (
     templateId: string,
     itemId: string,
-    newItem: GenericItem
+    newItem: CalendarItem
   ) => void;
 }
 
@@ -107,7 +108,7 @@ export const createTemplateStore = (initProps?: TemplateProps) => {
     editTemplateItem: (
       templateId: string,
       itemId: string,
-      newItem: GenericItem
+      newItem: CalendarItem
     ) =>
       set((state: TemplateState) => {
         const newTemplates = [...state.templates];
