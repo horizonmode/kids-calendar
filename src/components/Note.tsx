@@ -2,13 +2,19 @@
 import { CSSProperties } from "react";
 import hexConvert from "hex-color-opacity";
 import { Resizable } from "re-resizable";
-import { EditorProvider } from "@tiptap/react";
+import { EditorContent, EditorProvider } from "@tiptap/react";
 import ExtensionKit from "@/extensions/extension-kit";
-import { TextMenuProvider } from "./editor/TextMenu";
+import { TextMenu, TextMenuProvider } from "./editor/TextMenu";
+import {
+  ContentItemMenu,
+  ContentItemMenuProvider,
+} from "./editor/ContentItemMenu";
+import { useTextEditor } from "./editor/useEditor";
+import { on } from "events";
 
 export interface NoteProps {
-  content?: string;
-  onUpdateContent?: (val: string) => void;
+  content: string;
+  onUpdateContent: (val: string) => void;
   onUpdateSize?: (width: number, height: number) => void;
   onClick?: () => void;
   onBlur?: () => void;
@@ -39,7 +45,7 @@ const Note = ({
   const text = color === "black" ? "white" : "black";
 
   const wrapperClass =
-    "relative text-sm md:text-md touch-none text-gray-800 p-3 rounded shadow-lg group overflow-y-auto select-none outline-none flex flex-col";
+    "text-sm md:text-md touch-none text-gray-800 p-3 rounded shadow-lg group overflow-y-auto overflow-x-visible select-none outline-none flex flex-col";
 
   const wrapperStyle = {
     backgroundColor: color,
@@ -55,38 +61,40 @@ const Note = ({
     !editable && onClick && onClick();
   };
 
-  const editableNote = (
-    <EditorProvider
-      editable={editable}
-      slotBefore={editable && <TextMenuProvider />}
-      extensions={ExtensionKit}
-      content={content}
-      onUpdate={(e) => onUpdateContent && onUpdateContent(e.editor.getHTML())}
-      immediatelyRender={false}
-    />
-  );
-  return editable ? (
-    <Resizable
-      defaultSize={{
-        width,
-        height,
-      }}
-      className={wrapperClass}
-      style={{
-        ...wrapperStyle,
-        outlineColor: "#000",
-        outlineStyle: "solid",
-        outlineWidth: "1px",
-      }}
-      onResizeStop={(e, direction, ref, d) => {
-        onUpdateSize && onUpdateSize(ref.offsetWidth, ref.offsetHeight);
-      }}
-    >
-      {editableNote}
-    </Resizable>
-  ) : (
-    <div onClick={onWrapperClick} className={wrapperClass} style={wrapperStyle}>
-      {editableNote}
+  const { editor } = useTextEditor({ onUpdateContent, content });
+
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <div className="relative">
+      <div
+        className={wrapperClass}
+        onClick={onWrapperClick}
+        style={
+          !editable
+            ? wrapperStyle
+            : {
+                ...wrapperStyle,
+                outlineColor: "#000",
+                outlineStyle: "solid",
+                outlineWidth: "1px",
+              }
+        }
+      >
+        <EditorContent
+          className="flex-1 overflow-y-auto"
+          editor={editor}
+          readOnly={!editable}
+        />
+      </div>
+      {editable && (
+        <div>
+          <TextMenu editor={editor}></TextMenu>
+          <ContentItemMenu editor={editor} />
+        </div>
+      )}
     </div>
   );
 };

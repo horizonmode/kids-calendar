@@ -2,7 +2,6 @@ import { Delta } from "@/components/Delta";
 import {
   CalendarItem,
   GenericItem,
-  Person,
   ScheduleItem,
   Section,
   Template,

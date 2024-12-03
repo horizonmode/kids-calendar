@@ -42,7 +42,7 @@ export const TextMenu = ({ editor }: TextMenuProps) => {
         zIndex: 100,
         popperOptions: {
           placement: "top-start",
-          strategy: "fixed",
+          // strategy: "fixed",
           modifiers: [
             {
               name: "preventOverflow",

@@ -276,7 +276,7 @@ const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
   const [dragId, setDragId] = useState<string | null>(null);
 
   const mouseActivationConstraint = {
-    distance: 5,
+    distance: 15,
   };
 
   const sensors = useSensors(

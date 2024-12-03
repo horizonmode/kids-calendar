@@ -8,6 +8,7 @@ import { Underline } from "@tiptap/extension-underline";
 import { Highlight } from "@tiptap/extension-highlight";
 import { FontSize } from "./FontSize";
 import { Link } from "./Link";
+import { SlashCommand } from "./SlashCommand";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
@@ -38,4 +39,5 @@ export {
   Subscript,
   Superscript,
   Placeholder,
+  SlashCommand,
 };

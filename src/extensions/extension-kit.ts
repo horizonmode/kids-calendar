@@ -20,7 +20,9 @@ import {
   Subscript,
   Superscript,
   Placeholder,
+  SlashCommand,
 } from ".";
+import DragHandle from "@tiptap-pro/extension-drag-handle-react";
 
 export const ExtensionKit: AnyExtension[] = [
   Document,
@@ -58,6 +60,7 @@ export const ExtensionKit: AnyExtension[] = [
     showOnlyCurrent: false,
     placeholder: () => "placeholder",
   }),
+  SlashCommand,
 ];
 
 export default ExtensionKit;
