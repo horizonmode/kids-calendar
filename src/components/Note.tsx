@@ -61,7 +61,7 @@ const Note = ({
     !editable && onClick && onClick();
   };
 
-  const { editor } = useTextEditor({ onUpdateContent, content });
+  const { editor } = useTextEditor({ onUpdateContent, content, editable });
 
   if (!editor) {
     return null;
@@ -83,11 +83,7 @@ const Note = ({
               }
         }
       >
-        <EditorContent
-          className="flex-1 overflow-y-auto"
-          editor={editor}
-          readOnly={!editable}
-        />
+        <EditorContent className="flex-1 overflow-y-auto" editor={editor} />
       </div>
       {editable && (
         <div>
