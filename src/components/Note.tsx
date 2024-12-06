@@ -32,10 +32,8 @@ const Note = ({
   color = "#0096FF",
   style,
   editable,
-  onBlur,
   width,
   height,
-  onUpdateSize,
 }: NoteProps) => {
   const isHex = /^#[0-9A-F]{6}$/i.test(color);
   if (isHex) {

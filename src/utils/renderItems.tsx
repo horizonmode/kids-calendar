@@ -10,6 +10,7 @@ import PersonAssignment from "@/components/PersonAssignment";
 import PostCard from "@/components/PostCard";
 import { CSSProperties } from "react";
 import Note from "@/components/Note";
+import { Resizable } from "re-resizable";
 
 const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
   position: "absolute",
@@ -60,20 +61,27 @@ export const renderNote = (
       position="right"
       className={`${locked ? "hidden" : ""}`}
     >
-      <Note
-        editable={editable}
-        content={item.content}
-        onUpdateContent={(content: string) => {
-          onItemUpdate({ content });
+      <Resizable
+        enable={
+          !editable ? false : { right: true, bottom: true, bottomRight: true }
+        }
+        onResize={(_, __, ref) => {
+          onItemUpdate({ width: ref.offsetWidth, height: ref.offsetHeight });
         }}
-        onUpdateSize={(width: number, height: number) => {
-          onItemUpdate({ width, height });
-        }}
-        color={item.color}
-        width={item.width}
-        height={item.height}
-        onClick={() => onItemSelect(item)}
-      ></Note>
+        defaultSize={{ width: item.width, height: item.height }}
+      >
+        <Note
+          editable={editable}
+          content={item.content}
+          onUpdateContent={(content: string) => {
+            onItemUpdate({ content });
+          }}
+          color={item.color}
+          width={item.width}
+          height={item.height}
+          onClick={() => onItemSelect(item)}
+        ></Note>
+      </Resizable>
     </Editable>
     {showPeople && (
       <PersonAssignment
