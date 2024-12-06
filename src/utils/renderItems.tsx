@@ -141,7 +141,7 @@ export const renderPostCard = (
         position="right"
         actions={[
           {
-            iconName: "Eye",
+            iconName: item.showLabel ? "Text" : "EyeClosed",
             onClick: () => {
               onItemUpdate({ showLabel: !item.showLabel });
             },
