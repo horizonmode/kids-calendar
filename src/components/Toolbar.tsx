@@ -80,6 +80,7 @@ const Toolbar = ({
                 editable={false}
                 width={ti.width}
                 height={ti.height}
+                onUpdateContent={(val: string) => {}}
               ></Note>
             </Draggable>
           </div>

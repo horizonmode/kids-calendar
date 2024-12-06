@@ -9,10 +9,9 @@ export interface EditableProps {
   onSelect: (selected: boolean) => void;
   onChangeColor?: (val: string) => void;
   color: string;
-  children?: ReactNode;
   className?: string;
   position?: "top" | "bottom" | "left" | "right";
-  onUpdateContent?: (val: string) => void;
+  children?: ReactNode;
 }
 
 const Editable = ({
@@ -21,11 +20,9 @@ const Editable = ({
   onSelect,
   onChangeColor,
   color,
-  children,
   className,
   position = "top",
-  content = "initialContent",
-  onUpdateContent,
+  children,
 }: EditableProps) => {
   const positionClass =
     position === "top"
@@ -61,6 +58,9 @@ const Editable = ({
               }}
             />
             <input
+              onClick={(e) => {
+                console.log("clicked");
+              }}
               onChange={(e) => {
                 const { value } = e.target;
                 onChangeColor && onChangeColor(value);
@@ -68,7 +68,6 @@ const Editable = ({
               className={sizeClass}
               type="color"
               name="color"
-              value={color}
             />
           </>
         )}
