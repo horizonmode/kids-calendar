@@ -1,6 +1,13 @@
 "use client";
 import { ReactNode } from "react";
 import { RiDeleteBin6Line, RiCloseCircleLine } from "@remixicon/react";
+import { icons } from "lucide-react";
+import { Icon } from "./ui/Icon";
+
+export interface Action {
+  iconName: keyof typeof icons;
+  onClick: () => void;
+}
 
 export interface EditableProps {
   editable: boolean;
@@ -12,6 +19,7 @@ export interface EditableProps {
   className?: string;
   position?: "top" | "bottom" | "left" | "right";
   children?: ReactNode;
+  actions?: Action[];
 }
 
 const Editable = ({
@@ -23,6 +31,7 @@ const Editable = ({
   className,
   position = "top",
   children,
+  actions,
 }: EditableProps) => {
   const positionClass =
     position === "top"
@@ -69,6 +78,12 @@ const Editable = ({
               type="color"
               name="color"
             />
+            {actions &&
+              actions.map(({ iconName, onClick }, i) => (
+                <div key={i} onClick={onClick}>
+                  <Icon name={iconName} className={sizeClass} />
+                </div>
+              ))}
           </>
         )}
       </div>

@@ -11,6 +11,7 @@ import PostCard from "@/components/PostCard";
 import { CSSProperties } from "react";
 import Note from "@/components/Note";
 import { Resizable } from "re-resizable";
+import { RiDeleteBin6Line, RiEye2Line } from "@remixicon/react";
 
 const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
   position: "absolute",
@@ -116,7 +117,13 @@ export const renderPostCard = (
       top={`${item.y || 50}%`}
       style={getStyle(item)}
       element="post-card"
-      data={{ content: item.content, fileUrl: item.image?.url }}
+      data={{
+        content: item.content,
+        fileUrl: item.image?.url,
+        width: item.width,
+        height: item.height,
+        showLabel: item.showLabel,
+      }}
       disabled={editable}
     >
       <Editable
@@ -132,19 +139,40 @@ export const renderPostCard = (
         editable={editable}
         className={`${locked ? "hidden" : ""}`}
         position="right"
+        actions={[
+          {
+            iconName: "Eye",
+            onClick: () => {
+              onItemUpdate({ showLabel: !item.showLabel });
+            },
+          },
+        ]}
       >
-        <PostCard
-          content={item.content || ""}
-          editable={editable}
-          onUpdateContent={(content: string) => {
-            onItemUpdate({ content });
+        <Resizable
+          enable={
+            !editable ? false : { right: true, bottom: true, bottomRight: true }
+          }
+          onResize={(_, __, ref) => {
+            onItemUpdate({ width: ref.offsetWidth, height: ref.offsetHeight });
           }}
-          fileUrl={item.image?.url}
-          color={item.color}
-          onAddImageClicked={onAddImageClicked}
-          onImageClicked={onImageClicked}
-          onClick={() => onItemSelect(item)}
-        ></PostCard>
+          defaultSize={{ width: item.width, height: item.height }}
+        >
+          <PostCard
+            content={item.content || ""}
+            editable={editable}
+            onUpdateContent={(content: string) => {
+              onItemUpdate({ content });
+            }}
+            fileUrl={item.image?.url}
+            color={item.color}
+            onAddImageClicked={onAddImageClicked}
+            onImageClicked={onImageClicked}
+            onClick={() => onItemSelect(item)}
+            width={item.width}
+            height={item.height}
+            showLabel={item.showLabel}
+          ></PostCard>
+        </Resizable>
       </Editable>
       {showPeople && (
         <PersonAssignment

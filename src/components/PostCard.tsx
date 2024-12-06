@@ -9,6 +9,7 @@ import React, {
 import ContentEditable from "react-contenteditable";
 import hexConvert from "hex-color-opacity";
 import { RiCameraLensFill, RiImageAddLine } from "@remixicon/react";
+import Image from "next/image";
 
 export interface PostCardProps {
   content: string;
@@ -21,19 +22,24 @@ export interface PostCardProps {
   onAddImageClicked?: () => void;
   onImageClicked?: () => void;
   onClick?: () => void;
+  width?: number;
+  height?: number;
+  showLabel?: boolean;
 }
 
 const PostCard = ({
   content,
   style,
   onUpdateContent,
-  children,
   fileUrl,
   editable = false,
   onAddImageClicked,
   onImageClicked,
   color = "#FF00FF",
   onClick,
+  width,
+  height,
+  showLabel,
 }: PostCardProps) => {
   const editRef: RefObject<HTMLElement> =
     useRef<HTMLElement>() as RefObject<HTMLElement>;
@@ -55,72 +61,83 @@ const PostCard = ({
     !editable && onClick && onClick();
   };
 
+  const wrapperStyle = {
+    width,
+    height,
+    ...style,
+  };
+
   return (
-    <div style={{ ...style }}>
-      <div
-        onClick={onWrapperClick}
-        className={`bg-gradient-to-b  rounded-l-lg shadow-lg w-[10rem] flex flex-col align-top bg-white ${
-          editable && "outline-1 outline-black outline"
-        }`}
-      >
-        {!hasFile ? (
-          <div className="flex items-center w-full h-full p-6 justify-center pointer-events-auto">
-            {editable ? (
-              <RiImageAddLine
-                onClick={() => {
-                  if (onAddImageClicked) {
-                    onAddImageClicked();
-                  }
-                }}
+    <div
+      style={wrapperStyle}
+      onClick={onWrapperClick}
+      className={`bg-gradient-to-b  rounded-l-lg shadow-lg flex flex-col align-top bg-white ${
+        editable && "outline-1 outline-black outline"
+      }`}
+    >
+      {!hasFile ? (
+        <div className="flex items-center flex-1 relative p-4 justify-center pointer-events-auto bg-white">
+          {editable ? (
+            <RiImageAddLine
+              onClick={() => {
+                if (onAddImageClicked) {
+                  onAddImageClicked();
+                }
+              }}
+            />
+          ) : (
+            <RiCameraLensFill />
+          )}
+        </div>
+      ) : (
+        <div className="flex-1 relative">
+          {fileUrl.includes("mov") || fileUrl.includes("mp4") ? (
+            <video
+              className="object-cover object-left-top"
+              src={fileUrl}
+            ></video>
+          ) : (
+            fileUrl && (
+              <Image
+                layout="fill"
+                alt="post-card"
+                className="object-cover object-left-top"
+                src={fileUrl}
               />
-            ) : (
-              <RiCameraLensFill />
-            )}
-          </div>
-        ) : (
-          <>
-            {fileUrl.includes("mov") || fileUrl.includes("mp4") ? (
-              <video className="min-w-full h-auto" src={fileUrl}></video>
-            ) : (
-              fileUrl && (
-                <img
-                  className="min-w-full h-auto"
-                  onClick={onImageClicked}
-                  src={fileUrl}
-                />
-              )
-            )}
-            {editable && (
-              <RiImageAddLine
-                className="absolute right-0 top-0 flex items-center w-10 h-10 p-2 text-white justify-center bg-black cursor-pointer"
-                onClick={onAddImageClicked}
-              />
-            )}
-            {!editable && (
-              <RiCameraLensFill
-                data-no-dnd="true"
-                className="absolute right-0 top-0 flex items-center w-10 h-10 p-2 text-black justify-center cursor-pointer"
-                onClick={onImageClicked}
-              />
-            )}
-          </>
-        )}
+            )
+          )}
+          {editable && (
+            <RiImageAddLine
+              className="absolute right-0 top-0 flex items-center p-2 text-white justify-center bg-black cursor-pointer"
+              onClick={onAddImageClicked}
+            />
+          )}
+          {!editable && (
+            <RiCameraLensFill
+              data-no-dnd="true"
+              className="absolute right-0 top-0 flex items-center  p-2 text-black justify-center cursor-pointer"
+              onClick={onImageClicked}
+            />
+          )}
+        </div>
+      )}
+      {showLabel && (
         <div
+          className="flex-1 p-2"
           style={{
             backgroundColor: `${hexConvert(color, 0.8)}`,
           }}
         >
           <ContentEditable
-            className=" whitespace-normal outline-none p-2 bg-transparent"
+            className="whitespace-normal outline-none bg-transparent"
             innerRef={editRef}
             tagName="pre"
             disabled={!editable} // use true to disable edition
             html={content || ""} // innerHTML of the editable div
             onChange={(e) => onUpdateContent && onUpdateContent(e.target.value)} // handle innerHTML change
           />
-          {children}
         </div>
-      </div>
+      )}
     </div>
   );
 };

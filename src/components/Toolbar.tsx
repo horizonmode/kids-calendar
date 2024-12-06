@@ -101,7 +101,12 @@ const Toolbar = ({
                 width: "10em",
                 position: "relative",
               }}
-              data={{ content: ti.content }}
+              data={{
+                content: ti.content,
+                width: ti.width,
+                height: ti.height,
+                showLabel: ti.showLabel,
+              }}
             >
               <PostCard
                 content={ti.content || ""}
@@ -109,6 +114,9 @@ const Toolbar = ({
                   position: "relative",
                   zIndex: 200,
                 }}
+                width={ti.width}
+                height={ti.height}
+                showLabel={ti.showLabel}
               ></PostCard>
             </Draggable>
           </div>

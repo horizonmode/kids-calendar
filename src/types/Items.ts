@@ -62,6 +62,9 @@ export type PostItItem = GenericItem & {
 export type PostCardItem = GenericItem & {
   type: "post-card";
   image: GalleryImage | null;
+  width: number;
+  height: number;
+  showLabel: boolean;
 };
 
 export type EventItem = GenericItem &
