@@ -123,7 +123,7 @@ const PostCard = ({
       )}
       {showLabel && (
         <div
-          className="flex-1 p-2"
+          className="p-2"
           style={{
             backgroundColor: `${hexConvert(color, 0.8)}`,
           }}

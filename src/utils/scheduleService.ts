@@ -79,6 +79,9 @@ const toolbarItems: CalendarItem[] = [
       url: "",
       id: 0,
     },
+    width: 100,
+    height: 75,
+    showLabel: true,
   },
 ];
 
