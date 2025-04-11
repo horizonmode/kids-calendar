@@ -50,6 +50,7 @@ const Note = ({
     color: text,
     width,
     height,
+    touchAction: 'none',
     ...style,
   };
 
@@ -66,7 +67,7 @@ const Note = ({
   }
 
   return (
-    <div className="relative">
+    <div className="relative touch-none">
       <div
         className={wrapperClass}
         onClick={onWrapperClick}

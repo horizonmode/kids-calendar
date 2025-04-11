@@ -45,6 +45,7 @@ export const renderNote = (
       height: item.height,
     }}
     disabled={editable}
+    handle={true}
   >
     <Editable
       onDelete={() => onItemDelete(item)}

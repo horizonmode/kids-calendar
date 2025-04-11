@@ -1,5 +1,5 @@
 import useImageContext from "@/store/images";
-import React, { DragEventHandler, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { shallow } from "zustand/shallow";
 import DropZone from "./DropZone";
 import Image from "next/image";
@@ -8,8 +8,6 @@ import {
   RiArrowLeftLine,
   RiArrowRightLine,
   RiCheckFill,
-  RiDeleteBin2Line,
-  RiLoader2Fill,
 } from "@remixicon/react";
 import { Button } from "@tremor/react";
 import FileUpload from "./FileUpload";

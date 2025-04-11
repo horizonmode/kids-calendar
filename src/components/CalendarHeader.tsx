@@ -27,14 +27,14 @@ const Header = ({
         {children}
       </div>
       <div className="hidden md:flex flex-1 flex-row items-center justify-center">
-        <Image
+        {/* <Image
           src="/static/logo.png"
           alt="Logo"
           width="0"
           height="0"
           sizes="100vw"
           className="w-52 md:w-64 h-auto p-5"
-        />
+        /> */}
       </div>
       <div className="flex-1">
         {showTabs ? (

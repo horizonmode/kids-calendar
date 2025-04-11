@@ -1,5 +1,6 @@
 import React, { CSSProperties, ReactNode } from "react";
 import { useDraggable } from "@dnd-kit/core";
+import { Handle } from "./Handle";
 
 interface DraggableProps {
   element?: string;
@@ -11,6 +12,7 @@ interface DraggableProps {
   data?: any;
   action?: "move" | "resize";
   disabled?: boolean;
+  handle?: boolean;
 }
 
 function Draggable({
@@ -23,6 +25,7 @@ function Draggable({
   data,
   action,
   disabled = false,
+  handle = false,
 }: DraggableProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: id,
@@ -38,17 +41,24 @@ function Draggable({
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
+      {...(handle ? {} : listeners)}
+      {...(handle ? {} : attributes)}
       style={{
         opacity: isDragging ? 0 : 1,
         top: top,
         left: left,
         position: "absolute",
-        touchAction: "manipulation",
+        touchAction: "none",
         ...style,
       }}
     >
+      {handle ? (
+        <Handle
+          style={{ right: 0, top: 0, position: "absolute", zIndex: 50 }}
+          className="bg-black"
+          {...(handle ? listeners : {})}
+        />
+      ) : null}
       {children}
     </div>
   );
