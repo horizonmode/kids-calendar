@@ -56,6 +56,7 @@ function DraggableTape({
         isStart,
         isEnd,
         color: item.color,
+        useHandle: useHandle,
       },
     },
     disabled: editable,
@@ -131,7 +132,7 @@ function DraggableTape({
       {...(!useHandle ? moveAttributes : {})}
       {...(!useHandle ? moveListeners : {})}
     >
-      {isStart && useHandle && (
+      {isStart && useHandle && !editable && (
         <Handle
           style={{ left: -5, position: "absolute", zIndex: 100 }}
           className="bg-black pointer-events-auto"

@@ -1,4 +1,4 @@
-import React, { CSSProperties, ReactNode } from "react";
+import React, { CSSProperties, ReactNode, use } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { Handle } from "./Handle";
 
@@ -33,7 +33,7 @@ function Draggable({
       type: element,
       style,
       action,
-      extra: { itemId: id, ...data },
+      extra: { itemId: id, ...data, useHandle: handle },
     },
     disabled,
   });
@@ -41,8 +41,8 @@ function Draggable({
   return (
     <div
       ref={setNodeRef}
-      {...(handle ? {} : listeners)}
-      {...(handle ? {} : attributes)}
+      {...(handle || disabled ? {} : listeners)}
+      {...(handle || disabled ? {} : attributes)}
       style={{
         opacity: isDragging ? 0 : 1,
         top: top,
@@ -52,7 +52,7 @@ function Draggable({
         ...style,
       }}
     >
-      {handle ? (
+      {handle && !disabled ? (
         <Handle
           style={{ right: 0, top: 0, position: "absolute", zIndex: 50 }}
           className="bg-black"

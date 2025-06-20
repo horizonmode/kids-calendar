@@ -17,6 +17,7 @@ export interface NoteProps {
   editable: boolean;
   width: number;
   height: number;
+  children?: React.ReactNode;
 }
 
 const Note = ({
@@ -28,6 +29,7 @@ const Note = ({
   editable,
   width,
   height,
+  children,
 }: NoteProps) => {
   const isHex = /^#[0-9A-F]{6}$/i.test(color);
   if (isHex) {
@@ -84,6 +86,7 @@ const Note = ({
           <ContentItemMenu editor={editor} />
         </div>
       )}
+      {children}
     </div>
   );
 };
