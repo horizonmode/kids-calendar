@@ -148,6 +148,7 @@ const Toolbar = ({
               }}
               event={ti as EventItem}
               useHandle={false}
+              locked={false}
             />
           </div>
         );

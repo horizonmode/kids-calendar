@@ -55,13 +55,9 @@ function DraggableOverlay({ axis, dragging }: OverlayProps) {
       case "event":
         if (active.data.current.action === "move")
           return (
-            <Tape {...active.data.current.extra}>
-              {active.data.current.extra.useHandle && (
-                <Handle
-                  style={{ left: 0, top: 0, position: "absolute", zIndex: 50 }}
-                />
-              )}
-            </Tape>
+            <Handle
+              style={{ left: 0, top: 0, position: "absolute", zIndex: 50 }}
+            />
           );
         if (active.data.current.action === "resize") return <ResizeIcon />;
       case "people":
