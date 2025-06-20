@@ -140,6 +140,7 @@ const Toolbar = ({
                 position: "relative",
               }}
               event={ti as EventItem}
+              useHandle={false}
             />
           </div>
         );

@@ -1,16 +1,10 @@
 "use client";
 import { CSSProperties } from "react";
 import hexConvert from "hex-color-opacity";
-import { Resizable } from "re-resizable";
 import { EditorContent, EditorProvider } from "@tiptap/react";
-import ExtensionKit from "@/extensions/extension-kit";
 import { TextMenu, TextMenuProvider } from "./editor/TextMenu";
-import {
-  ContentItemMenu,
-  ContentItemMenuProvider,
-} from "./editor/ContentItemMenu";
+import { ContentItemMenu } from "./editor/ContentItemMenu";
 import { useTextEditor } from "./editor/useEditor";
-import { on } from "events";
 
 export interface NoteProps {
   content: string;
@@ -50,7 +44,7 @@ const Note = ({
     color: text,
     width,
     height,
-    touchAction: 'none',
+    touchAction: "none",
     ...style,
   };
 

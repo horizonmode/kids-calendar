@@ -27,7 +27,7 @@ export const DropdownButton = React.forwardRef<
   ref
 ) {
   const buttonClass = cn(
-    "flex items-center gap-2 p-1.5 text-sm font-medium text-neutral-500 dark:text-neutral-400 text-left bg-transparent w-full rounded",
+    "flex items-center gap-2 p-1.5 text-md font-medium text-neutral-500 dark:text-neutral-400 text-left bg-transparent w-full rounded",
     !isActive && !disabled,
     "hover:bg-neutral-100 hover:text-neutral-800 dark:hover:bg-neutral-900 dark:hover:text-neutral-200",
     isActive &&

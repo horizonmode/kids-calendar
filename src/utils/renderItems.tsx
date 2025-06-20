@@ -71,6 +71,8 @@ export const renderNote = (
           onItemUpdate({ width: ref.offsetWidth, height: ref.offsetHeight });
         }}
         defaultSize={{ width: item.width, height: item.height }}
+        minHeight={50}
+        minWidth={100}
       >
         <Note
           editable={editable}
