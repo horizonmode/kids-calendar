@@ -10,6 +10,7 @@ export interface Action {
 }
 
 export interface EditableProps {
+  targetComponentId?: string;
   editable: boolean;
   content?: string;
   onDelete?: () => void;
@@ -23,6 +24,7 @@ export interface EditableProps {
 }
 
 const Editable = ({
+  targetComponentId,
   editable,
   onDelete,
   onSelect,
@@ -67,6 +69,8 @@ const Editable = ({
               }}
             />
             <input
+              id={`${targetComponentId}-color-picker`}
+              value={color}
               onClick={(e) => {
                 console.log("clicked");
               }}

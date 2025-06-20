@@ -11,7 +11,6 @@ import PostCard from "@/components/PostCard";
 import { CSSProperties } from "react";
 import Note from "@/components/Note";
 import { Resizable } from "re-resizable";
-import { RiDeleteBin6Line, RiEye2Line } from "@remixicon/react";
 
 const getStyle: (d: GenericItem) => CSSProperties = (d) => ({
   position: "absolute",
@@ -48,6 +47,7 @@ export const renderNote = (
     handle={true}
   >
     <Editable
+      targetComponentId={item.id}
       onDelete={() => onItemDelete(item)}
       color={item.color || "#0096FF"}
       onChangeColor={(color: string) => {
@@ -128,6 +128,7 @@ export const renderPostCard = (
       disabled={editable}
     >
       <Editable
+        targetComponentId={item.id}
         onDelete={() => onItemDelete(item)}
         color={item.color || "#0096FF"}
         onChangeColor={(color: string) => {

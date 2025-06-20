@@ -1,4 +1,4 @@
-import React, { CSSProperties, useState } from "react";
+import React, { CSSProperties, use, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import Tape from "./Tape";
 import ResizeIcon from "./ResizeIcon";
@@ -6,6 +6,7 @@ import Editable from "./Editable";
 import PersonAssignment from "./PersonAssignment";
 import { RiRefreshLine } from "@remixicon/react";
 import { EventItem } from "@/types/Items";
+import { Handle } from "./Handle";
 
 interface DraggableTapeProps {
   id: string;
@@ -22,6 +23,7 @@ interface DraggableTapeProps {
   onDelete?: () => void;
   onEditEvent?: (item: EventItem, action: "update" | "delete" | "move") => void;
   event: EventItem;
+  useHandle?: boolean;
 }
 
 function DraggableTape({
@@ -38,6 +40,7 @@ function DraggableTape({
   loading = false,
   event,
   onEditEvent,
+  useHandle = true,
 }: DraggableTapeProps) {
   const [editingItem, setEditingItem] = useState<EventItem | null>(null);
   const editable = (editingItem && editingItem.id === event.id) || false;
@@ -114,8 +117,6 @@ function DraggableTape({
       id={id}
       ref={moveSetNodeRef}
       className="w-full flex-shrink-0 absolute"
-      {...moveListeners}
-      {...moveAttributes}
       style={{
         opacity: moveIsDragging ? 0.5 : undefined,
         top: top,
@@ -123,13 +124,20 @@ function DraggableTape({
         ...style,
       }}
       onClick={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
         if (!editable) {
           onSelect(event);
         }
       }}
+      {...(!useHandle ? moveAttributes : {})}
+      {...(!useHandle ? moveListeners : {})}
     >
+      {isStart && useHandle && (
+        <Handle
+          style={{ left: -5, position: "absolute", zIndex: 100 }}
+          className="bg-black pointer-events-auto"
+          {...moveListeners}
+        />
+      )}
       {isStart && onSelect && (
         <Editable
           onDelete={() => onDelete(event)}
