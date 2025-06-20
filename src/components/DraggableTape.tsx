@@ -135,7 +135,7 @@ function DraggableTape({
       {isStart && useHandle && !editable && !locked && (
         <Handle
           style={{ left: -5, position: "absolute", zIndex: 100 }}
-          className="bg-black pointer-events-auto"
+          className="bg-black pointer-events-auto opacity-35 hover:opacity-100"
           {...moveListeners}
         />
       )}

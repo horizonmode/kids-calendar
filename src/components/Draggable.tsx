@@ -55,7 +55,7 @@ function Draggable({
       {handle && !disabled ? (
         <Handle
           style={{ right: 0, top: 0, position: "absolute", zIndex: 50 }}
-          className="bg-black"
+          className="bg-black opacity-35 hover:opacity-100 "
           {...(handle ? listeners : {})}
         />
       ) : null}
