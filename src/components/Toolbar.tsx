@@ -9,7 +9,14 @@ import React, {
 
 import { Icon } from "@tremor/react";
 import { useDroppable } from "@dnd-kit/core";
-import { RiArrowLeftLine } from "@remixicon/react";
+import {
+  RiArrowLeftLine,
+  RiLock2Fill,
+  RiLockFill,
+  RiLockLine,
+  RiLockUnlockFill,
+  RiLockUnlockLine,
+} from "@remixicon/react";
 import { RiArrowDownLine } from "@remixicon/react";
 import { RiInformationLine } from "@remixicon/react";
 import { RiArrowLeftWideLine } from "@remixicon/react";
@@ -249,7 +256,7 @@ const Toolbar = ({
           className="flex-1 flex justify-center align-middle items-center overflow-visible w-12 h-12 hover:bg-slate-200"
           onClick={onToggleLock}
         >
-          <Icon size="lg" icon={!locked ? RiEditLine : RiEditFill} />
+          <Icon size="lg" icon={!locked ? RiLockUnlockLine : RiLockFill} />
         </div>
       </div>
       <div

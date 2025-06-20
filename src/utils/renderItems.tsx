@@ -43,7 +43,7 @@ export const renderNote = (
       width: item.width,
       height: item.height,
     }}
-    disabled={editable}
+    disabled={editable || locked}
     handle={true}
   >
     <Editable
@@ -83,7 +83,7 @@ export const renderNote = (
           color={item.color}
           width={item.width}
           height={item.height}
-          onClick={() => onItemSelect(item)}
+          onClick={() => !locked && onItemSelect(item)}
         ></Note>
       </Resizable>
     </Editable>

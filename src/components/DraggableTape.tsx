@@ -125,14 +125,14 @@ function DraggableTape({
         ...style,
       }}
       onClick={(e) => {
-        if (!editable) {
+        if (!editable && !locked) {
           onSelect(event);
         }
       }}
-      {...(!useHandle ? moveAttributes : {})}
-      {...(!useHandle ? moveListeners : {})}
+      {...(!useHandle && !locked ? moveAttributes : {})}
+      {...(!useHandle && !locked ? moveListeners : {})}
     >
-      {isStart && useHandle && !editable && (
+      {isStart && useHandle && !editable && !locked && (
         <Handle
           style={{ left: -5, position: "absolute", zIndex: 100 }}
           className="bg-black pointer-events-auto"
@@ -175,7 +175,8 @@ function DraggableTape({
       {isEnd && loading ? (
         <RiRefreshLine className="absolute pointer-events-none right-0 -top-12 animate-spin" />
       ) : (
-        isEnd && (
+        isEnd &&
+        !locked && (
           <ResizeIcon
             ref={resizeSetNodeRef}
             listeners={resizeListeners}

@@ -44,6 +44,7 @@ import { updateEventAction } from "@/serverActions/events";
 import CalendarCell from "./CalendarCell";
 import useOptimisticCalendarDays from "@/hooks/useOptimisticCalendarDays";
 import useOptimisticEvents from "@/hooks/useOptimisticEvents";
+import useUIContext, { UIStore } from "@/store/ui";
 const {
   reorderDays,
   reorderEvents,
@@ -63,18 +64,22 @@ interface MonthViewProps {
 }
 
 const MonthView = ({ onNext, onPrev, calendarId }: MonthViewProps) => {
-  const [currentDay, setSelectedDay, content, events, locked, setLocked] =
-    useCalendarContext(
-      (state) => [
-        state.selectedDay,
-        state.setSelectedDay,
-        calendarService.getDaysContent(state.days, state.selectedDay),
-        calendarService.getDaysEvents(state.events, state.selectedDay),
-        state.locked,
-        state.setLocked,
-      ],
-      shallow
-    );
+  const [currentDay, setSelectedDay, content, events] = useCalendarContext(
+    (state) => [
+      state.selectedDay,
+      state.setSelectedDay,
+      calendarService.getDaysContent(state.days, state.selectedDay),
+      calendarService.getDaysEvents(state.events, state.selectedDay),
+      state.locked,
+      state.setLocked,
+    ],
+    shallow
+  );
+
+  const [locked, setLocked] = useUIContext(
+    (state) => [state.locked, state.setLocked],
+    shallow
+  );
 
   const [people, showPeople, setShowPeople] = usePersonContext((state) => [
     state.people,
